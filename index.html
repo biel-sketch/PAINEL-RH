@@ -4050,9 +4050,18 @@
       .filter(function(c){ return c && c.nome; });
   }
 
+  function normalizeVagasData(arr){
+    return (arr||[]).map(function(v){
+      return Object.assign({}, v, {
+        hired: Array.isArray(v.hired) ? v.hired : [],
+        history: Array.isArray(v.history) ? v.history : []
+      });
+    });
+  }
+
   function applyAppState(s){
     if(!s) return;
-    if(s.vagasData) vagasData = s.vagasData;
+    if(s.vagasData) vagasData = normalizeVagasData(s.vagasData);
     if(s.clientesData) clientesData = normalizeClientesData(s.clientesData);
     if(s.candidatesData) candidatesData = s.candidatesData;
     if(s.interviewsData) interviewsData = s.interviewsData;
