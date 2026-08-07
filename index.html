@@ -209,6 +209,13 @@
   .barchart-bar-value{position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--text-dim);font-family:var(--font-mono);white-space:nowrap;}
   .barchart-label{margin-top:8px;font-size:10px;color:var(--text-faint);text-align:center;max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .donut-legend-swatch{width:9px;height:9px;border-radius:2px;flex-shrink:0;display:inline-block;margin-right:8px;}
+  .fireworks-overlay{position:fixed;inset:0;pointer-events:none;z-index:99999;overflow:hidden;}
+  .firework-particle{position:absolute;width:6px;height:6px;border-radius:50%;top:0;left:0;opacity:1;will-change:transform,opacity;animation:firework-fly 1100ms cubic-bezier(.15,.6,.4,1) forwards;}
+  @keyframes firework-fly{
+    0%{transform:translate(0,0) scale(1);opacity:1;}
+    65%{opacity:1;}
+    100%{transform:translate(var(--dx), var(--dy)) scale(0.25);opacity:0;}
+  }
 
   /* Modal */
   .modal-overlay{
@@ -1597,8 +1604,8 @@
     {user:'mariah', email:'dp@loginserv.com.br', name:'Mariah', role:'dp'},
     {user:'larissa', email:'dp.1@loginserv.com.br', name:'Larissa', role:'dp'},
     {user:'marilia', email:'dp.3@loginserv.com.br', name:'Marilia', role:'dp'},
-    {user:'elaine silva', email:'rh@loginserv.com.br', name:'Elaine Silva', role:'analista_dp'},
-    {user:'daniela', email:'rh.2@loginserv.com.br', name:'Daniela', role:'analista_dp'},
+    {user:'elaine silva', email:'rh@loginserv.com.br', name:'Elaine Silva', role:'analista'},
+    {user:'daniela', email:'rh.2@loginserv.com.br', name:'Daniela', role:'analista'},
     {user:'marcela', email:'rh.1@loginserv.com.br', name:'Marcela', role:'assistente'},
     {user:'comercial', email:'comercial@loginserv.com.br', name:'Comercial', role:'comercial'}
   ];
@@ -2434,6 +2441,44 @@
     toast._t = setTimeout(function(){ toast.style.opacity = '0'; }, 2600);
   }
 
+  function celebrateVagaFechada(){
+    var overlay = document.createElement('div');
+    overlay.className = 'fireworks-overlay';
+    document.body.appendChild(overlay);
+
+    var cores = ['#2DD4BF', '#3B82F6', '#7FE0D3', '#60A5FA', '#22D3EE'];
+    var bursts = 4;
+
+    for(var b = 0; b < bursts; b++){
+      (function(delay){
+        setTimeout(function(){
+          var cx = 15 + Math.random() * 70;
+          var cy = 12 + Math.random() * 45;
+          var particleCount = 26;
+          for(var i = 0; i < particleCount; i++){
+            var p = document.createElement('div');
+            p.className = 'firework-particle';
+            var angle = (Math.PI * 2 * i) / particleCount + Math.random() * 0.3;
+            var distance = 60 + Math.random() * 70;
+            var dx = Math.cos(angle) * distance;
+            var dy = Math.sin(angle) * distance;
+            p.style.setProperty('--dx', dx + 'px');
+            p.style.setProperty('--dy', dy + 'px');
+            p.style.left = cx + '%';
+            p.style.top = cy + '%';
+            var cor = cores[Math.floor(Math.random() * cores.length)];
+            p.style.background = cor;
+            p.style.boxShadow = '0 0 8px 2px ' + cor;
+            overlay.appendChild(p);
+            setTimeout((function(el){ return function(){ el.remove(); }; })(p), 1200);
+          }
+        }, delay);
+      })(b * 350);
+    }
+
+    setTimeout(function(){ overlay.remove(); }, bursts * 350 + 1400);
+  }
+
   function downloadFile(filename, content, mime){
     var blob = new Blob([content], {type: mime});
     var url = URL.createObjectURL(blob);
@@ -2531,7 +2576,7 @@
     renderInterviews();
     renderKanban();
     logAudit('Zerou os dados operacionais (entrevistas e esteira)');
-    syncAfterChange();
+    forceOverwriteCloud();
 
     document.getElementById('danger-password').value = '';
     document.getElementById('danger-confirm-row').style.display = 'none';
@@ -2578,7 +2623,7 @@
 
     renderAllViews();
     logAudit('Zerou TODOS os dados do sistema');
-    syncAfterChange();
+    forceOverwriteCloud();
 
     document.getElementById('danger-all-password').value = '';
     document.getElementById('danger-all-confirm-row').style.display = 'none';
@@ -3848,6 +3893,7 @@
       vaga.history.push({ts:new Date().toISOString(), acao:'Integração de '+c.name});
       if(vaga.qtd - vaga.hired.length <= 0){
         vaga.history.push({ts:new Date().toISOString(), acao:'Todas as vagas preenchidas — posição fechada'});
+        celebrateVagaFechada();
       }
       renderVagas();
       syncAfterChange();
@@ -4227,6 +4273,22 @@
 
   // Chame syncAfterChange() logo após qualquer criação/edição/remoção de dados
   // para salvar na nuvem imediatamente, sem esperar os 20s do ciclo automático.
+  function forceOverwriteCloud(){
+    setSyncIndicator('syncing', 'Salvando...');
+    var local = collectAppState();
+    return cloudPut(local).then(function(){
+      clearPendingChanges();
+      saveLocalCache(local);
+      cloudLastSync = new Date();
+      setSyncIndicator('ok', 'Sincronizado');
+    }).catch(function(err){
+      console.error('Erro ao salvar na nuvem:', err);
+      markPendingChanges();
+      saveLocalCache(local);
+      setSyncIndicator('err', 'Alterações pendentes');
+    });
+  }
+
   function syncAfterChange(){
     if(cloudSyncTimer) clearTimeout(cloudSyncTimer);
     pushToCloud().then(scheduleNextSync).catch(scheduleNextSync);
