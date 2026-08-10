@@ -1835,24 +1835,7 @@
     if(e.target === this) closeVagaModal();
   });
 
-  var vagasData = [
-    {cliente:'GRESPAN', cargo:'Operador de produção', cidade:'Garça', qtd:4, urgente:false, createdAt:'2026-07-10T09:00:00.000Z', history:[{ts:'2026-07-10T09:00:00.000Z', acao:'Vaga cadastrada'}], hired:[
-      {name:'João Pedro Santos', telefone:'(14) 99011-2233'},
-      {name:'Vinícius Almeida', telefone:'(14) 99044-5566'},
-      {name:'Marcos Aurélio', telefone:'(14) 99077-8899'}
-    ]},
-    {cliente:'CASA DO CONTABILISTA', cargo:'Assistente administrativo', cidade:'Marília', qtd:2, urgente:false, createdAt:'2026-07-22T09:00:00.000Z', history:[{ts:'2026-07-22T09:00:00.000Z', acao:'Vaga cadastrada'}], hired:[
-      {name:'Fernanda Costa', telefone:'(14) 99101-2233'},
-      {name:'Larissa Prado', telefone:'(14) 99404-5566'}
-    ]},
-    {cliente:'EMDURB', cargo:'Técnico eletricista', cidade:'Bauru', qtd:5, urgente:true, createdAt:'2026-06-28T09:00:00.000Z', history:[{ts:'2026-06-28T09:00:00.000Z', acao:'Vaga cadastrada'},{ts:'2026-07-15T14:00:00.000Z', acao:'Marcada como urgente'}], hired:[
-      {name:'Diego Martins', telefone:'(14) 99201-2233'},
-      {name:'Rogério Nunes', telefone:'(14) 99504-5566'}
-    ]},
-    {cliente:'DORI', cargo:'Auxiliar de estoque', cidade:'Garça', qtd:3, urgente:false, createdAt:'2026-07-30T09:00:00.000Z', history:[{ts:'2026-07-30T09:00:00.000Z', acao:'Vaga cadastrada'}], hired:[
-      {name:'Priscila Gomes', telefone:'(14) 99301-2233'}
-    ]}
-  ];
+  var vagasData = [];
 
   function populateVagaFilters(){
     var clienteSelect = document.getElementById('filter-vaga-cliente');
@@ -2671,36 +2654,10 @@
     }
   }
 
-  var candidatesData = {
-    marcos: {name:'Marcos Silva', role:'Operador de produção', cliente:'GRESPAN', telefone:'(14) 99123-4567', stage:'aprovado', checklist:null, jus:'sim', stageSince:'2026-07-28T09:00:00.000Z'},
-    rafael: {name:'Rafael Souza', role:'Técnico eletricista', cliente:'EMDURB', telefone:'(14) 99654-3210', stage:'aprovado', checklist:null, jus:'sim', stageSince:'2026-07-30T09:00:00.000Z'},
-    ana: {name:'Ana Ferreira', role:'Assistente administrativo', cliente:'CASA DO CONTABILISTA', telefone:'(14) 99876-5432', stage:'documentacao', jus:'sim', stageSince:'2026-08-04T09:00:00.000Z', checklist:[
-      {item:'Documentos conferidos no JPL', done:false}
-    ]},
-    camila: {name:'Camila Rodrigues', role:'Conferente de estoque', cliente:'DORI', telefone:'(14) 99321-7788', stage:'exames', jus:'sim', checklist:null, exame:{status:'agendado', data:'2026-08-10', obs:''}},
-    juliana: {name:'Juliana Rocha', role:'Auxiliar de estoque', cliente:'DORI', telefone:'(14) 99222-3344', stage:'dp', jus:'sim', checklist:[
-      {item:'Contabilidade', done:true},
-      {item:'Assinatura digital', done:true},
-      {item:'Sistema integrado/e-mail', done:false},
-      {item:'Benefícios', done:false}
-    ]},
-    eduardo: {name:'Eduardo Lima', role:'Motorista', cliente:'', telefone:'(14) 99555-6677', stage:'contratacao', jus:'sim', checklist:[
-      {item:'Integração interna', done:true, date:'2026-08-05'},
-      {item:'Entrega de EPIs', done:false},
-      {item:'Integração/início no cliente', done:false, date:''},
-      {item:'Acompanhamento do 1º dia', done:false}
-    ]}
-  };
+  var candidatesData = {};
 
-  var interviewsData = [
-    {id:'int-marcos', time:'09:00', name:'Marcos Silva', role:'Operador de produção', cliente:'GRESPAN', cidade:'Bauru', telefone:'(14) 99123-4567', entrevistador:'Moises', modalidade:'presencial'},
-    {id:'int-ana', time:'11:30', name:'Ana Ferreira', role:'Assistente administrativo', cliente:'CASA DO CONTABILISTA', cidade:'Bauru', telefone:'(14) 99876-5432', entrevistador:'Elaine', modalidade:'online'},
-    {id:'int-rafael', time:'14:00', name:'Rafael Souza', role:'Técnico eletricista', cliente:'EMDURB', cidade:'Bauru', telefone:'(14) 99654-3210', entrevistador:'Moises', modalidade:'presencial'}
-  ];
-  var reprovadosData = [
-    {id:'seed-rep-0', name:'Bruno Costa', telefone:'(14) 99111-2233', vaga:'Operador de produção', cliente:'GRESPAN', situacao:'reprovado', jus:'sim', obs:'Faltou à entrevista'},
-    {id:'seed-rep-1', name:'Carla Dias', telefone:'(14) 99444-5566', vaga:'Técnico eletricista', cliente:'EMDURB', situacao:'reprovado', jus:'nao', obs:'Não atende ao perfil'}
-  ];
+  var interviewsData = [];
+  var reprovadosData = [];
   var talentBankData = [];
   var interviewCounter = 0;
   var auditLog = [];
@@ -3912,10 +3869,7 @@
     if(e.target === this) closeCandidateModal();
   });
 
-  var retornoData = [
-    {id:'seed-ret-0', name:'Juliana Rocha', telefone:'(14) 99222-3344', vaga:'Auxiliar de estoque', cliente:'DORI', dataReprova:'28/06/2026', done:false},
-    {id:'seed-ret-1', name:'Eduardo Lima', telefone:'(14) 99555-6677', vaga:'Motorista', cliente:'CASA DO CONTABILISTA', dataReprova:'25/06/2026', done:true}
-  ];
+  var retornoData = [];
 
   function addToRetorno(entry){
     var d = new Date();
@@ -4053,26 +4007,68 @@
   function normalizeVagasData(arr){
     return (arr||[]).map(function(v){
       return Object.assign({}, v, {
+        cliente: v.cliente || '',
+        cargo: v.cargo || '',
+        cidade: v.cidade || '',
+        qtd: typeof v.qtd === 'number' ? v.qtd : (parseInt(v.qtd, 10) || 0),
         hired: Array.isArray(v.hired) ? v.hired : [],
         history: Array.isArray(v.history) ? v.history : []
       });
     });
   }
 
+  var VALID_STAGES = ['aprovado','documentacao','exames','dp','contratacao'];
+
+  function normalizeChecklist(checklist){
+    if(!Array.isArray(checklist)) return null;
+    return checklist.map(function(entry){
+      var e = {item: (entry && entry.item) || '', done: !!(entry && entry.done)};
+      if(entry && entry.hasOwnProperty('date')) e.date = entry.date || '';
+      return e;
+    });
+  }
+
+  function normalizeCandidatesData(obj){
+    var result = {};
+    Object.keys(obj || {}).forEach(function(id){
+      var c = obj[id] || {};
+      result[id] = Object.assign({}, c, {
+        name: c.name || '',
+        role: c.role || '',
+        telefone: c.telefone || '',
+        cliente: c.cliente || '',
+        jus: c.jus || 'sim',
+        stage: VALID_STAGES.indexOf(c.stage) !== -1 ? c.stage : 'aprovado',
+        checklist: normalizeChecklist(c.checklist),
+        exame: (c.exame && typeof c.exame === 'object') ? {
+          status: c.exame.status || 'agendado',
+          data: c.exame.data || '',
+          obs: c.exame.obs || ''
+        } : undefined
+      });
+    });
+    return result;
+  }
+
+  function normalizeArray(arr){
+    if(!Array.isArray(arr)) return [];
+    return arr.filter(function(item){ return item !== null && item !== undefined && typeof item === 'object'; });
+  }
+
   function applyAppState(s){
     if(!s) return;
     if(s.vagasData) vagasData = normalizeVagasData(s.vagasData);
     if(s.clientesData) clientesData = normalizeClientesData(s.clientesData);
-    if(s.candidatesData) candidatesData = s.candidatesData;
-    if(s.interviewsData) interviewsData = s.interviewsData;
-    if(s.reprovadosData) reprovadosData = s.reprovadosData;
-    if(s.talentBankData) talentBankData = s.talentBankData;
-    if(s.interviewsHistoryData) interviewsHistoryData = s.interviewsHistoryData;
-    if(s.retornoData) retornoData = s.retornoData;
-    if(s.auditLog) auditLog = s.auditLog;
+    if(s.candidatesData) candidatesData = normalizeCandidatesData(s.candidatesData);
+    if(s.interviewsData) interviewsData = normalizeArray(s.interviewsData);
+    if(s.reprovadosData) reprovadosData = normalizeArray(s.reprovadosData);
+    if(s.talentBankData) talentBankData = normalizeArray(s.talentBankData);
+    if(s.interviewsHistoryData) interviewsHistoryData = normalizeArray(s.interviewsHistoryData);
+    if(s.retornoData) retornoData = normalizeArray(s.retornoData);
+    if(s.auditLog) auditLog = normalizeArray(s.auditLog);
     if(s.cargosPretendidos){
       CARGOS_PRETENDIDOS.length = 0;
-      s.cargosPretendidos.forEach(function(c){ CARGOS_PRETENDIDOS.push(c); });
+      normalizeArray(s.cargosPretendidos).forEach(function(c){ if(c) CARGOS_PRETENDIDOS.push(c); });
       if(document.getElementById('nc-cargo')) populateCargoPretendidoSelect();
       if(document.getElementById('nv-cargo')) populateNvCargoSelect();
     }
@@ -4096,7 +4092,7 @@
   function hasPendingChanges(){ try{ return localStorage.getItem(CLOUD_PENDING_KEY) === '1'; }catch(e){ return false; } }
 
   function cloudGet(){
-    return fetch(CLOUD_DB_URL).then(function(r){
+    return fetch(CLOUD_DB_URL + '?_ts=' + Date.now(), {cache: 'no-store'}).then(function(r){
       if(!r.ok) throw new Error('HTTP '+r.status);
       return r.json();
     });
