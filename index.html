@@ -619,10 +619,12 @@
             <button class="btn btn-ghost" id="filter-vaga-clear" style="padding:7px 12px;">Limpar</button>
           </div>
         </div>
+        <div style="overflow-x:auto;">
         <table>
-          <thead><tr><th>Cliente</th><th>Cargo</th><th>Cidade</th><th>Qtd vagas</th><th>Fechadas</th><th>Faltantes</th><th>Alertas</th></tr></thead>
+          <thead><tr><th>Cliente</th><th>Cargo</th><th>Cidade</th><th>Qtd vagas</th><th>Fechadas</th><th>Faltantes</th><th>Alertas</th><th>Ações</th></tr></thead>
           <tbody id="vagas-tbody"></tbody>
         </table>
+        </div>
       </div>
     </div>
 
@@ -744,10 +746,12 @@
             </select>
           </div>
         </div>
+        <div style="overflow-x:auto;">
         <table>
           <thead><tr><th>Nome</th><th>Telefone</th><th>Cargo pretendido</th><th>Cidade</th><th>Situação</th><th>Jus</th><th>Obs / motivo</th><th>Ações</th></tr></thead>
           <tbody id="reprovados-tbody"></tbody>
         </table>
+        </div>
       </div>
     </div>
 
@@ -763,20 +767,24 @@
             <input type="text" id="talent-search-term" placeholder="Buscar por nome, cliente ou obs..." style="background:#0D1526;border:1px solid var(--line-strong);border-radius:8px;padding:7px 10px;color:var(--text);font-family:var(--font-body);font-size:12.5px;width:240px;">
           </div>
         </div>
+        <div style="overflow-x:auto;">
         <table>
           <thead><tr><th>Nome</th><th>Telefone</th><th>Cargo pretendido</th><th>Cidade</th><th>Jus</th><th>Obs</th><th>Ações</th></tr></thead>
           <tbody id="banco-talentos-tbody"></tbody>
         </table>
+        </div>
       </div>
     </div>
 
     <div class="view" id="view-retorno">
       <div class="topbar"><div class="page-title">Retorno</div></div>
       <div class="panel">
+        <div style="overflow-x:auto;">
         <table>
           <thead><tr><th>Nome</th><th>Telefone</th><th>Cargo pretendido</th><th>Cidade</th><th>Data de reprova</th><th>Retornar</th><th>Ações</th></tr></thead>
           <tbody id="retorno-tbody"></tbody>
         </table>
+        </div>
       </div>
     </div>
 
@@ -1212,8 +1220,8 @@
             <div class="cfg-row-value mono" id="ia-telefone">—</div>
           </div>
           <div class="cfg-row" style="padding:8px 0;">
-            <div class="cfg-row-label">CPF</div>
-            <div class="cfg-row-value mono" id="ia-cpf">—</div>
+            <div class="cfg-row-label">CPF *</div>
+            <input type="text" id="ia-cpf" class="mono" placeholder="000.000.000-00" style="background:#0D1526;border:1px solid var(--line-strong);border-radius:6px;padding:5px 8px;color:var(--text);font-family:var(--font-mono);font-size:13px;width:140px;">
           </div>
           <div class="cfg-row" style="padding:8px 0;">
             <div class="cfg-row-label">ENDEREÇO</div>
@@ -1437,12 +1445,54 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="edit-vaga-overlay">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <div class="modal-title">Editar vaga</div>
+        <div class="modal-sub" id="ev-subtitle">—</div>
+      </div>
+      <button class="modal-close" id="ev-close" aria-label="Fechar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <form id="ev-form">
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-field">
+            <label for="ev-cidade">Cidade</label>
+            <input type="text" id="ev-cidade" required>
+          </div>
+          <div class="form-field">
+            <label for="ev-qtd">Qtd de vagas</label>
+            <input type="number" id="ev-qtd" min="1" required>
+          </div>
+        </div>
+        <div class="form-field">
+          <label for="ev-obs">Observação</label>
+          <textarea id="ev-obs" placeholder="Alguma informação importante sobre essa vaga..." style="width:100%;min-height:70px;background:#0D1526;border:1px solid var(--line-strong);border-radius:8px;padding:9px 10px;color:var(--text);font-family:var(--font-body);font-size:13px;resize:vertical;"></textarea>
+        </div>
+        <div class="form-field">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+            <input type="checkbox" id="ev-urgente" style="width:auto;">
+            Marcar como urgente
+          </label>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-ghost" id="ev-cancel" style="flex:1;">Cancelar</button>
+        <button type="submit" class="btn btn-primary" style="flex:1;">Salvar alterações</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <div class="modal-overlay" id="new-vaga-overlay">
   <div class="modal">
     <div class="modal-head">
       <div>
-        <div class="modal-title">Nova vaga</div>
-        <div class="modal-sub">Cadastrar posição em aberto</div>
+        <div class="modal-title" id="nv-title">Nova vaga</div>
+        <div class="modal-sub" id="nv-subtitle">Cadastrar posição em aberto</div>
       </div>
       <button class="modal-close" id="nv-close" aria-label="Fechar">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
@@ -1485,7 +1535,7 @@
       </div>
       <div class="modal-foot">
         <button type="button" class="btn btn-ghost" id="nv-cancel" style="flex:1;">Cancelar</button>
-        <button type="submit" class="btn btn-primary" style="flex:1;">Cadastrar vaga</button>
+        <button type="submit" class="btn btn-primary" id="nv-submit-btn" style="flex:1;">Cadastrar vaga</button>
       </div>
     </form>
   </div>
@@ -1510,8 +1560,8 @@
             <input type="text" id="nc-nome" placeholder="Nome completo" required>
           </div>
           <div class="form-field">
-            <label for="nc-cpf">CPF *</label>
-            <input type="text" id="nc-cpf" placeholder="000.000.000-00" inputmode="numeric" maxlength="14" required>
+            <label for="nc-cpf">CPF <span style="color:var(--text-faint);font-weight:400;">(opcional aqui — pedido na entrevista)</span></label>
+            <input type="text" id="nc-cpf" placeholder="000.000.000-00" inputmode="numeric" maxlength="14">
           </div>
         </div>
         <div class="form-row">
@@ -1777,6 +1827,57 @@
     return '<div class="vd-candidate"><div class="vd-candidate-name">'+c.name+notaHtml+'</div><div class="vd-candidate-phone">'+(c.telefone||'—')+'</div>'+pendingHtml+'</div>';
   }
 
+  var editVagaKey = null;
+  function openEditVagaModal(idx){
+    var v = vagasData[idx];
+    if(!v) return;
+    editVagaKey = vagaKey(v);
+    document.getElementById('ev-subtitle').textContent = v.cargo+' — '+v.cliente;
+    document.getElementById('ev-cidade').value = v.cidade || '';
+    document.getElementById('ev-qtd').value = v.qtd;
+    document.getElementById('ev-obs').value = v.obs || '';
+    document.getElementById('ev-urgente').checked = !!v.urgente;
+    document.getElementById('edit-vaga-overlay').classList.add('open');
+  }
+  function closeEditVagaModal(){
+    document.getElementById('edit-vaga-overlay').classList.remove('open');
+    editVagaKey = null;
+  }
+  document.getElementById('ev-close').addEventListener('click', closeEditVagaModal);
+  document.getElementById('ev-cancel').addEventListener('click', closeEditVagaModal);
+  document.getElementById('edit-vaga-overlay').addEventListener('click', function(e){
+    if(e.target === this) closeEditVagaModal();
+  });
+  document.getElementById('ev-form').addEventListener('submit', function(e){
+    e.preventDefault();
+    if(!editVagaKey) return;
+    var alvoKey = editVagaKey;
+    var novaCidade = document.getElementById('ev-cidade').value.trim();
+    var novaQtd = parseInt(document.getElementById('ev-qtd').value, 10) || 1;
+    var novaObs = document.getElementById('ev-obs').value.trim();
+    var novaUrgente = document.getElementById('ev-urgente').checked;
+
+    safeDeleteAndSync(function(){
+      var idx2 = vagasData.findIndex(function(x){ return vagaKey(x) === alvoKey; });
+      if(idx2 === -1) return;
+      var v2 = vagasData[idx2];
+      var wasUrgente = !!v2.urgente;
+      v2.cidade = novaCidade;
+      v2.qtd = novaQtd;
+      v2.obs = novaObs;
+      v2.urgente = novaUrgente;
+      v2.history = v2.history || [];
+      v2.history.push({ts:new Date().toISOString(), acao:'Vaga editada'});
+      if(novaUrgente !== wasUrgente){
+        v2.history.push({ts:new Date().toISOString(), acao: novaUrgente ? 'Marcada como urgente' : 'Removida a marcação de urgente'});
+      }
+      logAudit('Editou a vaga "'+v2.cargo+' ('+v2.cliente+')"');
+    }).then(function(){
+      showToast('Vaga atualizada.');
+      closeEditVagaModal();
+    });
+  });
+
   function openVagaModal(idx){
     var vaga = vagasData[idx];
     document.getElementById('vd-title').textContent = vaga.cargo;
@@ -2013,12 +2114,52 @@
         '<td class="mono">'+v.qtd+'</td>'+
         '<td class="mono">'+fechadas+'</td>'+
         '<td class="mono">'+faltantes+'</td>'+
-        '<td>'+(badges || '—')+'</td>';
+        '<td>'+(badges || '—')+'</td>'+
+        '<td></td>';
       tr.addEventListener('click', function(){ openVagaModal(idx); });
+
+      var canEditVaga = !currentRole || currentRole.editVagas;
+      var tdVagaAction = tr.lastElementChild;
+      var editVagaBtn = document.createElement('button');
+      editVagaBtn.type = 'button';
+      editVagaBtn.className = 'data-btn';
+      editVagaBtn.style.cssText = 'padding:5px 10px;';
+      editVagaBtn.textContent = 'Editar';
+      editVagaBtn.disabled = !canEditVaga;
+      editVagaBtn.title = canEditVaga ? '' : 'Seu perfil não pode editar vagas.';
+      editVagaBtn.addEventListener('click', function(e){
+        e.stopPropagation();
+        if(!canEditVaga) return;
+        openEditVagaModal(idx);
+      });
+      var delVagaBtn2 = document.createElement('button');
+      delVagaBtn2.type = 'button';
+      delVagaBtn2.className = 'data-btn';
+      delVagaBtn2.style.cssText = 'padding:5px 10px;margin-left:6px;color:var(--red);';
+      delVagaBtn2.textContent = 'Excluir';
+      delVagaBtn2.disabled = !canEditVaga;
+      delVagaBtn2.title = canEditVaga ? '' : 'Seu perfil não pode excluir vagas.';
+      delVagaBtn2.addEventListener('click', function(e){
+        e.stopPropagation();
+        if(!canEditVaga) return;
+        var alvoKey = vagaKey(v);
+        var alvoLabel = v.cargo+' ('+v.cliente+')';
+        var confirmed = window.confirm('Excluir a vaga "'+alvoLabel+'"? Isso remove o registro da vaga (histórico e contratados inclusos). Ação irreversível.');
+        if(!confirmed) return;
+        safeDeleteAndSync(function(){
+          var idx2 = vagasData.findIndex(function(x){ return vagaKey(x) === alvoKey; });
+          if(idx2 !== -1) vagasData.splice(idx2, 1);
+          logAudit('Excluiu a vaga "'+alvoLabel+'"');
+        }).then(function(){
+          showToast('Vaga excluída.');
+        });
+      });
+      tdVagaAction.appendChild(editVagaBtn);
+      tdVagaAction.appendChild(delVagaBtn2);
       tbody.appendChild(tr);
     });
     if(!anyOpen){
-      tbody.innerHTML = '<tr><td colspan="7" class="kanban-empty">Nenhuma vaga em aberto para esse filtro.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" class="kanban-empty">Nenhuma vaga em aberto para esse filtro.</td></tr>';
     }
     updateVagasStats();
     renderVagasFechadas();
@@ -2060,28 +2201,6 @@
         openReopenModal(idx);
       });
       tdAction.appendChild(reopenBtn);
-      var delVagaBtn = document.createElement('button');
-      delVagaBtn.className = 'data-btn';
-      delVagaBtn.style.cssText = 'padding:6px 12px;margin-left:6px;color:var(--red);';
-      delVagaBtn.textContent = 'Excluir';
-      delVagaBtn.disabled = !canReopen;
-      delVagaBtn.title = canReopen ? '' : 'Seu perfil não pode excluir vagas.';
-      delVagaBtn.addEventListener('click', function(e){
-        e.stopPropagation();
-        if(!canReopen) return;
-        var alvoKey = vagaKey(v);
-        var alvoLabel = v.cargo+' ('+v.cliente+')';
-        var confirmed = window.confirm('Excluir a vaga "'+alvoLabel+'"? Isso remove o registro da vaga (histórico e contratados inclusos). Ação irreversível.');
-        if(!confirmed) return;
-        safeDeleteAndSync(function(){
-          var idx2 = vagasData.findIndex(function(x){ return vagaKey(x) === alvoKey; });
-          if(idx2 !== -1) vagasData.splice(idx2, 1);
-          logAudit('Excluiu a vaga "'+alvoLabel+'"');
-        }).then(function(){
-          showToast('Vaga excluída.');
-        });
-      });
-      tdAction.appendChild(delVagaBtn);
       tr.appendChild(tdCliente); tr.appendChild(tdCargo); tr.appendChild(tdCidade);
       tr.appendChild(tdQtd); tr.appendChild(tdContratados); tr.appendChild(tdAction);
       tbody.appendChild(tr);
@@ -3299,7 +3418,7 @@
     document.getElementById('ia-name').textContent = iv.name;
     document.getElementById('ia-role').textContent = iv.role+' · '+iv.cidade;
     document.getElementById('ia-telefone').textContent = iv.telefone || '—';
-    document.getElementById('ia-cpf').textContent = iv.cpf || '—';
+    document.getElementById('ia-cpf').value = iv.cpf || '';
     document.getElementById('ia-endereco').textContent = iv.endereco || '—';
     document.getElementById('ia-situacao').value = 'aprovado';
     document.getElementById('ia-obs').value = '';
@@ -3311,6 +3430,7 @@
     var canEdit = !currentRole || currentRole.editCandidatos;
     document.getElementById('ia-jus').disabled = !canEdit;
     document.getElementById('ia-obs').disabled = !canEdit;
+    document.getElementById('ia-cpf').disabled = !canEdit;
     if(!canEdit) document.getElementById('ia-situacao').disabled = true;
     var saveBtn = document.getElementById('ia-save');
     saveBtn.style.display = canEdit ? 'inline-flex' : 'none';
@@ -3325,6 +3445,22 @@
       var situacao = jus === 'nao' ? 'reprovado' : document.getElementById('ia-situacao').value;
       var obs = document.getElementById('ia-obs').value;
       var nota = parseInt(document.getElementById('ia-nota').value, 10) || 0;
+      var cpf = document.getElementById('ia-cpf').value.trim() || iv.cpf;
+
+      if(!cpf){
+        document.getElementById('ia-cpf').style.borderColor = 'var(--red)';
+        document.getElementById('ia-cpf').focus();
+        showToast('Informe o CPF do candidato para registrar a decisão.');
+        return;
+      }
+      if(!isValidCPF(cpf)){
+        document.getElementById('ia-cpf').style.borderColor = 'var(--red)';
+        document.getElementById('ia-cpf').focus();
+        showToast('CPF inválido. Verifique o número digitado.');
+        return;
+      }
+      document.getElementById('ia-cpf').style.borderColor = '';
+
       if(jus === 'nao' && !obs){
         obs = 'Reprovado na verificação jurídica (Jus).';
       }
@@ -3332,7 +3468,7 @@
       interviewsData = interviewsData.filter(function(i){ return i.id !== id; });
 
       interviewsHistoryData.push({
-        id:genRecordId('hist'), name:iv.name, telefone:iv.telefone, cpf:iv.cpf, endereco:iv.endereco, vaga:iv.role, cidade:iv.cidade,
+        id:genRecordId('hist'), name:iv.name, telefone:iv.telefone, cpf:cpf, endereco:iv.endereco, vaga:iv.role, cidade:iv.cidade,
         date:iv.date, time:iv.time, entrevistador:iv.entrevistador, modalidade:iv.modalidade,
         situacao:situacao, jus:jus, obs:obs, nota:nota
       });
@@ -3340,15 +3476,15 @@
 
       if(situacao === 'aprovado'){
         var newId = 'cand-'+id;
-        candidatesData[newId] = {name:iv.name, role:iv.role, cargoPretendido:iv.role, cliente:null, cidade:iv.cidade, telefone:iv.telefone, cpf:iv.cpf, endereco:iv.endereco, stage:'aprovado', checklist:null, jus:jus, nota:nota, stageSince:new Date().toISOString(), interviewDate:iv.date};
+        candidatesData[newId] = {name:iv.name, role:iv.role, cargoPretendido:iv.role, cliente:null, cidade:iv.cidade, telefone:iv.telefone, cpf:cpf, endereco:iv.endereco, stage:'aprovado', checklist:null, jus:jus, nota:nota, stageSince:new Date().toISOString(), interviewDate:iv.date};
         renderKanban();
       } else if(situacao === 'banco_talentos'){
-        talentBankData.push({id:genRecordId('tb'), name:iv.name, telefone:iv.telefone, cpf:iv.cpf, endereco:iv.endereco, vaga:iv.role, cidade:iv.cidade, obs:obs, jus:jus, nota:nota});
+        talentBankData.push({id:genRecordId('tb'), name:iv.name, telefone:iv.telefone, cpf:cpf, endereco:iv.endereco, vaga:iv.role, cidade:iv.cidade, obs:obs, jus:jus, nota:nota});
         renderTalentBank();
       } else {
-        reprovadosData.push({id:genRecordId('rep'), name:iv.name, telefone:iv.telefone, cpf:iv.cpf, endereco:iv.endereco, vaga:iv.role, cidade:iv.cidade, situacao:situacao, jus:jus, obs:obs, nota:nota});
+        reprovadosData.push({id:genRecordId('rep'), name:iv.name, telefone:iv.telefone, cpf:cpf, endereco:iv.endereco, vaga:iv.role, cidade:iv.cidade, situacao:situacao, jus:jus, obs:obs, nota:nota});
         renderReprovados();
-        addToRetorno({name:iv.name, telefone:iv.telefone, cpf:iv.cpf, endereco:iv.endereco, vaga:iv.role, cidade:iv.cidade});
+        addToRetorno({name:iv.name, telefone:iv.telefone, cpf:cpf, endereco:iv.endereco, vaga:iv.role, cidade:iv.cidade});
       }
 
       renderInterviews();
@@ -4662,6 +4798,14 @@
     this.value = v;
   });
 
+  document.getElementById('ia-cpf').addEventListener('input', function(){
+    var v = this.value.replace(/\D/g,'').slice(0,11);
+    if(v.length > 9) v = v.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/, '$1.$2.$3-$4');
+    else if(v.length > 6) v = v.replace(/(\d{3})(\d{3})(\d{1,3})/, '$1.$2.$3');
+    else if(v.length > 3) v = v.replace(/(\d{3})(\d{1,3})/, '$1.$2');
+    this.value = v;
+  });
+
   function isValidCPF(cpf){
     cpf = (cpf||'').replace(/\D/g,'');
     if(cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) return false;
@@ -4738,21 +4882,23 @@
     var horario = document.getElementById('nc-horario').value;
     var entrevistador = document.getElementById('nc-entrevistador').value;
 
-    if(!nome || !cpf || !cep || !enderecoRua || !numero || !cidade || !telefone || !cargo || !data || !horario || !entrevistador){
+    if(!nome || !cep || !enderecoRua || !numero || !cidade || !telefone || !cargo || !data || !horario || !entrevistador){
       alert('Preencha todos os campos antes de cadastrar o candidato.');
       return;
     }
-    if(!isValidCPF(cpf)){
+    if(cpf && !isValidCPF(cpf)){
       alert('CPF inválido. Verifique o número digitado.');
       document.getElementById('nc-cpf').focus();
       return;
     }
-    var dup = findDuplicateCPF(cpf);
-    if(dup){
-      var proceedAnyway = window.confirm('Este CPF já está cadastrado para "'+dup.name+'" em '+dup.local+'. Deseja cadastrar mesmo assim?');
-      if(!proceedAnyway){
-        document.getElementById('nc-cpf').focus();
-        return;
+    if(cpf){
+      var dup = findDuplicateCPF(cpf);
+      if(dup){
+        var proceedAnyway = window.confirm('Este CPF já está cadastrado para "'+dup.name+'" em '+dup.local+'. Deseja cadastrar mesmo assim?');
+        if(!proceedAnyway){
+          document.getElementById('nc-cpf').focus();
+          return;
+        }
       }
     }
 
