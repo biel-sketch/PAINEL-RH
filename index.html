@@ -4067,8 +4067,9 @@
     if(s.retornoData) retornoData = normalizeArray(s.retornoData);
     if(s.auditLog) auditLog = normalizeArray(s.auditLog);
     if(s.cargosPretendidos){
+      var mergedCargos = mergeCargos(s.cargosPretendidos, CARGOS_PRETENDIDOS);
       CARGOS_PRETENDIDOS.length = 0;
-      normalizeArray(s.cargosPretendidos).forEach(function(c){ if(c) CARGOS_PRETENDIDOS.push(c); });
+      mergedCargos.forEach(function(c){ if(c) CARGOS_PRETENDIDOS.push(c); });
       if(document.getElementById('nc-cargo')) populateCargoPretendidoSelect();
       if(document.getElementById('nv-cargo')) populateNvCargoSelect();
     }
