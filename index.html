@@ -166,7 +166,9 @@
   .kanban-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
   .kanban-title{font-family:var(--font-display);font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:0.03em;color:var(--text-dim);}
   .kanban-badge{font-family:var(--font-mono);font-size:11px;color:var(--teal);background:var(--teal-soft);padding:1px 7px;border-radius:999px;}
-  .kanban-card{background:#0D1526;border:1px solid var(--line);border-radius:8px;padding:11px 12px;margin-bottom:8px;font-size:13px;cursor:pointer;transition:border-color 0.15s;}
+  .kanban-card{background:#0D1526;border:1px solid var(--line);border-radius:8px;padding:11px 12px;margin-bottom:8px;font-size:13px;cursor:pointer;transition:border-color 0.15s;position:relative;}
+  .kanban-card-delete{position:absolute;top:8px;right:8px;width:20px;height:20px;border-radius:5px;border:none;background:transparent;color:var(--text-faint);display:flex;align-items:center;justify-content:center;cursor:pointer;}
+  .kanban-card-delete:hover{background:var(--red-soft);color:var(--red);}
   .kanban-card:hover{border-color:var(--teal);}
   .kanban-card-name{font-weight:500;margin-bottom:2px;}
   .kanban-card-role{font-size:11.5px;color:var(--text-faint);margin-bottom:6px;}
@@ -743,7 +745,7 @@
           </div>
         </div>
         <table>
-          <thead><tr><th>Nome</th><th>Telefone</th><th>Cargo pretendido</th><th>Cidade</th><th>Situação</th><th>Jus</th><th>Obs / motivo</th></tr></thead>
+          <thead><tr><th>Nome</th><th>Telefone</th><th>Cargo pretendido</th><th>Cidade</th><th>Situação</th><th>Jus</th><th>Obs / motivo</th><th>Ações</th></tr></thead>
           <tbody id="reprovados-tbody"></tbody>
         </table>
       </div>
@@ -762,7 +764,7 @@
           </div>
         </div>
         <table>
-          <thead><tr><th>Nome</th><th>Telefone</th><th>Cargo pretendido</th><th>Cidade</th><th>Jus</th><th>Obs</th></tr></thead>
+          <thead><tr><th>Nome</th><th>Telefone</th><th>Cargo pretendido</th><th>Cidade</th><th>Jus</th><th>Obs</th><th>Ações</th></tr></thead>
           <tbody id="banco-talentos-tbody"></tbody>
         </table>
       </div>
@@ -772,7 +774,7 @@
       <div class="topbar"><div class="page-title">Retorno</div></div>
       <div class="panel">
         <table>
-          <thead><tr><th>Nome</th><th>Telefone</th><th>Cargo pretendido</th><th>Cidade</th><th>Data de reprova</th><th>Retornar</th></tr></thead>
+          <thead><tr><th>Nome</th><th>Telefone</th><th>Cargo pretendido</th><th>Cidade</th><th>Data de reprova</th><th>Retornar</th><th>Ações</th></tr></thead>
           <tbody id="retorno-tbody"></tbody>
         </table>
       </div>
@@ -1021,6 +1023,24 @@
           <div class="danger-row" id="danger-confirm-row" style="display:none;margin-top:10px;">
             <input type="text" id="danger-confirm-text" placeholder='Digite ZERAR OPERACIONAL para confirmar'>
             <button class="danger-btn" id="btn-zerar-operacional">Zerar operacional</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="cfg-panel danger-panel">
+        <div class="cfg-panel-head">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"/></svg>
+          <div class="cfg-panel-title">Zerar vagas e entrevistados</div>
+        </div>
+        <div class="cfg-panel-body">
+          <div class="danger-desc">Apaga <b>vagas, entrevistas agendadas, histórico de decisões, esteira de aprovação, reprovados, banco de talentos e retorno</b>. Clientes e cargos pretendidos são mantidos. Ação irreversível.</div>
+          <div class="danger-row">
+            <input type="password" id="danger-vagas-password" placeholder="Senha de administrador">
+            <button class="danger-btn" id="btn-unlock-danger-vagas">Desbloquear</button>
+          </div>
+          <div class="danger-row" id="danger-vagas-confirm-row" style="display:none;margin-top:10px;">
+            <input type="text" id="danger-vagas-confirm-text" placeholder='Digite ZERAR VAGAS para confirmar'>
+            <button class="danger-btn" id="btn-zerar-vagas">Zerar vagas</button>
           </div>
         </div>
       </div>
@@ -1607,8 +1627,8 @@
     {user:'elaine silva', email:'rh@loginserv.com.br', name:'Elaine Silva', role:'analista'},
     {user:'daniela', email:'rh.2@loginserv.com.br', name:'Daniela', role:'analista'},
     {user:'marcela', email:'rh.1@loginserv.com.br', name:'Marcela', role:'assistente'},
-    {user:'leonardo', email:'dp.2@loginserv.com.br', name:'Leonardo', role:'dp'},
-    {user:'renata', email:'rh.3@loginserv.com.br', name:'Renata', role:'assistente'},
+    {user:'leonardo', email:'leonardo@loginserv.com.br', name:'Leonardo', role:'dp'},
+    {user:'renata', email:'renata@loginserv.com.br', name:'Renata', role:'assistente'},
     {user:'comercial', email:'comercial@loginserv.com.br', name:'Comercial', role:'comercial'}
   ];
 
@@ -1732,7 +1752,7 @@
     novaVagaBtn.disabled = !currentRole.editVagas;
     novaVagaBtn.title = currentRole.editVagas ? '' : 'Seu perfil não pode cadastrar vagas.';
 
-    var adminOnlyIds = ['btn-sync-now','btn-arquivar-mes','btn-unlock-danger','danger-password','danger-confirm-text','btn-zerar-operacional','btn-unlock-danger-all','danger-all-password','btn-zerar-tudo','danger-all-confirm-text'];
+    var adminOnlyIds = ['btn-sync-now','btn-arquivar-mes','btn-unlock-danger','danger-password','danger-confirm-text','btn-zerar-operacional','btn-unlock-danger-vagas','danger-vagas-password','danger-vagas-confirm-text','btn-zerar-vagas','btn-unlock-danger-all','danger-all-password','btn-zerar-tudo','danger-all-confirm-text'];
     adminOnlyIds.forEach(function(id){ document.getElementById(id).disabled = !currentRole.editAdmin; });
     document.getElementById('config-perm-note').style.display = currentRole.editAdmin ? 'none' : 'flex';
   }
@@ -2040,6 +2060,28 @@
         openReopenModal(idx);
       });
       tdAction.appendChild(reopenBtn);
+      var delVagaBtn = document.createElement('button');
+      delVagaBtn.className = 'data-btn';
+      delVagaBtn.style.cssText = 'padding:6px 12px;margin-left:6px;color:var(--red);';
+      delVagaBtn.textContent = 'Excluir';
+      delVagaBtn.disabled = !canReopen;
+      delVagaBtn.title = canReopen ? '' : 'Seu perfil não pode excluir vagas.';
+      delVagaBtn.addEventListener('click', function(e){
+        e.stopPropagation();
+        if(!canReopen) return;
+        var alvoKey = vagaKey(v);
+        var alvoLabel = v.cargo+' ('+v.cliente+')';
+        var confirmed = window.confirm('Excluir a vaga "'+alvoLabel+'"? Isso remove o registro da vaga (histórico e contratados inclusos). Ação irreversível.');
+        if(!confirmed) return;
+        safeDeleteAndSync(function(){
+          var idx2 = vagasData.findIndex(function(x){ return vagaKey(x) === alvoKey; });
+          if(idx2 !== -1) vagasData.splice(idx2, 1);
+          logAudit('Excluiu a vaga "'+alvoLabel+'"');
+        }).then(function(){
+          showToast('Vaga excluída.');
+        });
+      });
+      tdAction.appendChild(delVagaBtn);
       tr.appendChild(tdCliente); tr.appendChild(tdCargo); tr.appendChild(tdCidade);
       tr.appendChild(tdQtd); tr.appendChild(tdContratados); tr.appendChild(tdAction);
       tbody.appendChild(tr);
@@ -2247,15 +2289,18 @@
       delBtn.style.cssText = 'padding:5px 10px;display:inline-flex;color:var(--red);';
       delBtn.textContent = 'Excluir';
       delBtn.addEventListener('click', function(){
-        var confirmed = window.confirm('Remover "'+c.nome+'" do cadastro de clientes?');
+        var nomeAlvo = c.nome;
+        var confirmed = window.confirm('Remover "'+nomeAlvo+'" do cadastro de clientes?');
         if(!confirmed) return;
-        clientesData.splice(c.idx, 1);
-        renderClientes();
-        populateNvClienteSelect();
-        populateNcCidadeSelect();
-        logAudit('Removeu o cliente "'+c.nome+'"');
-        syncAfterChange();
-        showToast('Cliente removido.');
+        safeDeleteAndSync(function(){
+          var idx2 = clientesData.findIndex(function(x){ return x.nome === nomeAlvo; });
+          if(idx2 !== -1) clientesData.splice(idx2, 1);
+          logAudit('Removeu o cliente "'+nomeAlvo+'"');
+        }).then(function(){
+          populateNvClienteSelect();
+          populateNcCidadeSelect();
+          showToast('Cliente removido.');
+        });
       });
       tdActions.appendChild(editBtn);
       tdActions.appendChild(delBtn);
@@ -2570,6 +2615,49 @@
     showToast('Dados operacionais zerados.');
   });
 
+  document.getElementById('btn-unlock-danger-vagas').addEventListener('click', function(){
+    if(!currentRole || !currentRole.editAdmin) return;
+    var pwField = document.getElementById('danger-vagas-password');
+    if(!pwField.value){
+      pwField.style.borderColor = 'var(--red)';
+      showToast('Digite a senha de administrador.');
+      return;
+    }
+    pwField.style.borderColor = '';
+    document.getElementById('danger-vagas-confirm-row').style.display = 'flex';
+    document.getElementById('danger-vagas-confirm-text').value = '';
+    document.getElementById('danger-vagas-confirm-text').focus();
+  });
+
+  document.getElementById('btn-zerar-vagas').addEventListener('click', function(){
+    if(!currentRole || !currentRole.editAdmin) return;
+    var confirmText = document.getElementById('danger-vagas-confirm-text');
+    if(confirmText.value.trim().toUpperCase() !== 'ZERAR VAGAS'){
+      confirmText.style.borderColor = 'var(--red)';
+      showToast('Digite exatamente "ZERAR VAGAS" para confirmar.');
+      return;
+    }
+    var confirmed = window.confirm('ÚLTIMA CONFIRMAÇÃO: isso vai apagar vagas, entrevistas agendadas, histórico de decisões, esteira de aprovação, reprovados, banco de talentos e retorno, para TODOS os usuários. Clientes e cargos pretendidos são mantidos. Não tem como desfazer. Confirma mesmo assim?');
+    if(!confirmed) return;
+
+    vagasData = [];
+    interviewsData = [];
+    interviewsHistoryData = [];
+    candidatesData = {};
+    reprovadosData = [];
+    talentBankData = [];
+    retornoData = [];
+    renderAllViews();
+    logAudit('Zerou vagas, entrevistas, esteira, reprovados, banco de talentos e retorno');
+    forceOverwriteCloud();
+
+    document.getElementById('danger-vagas-password').value = '';
+    document.getElementById('danger-vagas-confirm-row').style.display = 'none';
+    confirmText.value = '';
+    confirmText.style.borderColor = '';
+    showToast('Vagas, entrevistados, reprovados, banco de talentos e retorno zerados.');
+  });
+
   document.getElementById('btn-unlock-danger-all').addEventListener('click', function(){
     if(!currentRole || !currentRole.editAdmin) return;
     var pwField = document.getElementById('danger-all-password');
@@ -2762,8 +2850,22 @@
       '<div class="candidate-name">'+iv.name+'<div class="mono" style="font-size:11px;color:var(--text-faint);font-weight:400;">'+(iv.telefone||'—')+'</div></div>'+
       '<div class="candidate-role">'+iv.role+' · '+iv.cidade+'</div>'+
       '<span class="pill '+modClass+'" style="flex-shrink:0;">'+modLabel+'</span>'+
-      '<div class="interviewer"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>'+iv.entrevistador+'</div>';
+      '<div class="interviewer"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>'+iv.entrevistador+'</div>'+
+      '<button type="button" class="kanban-card-delete" title="Excluir entrevista" style="position:static;flex-shrink:0;color:var(--text-faint);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"/></svg></button>';
     row.addEventListener('click', function(){ openInterviewModal(iv.id); });
+    row.querySelector('.kanban-card-delete').addEventListener('click', function(e){
+      e.stopPropagation();
+      var alvoId = iv.id;
+      var confirmed = window.confirm('Excluir a entrevista de "'+iv.name+'"? Ação irreversível.');
+      if(!confirmed) return;
+      safeDeleteAndSync(function(){
+        var idx2 = interviewsData.findIndex(function(x){ return x.id === alvoId; });
+        if(idx2 !== -1) interviewsData.splice(idx2, 1);
+        logAudit('Excluiu a entrevista de '+iv.name);
+      }).then(function(){
+        showToast('Entrevista excluída.');
+      });
+    });
     return row;
   }
 
@@ -2926,7 +3028,7 @@
     var jusFilter = (document.getElementById('rep-filter-jus') || {}).value || '';
 
     if(reprovadosData.length === 0){
-      tbody.innerHTML = '<tr><td colspan="7" class="kanban-empty">Nenhum candidato reprovado.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" class="kanban-empty">Nenhum candidato reprovado.</td></tr>';
       updateHiringIndicators();
       return;
     }
@@ -2939,7 +3041,7 @@
     });
 
     if(filtered.length === 0){
-      tbody.innerHTML = '<tr><td colspan="7" class="kanban-empty">Nenhum candidato encontrado para esse filtro.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" class="kanban-empty">Nenhum candidato encontrado para esse filtro.</td></tr>';
       updateHiringIndicators();
       return;
     }
@@ -2953,7 +3055,20 @@
         '<td>'+r.cidade+'</td>'+
         '<td><span class="pill red">'+situacaoLabels[r.situacao]+'</span></td>'+
         '<td>'+(r.jus === 'sim' ? 'Sim' : 'Não')+'</td>'+
-        '<td>'+(r.obs || '—')+'</td>';
+        '<td>'+(r.obs || '—')+'</td>'+
+        '<td><button type="button" class="data-btn rep-del-btn" style="padding:5px 10px;color:var(--red);">Excluir</button></td>';
+      tr.querySelector('.rep-del-btn').addEventListener('click', function(){
+        var alvoId = r.id;
+        var confirmed = window.confirm('Excluir o registro de "'+r.name+'" dos reprovados?');
+        if(!confirmed) return;
+        safeDeleteAndSync(function(){
+          var idx2 = reprovadosData.findIndex(function(x){ return x.id === alvoId; });
+          if(idx2 !== -1) reprovadosData.splice(idx2, 1);
+          logAudit('Excluiu '+r.name+' de reprovados');
+        }).then(function(){
+          showToast('Registro excluído.');
+        });
+      });
       tbody.appendChild(tr);
     });
     updateHiringIndicators();
@@ -2987,11 +3102,11 @@
     });
 
     if(talentBankData.length === 0){
-      tbody.innerHTML = '<tr><td colspan="6" class="kanban-empty">Nenhum candidato no banco de talentos.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" class="kanban-empty">Nenhum candidato no banco de talentos.</td></tr>';
       return;
     }
     if(filtered.length === 0){
-      tbody.innerHTML = '<tr><td colspan="6" class="kanban-empty">Nenhum candidato encontrado para esse filtro.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" class="kanban-empty">Nenhum candidato encontrado para esse filtro.</td></tr>';
       return;
     }
     filtered.forEach(function(t){
@@ -3003,8 +3118,22 @@
         '<td>'+t.vaga+'</td>'+
         '<td>'+(t.cidade || '—')+'</td>'+
         '<td><span class="pill teal">Ok</span></td>'+
-        '<td>'+(t.obs || '—')+'</td>';
+        '<td>'+(t.obs || '—')+'</td>'+
+        '<td><button type="button" class="data-btn talent-del-btn" style="padding:5px 10px;color:var(--red);">Excluir</button></td>';
       tr.addEventListener('click', function(){ openTalentAction(t.id); });
+      tr.querySelector('.talent-del-btn').addEventListener('click', function(e){
+        e.stopPropagation();
+        var alvoId = t.id;
+        var confirmed = window.confirm('Excluir "'+t.name+'" do banco de talentos?');
+        if(!confirmed) return;
+        safeDeleteAndSync(function(){
+          var idx2 = talentBankData.findIndex(function(x){ return x.id === alvoId; });
+          if(idx2 !== -1) talentBankData.splice(idx2, 1);
+          logAudit('Excluiu '+t.name+' do banco de talentos');
+        }).then(function(){
+          showToast('Registro excluído.');
+        });
+      });
       tbody.appendChild(tr);
     });
   }
@@ -3312,8 +3441,24 @@
             slaHtml = '<div class="kanban-sla warning">'+daysInStage+' dias nesta etapa</div>';
           }
         }
-        card.innerHTML = '<div class="kanban-card-name">'+c.name+'</div><div class="kanban-card-role">'+c.role+'</div>'+progressHtml+'<span class="pill teal" style="margin-top:6px;">Jus ok</span>'+slaHtml;
+        card.innerHTML = '<button type="button" class="kanban-card-delete" title="Excluir candidato"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"/></svg></button>'+
+          '<div class="kanban-card-name">'+c.name+'</div><div class="kanban-card-role">'+c.role+'</div>'+progressHtml+'<span class="pill teal" style="margin-top:6px;">Jus ok</span>'+slaHtml;
         card.addEventListener('click', function(){ openCandidateModal(id); });
+        var delCandBtn = card.querySelector('.kanban-card-delete');
+        var canDeleteCand = roleCanEditStage(currentRole, c.stage);
+        if(!canDeleteCand){ delCandBtn.style.display = 'none'; }
+        delCandBtn.addEventListener('click', function(e){
+          e.stopPropagation();
+          var nomeAlvo = c.name;
+          var confirmed = window.confirm('Excluir "'+nomeAlvo+'" da esteira? Isso remove o registro completamente. Ação irreversível.');
+          if(!confirmed) return;
+          safeDeleteAndSync(function(){
+            delete candidatesData[id];
+            logAudit('Excluiu '+nomeAlvo+' da esteira');
+          }).then(function(){
+            showToast('Candidato excluído.');
+          });
+        });
         col.appendChild(card);
       });
       container.appendChild(col);
@@ -3905,7 +4050,7 @@
     var tbody = document.getElementById('retorno-tbody');
     tbody.innerHTML = '';
     if(retornoData.length === 0){
-      tbody.innerHTML = '<tr><td colspan="6" class="kanban-empty">Nenhum retorno pendente.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" class="kanban-empty">Nenhum retorno pendente.</td></tr>';
     } else {
       retornoData.forEach(function(r, idx){
         var tr = document.createElement('tr');
@@ -3932,13 +4077,26 @@
           '<td>'+r.vaga+'</td>'+
           '<td>'+r.cidade+'</td>'+
           '<td class="mono">'+dataCellHtml+'</td>'+
-          '<td class="checkbox-cell"><input type="checkbox" data-idx="'+idx+'" '+(r.done?'checked':'')+(canEdit?'':' disabled')+'></td>';
+          '<td class="checkbox-cell"><input type="checkbox" data-idx="'+idx+'" '+(r.done?'checked':'')+(canEdit?'':' disabled')+'></td>'+
+          '<td><button type="button" class="data-btn retorno-del-btn" style="padding:5px 10px;color:var(--red);">Excluir</button></td>';
         tr.querySelector('input').addEventListener('change', function(e){
           retornoData[idx].done = e.target.checked;
           updateRetornoStats();
           logAudit((e.target.checked?'Marcou retorno concluído: ':'Desmarcou retorno concluído: ')+r.name);
           syncAfterChange();
           renderRetorno();
+        });
+        tr.querySelector('.retorno-del-btn').addEventListener('click', function(){
+          var alvoId = r.id;
+          var confirmed = window.confirm('Excluir o registro de retorno de "'+r.name+'"?');
+          if(!confirmed) return;
+          safeDeleteAndSync(function(){
+            var idx2 = retornoData.findIndex(function(x){ return x.id === alvoId; });
+            if(idx2 !== -1) retornoData.splice(idx2, 1);
+            logAudit('Excluiu '+r.name+' de retorno');
+          }).then(function(){
+            showToast('Registro excluído.');
+          });
         });
         tbody.appendChild(tr);
       });
@@ -4281,6 +4439,29 @@
 
   // Chame syncAfterChange() logo após qualquer criação/edição/remoção de dados
   // para salvar na nuvem imediatamente, sem esperar os 20s do ciclo automático.
+  // Exclusão individual segura: busca a versão mais recente da nuvem, mescla com o que
+  // está no navegador (pra não perder edições concorrentes de outros usuários), só então
+  // aplica a exclusão e sobrescreve a nuvem diretamente (sem merge, senão o item "voltaria"
+  // no próximo merge, do mesmo jeito que acontecia no bug do "Zerar tudo").
+  function safeDeleteAndSync(applyDeletion){
+    setSyncIndicator('syncing', 'Excluindo...');
+    return cloudGet().then(function(cloud){
+      var merged = buildMergedState(cloud, collectAppState());
+      applyAppState(merged);
+      applyDeletion();
+      renderAllViews();
+      return forceOverwriteCloud();
+    }).catch(function(err){
+      console.error('Erro ao excluir (aplicando localmente e tentando de novo depois):', err);
+      applyDeletion();
+      renderAllViews();
+      markPendingChanges();
+      saveLocalCache(collectAppState());
+      setSyncIndicator('err', 'Alterações pendentes');
+      showToast('Não foi possível confirmar a exclusão com o servidor agora — vamos tentar de novo automaticamente.');
+    });
+  }
+
   function forceOverwriteCloud(){
     setSyncIndicator('syncing', 'Salvando...');
     var local = collectAppState();
