@@ -752,7 +752,19 @@
             <button class="period-btn" data-period="mes">Mês</button>
           </div>
         </div>
-        <div id="period-dia"></div>
+        <div id="period-dia">
+          <div class="month-summary" id="dia-summary-header">
+            <div class="month-number" id="dia-count">0</div>
+            <div class="month-label" id="dia-label">entrevistas agendadas hoje</div>
+          </div>
+          <div id="dia-detail"></div>
+
+          <div class="month-summary" id="dia-realizadas-summary-header" style="border-top:1px solid var(--line);">
+            <div class="month-number teal" id="dia-realizadas-count">0</div>
+            <div class="month-label" id="dia-realizadas-label">entrevistas realizadas hoje</div>
+          </div>
+          <div id="dia-realizadas-detail"></div>
+        </div>
         <div id="period-semana" style="display:none;">
           <div class="week-grid" id="week-grid-container"></div>
           <div id="week-day-detail" style="display:none;padding:0 18px 18px;"></div>
@@ -2263,6 +2275,7 @@
         safeDeleteAndSync(function(){
           var idx2 = vagasData.findIndex(function(x){ return vagaKey(x) === alvoKey; });
           if(idx2 !== -1) vagasData.splice(idx2, 1);
+          markDeleted('vagas', alvoKey);
           logAudit('Excluiu a vaga "'+alvoLabel+'"');
         }).then(function(){
           showToast('Vaga excluída.');
@@ -2528,6 +2541,7 @@
         safeDeleteAndSync(function(){
           var idx2 = clientesData.findIndex(function(x){ return x.nome === nomeAlvo; });
           if(idx2 !== -1) clientesData.splice(idx2, 1);
+          markDeleted('clientes', nomeAlvo.toLowerCase());
           logAudit('Removeu o cliente "'+nomeAlvo+'"');
         }).then(function(){
           populateNvClienteSelect();
@@ -3004,6 +3018,8 @@
     reprovadosData = [];
     talentBankData = [];
     retornoData = [];
+    deletedIds.vagas = []; deletedIds.interviews = []; deletedIds.candidates = [];
+    deletedIds.reprovados = []; deletedIds.talentBank = []; deletedIds.retorno = [];
     renderAllViews();
     logAudit('Zerou vagas, entrevistas, esteira, reprovados, banco de talentos e retorno');
     forceOverwriteCloud();
@@ -3050,6 +3066,7 @@
     retornoData = [];
     auditLog = [];
     interviewCounter = 0;
+    deletedIds = {interviews:[], vagas:[], candidates:[], reprovados:[], talentBank:[], retorno:[], clientes:[]};
 
     renderAllViews();
     logAudit('Zerou TODOS os dados do sistema');
@@ -3107,6 +3124,33 @@
   var reprovadosData = [];
   var talentBankData = [];
   var interviewCounter = 0;
+
+  // ---- Registro de exclusões (tombstones) ----
+  // Evita que um dado apagado "volte" quando um navegador com dados desatualizados sincroniza.
+  var deletedIds = {interviews:[], vagas:[], candidates:[], reprovados:[], talentBank:[], retorno:[], clientes:[]};
+  var DELETED_CATEGORIES = ['interviews','vagas','candidates','reprovados','talentBank','retorno','clientes'];
+
+  function markDeleted(category, key){
+    if(!deletedIds[category]) deletedIds[category] = [];
+    if(deletedIds[category].indexOf(key) === -1) deletedIds[category].push(key);
+  }
+
+  function mergeDeletedIds(a, b){
+    var merged = {};
+    DELETED_CATEGORIES.forEach(function(cat){
+      var set = {};
+      ((a && a[cat]) || []).forEach(function(k){ set[k] = true; });
+      ((b && b[cat]) || []).forEach(function(k){ set[k] = true; });
+      merged[cat] = Object.keys(set);
+    });
+    return merged;
+  }
+
+  function filterTombstoned(arr, delSet, keyFn){
+    var set = {};
+    (delSet||[]).forEach(function(k){ set[k] = true; });
+    return (arr||[]).filter(function(item){ return !set[keyFn(item)]; });
+  }
   var auditLog = [];
   function logAudit(acao){
     auditLog.push({
@@ -3218,6 +3262,7 @@
       safeDeleteAndSync(function(){
         var idx2 = interviewsData.findIndex(function(x){ return x.id === alvoId; });
         if(idx2 !== -1) interviewsData.splice(idx2, 1);
+        markDeleted('interviews', alvoId);
         logAudit('Excluiu a entrevista de '+iv.name);
       }).then(function(){
         showToast('Entrevista excluída.');
@@ -3227,10 +3272,12 @@
   }
 
   function renderInterviews(){
-    var container = document.getElementById('period-dia');
+    var container = document.getElementById('dia-detail');
     container.innerHTML = '';
     var hoje = interviewsData.filter(function(iv){ return iv.date === todayISO; });
     hoje.sort(function(a,b){ return a.time < b.time ? -1 : (a.time > b.time ? 1 : 0); });
+    document.getElementById('dia-count').textContent = hoje.length;
+    document.getElementById('dia-label').textContent = 'entrevista'+(hoje.length===1?'':'s')+' agendada'+(hoje.length===1?'':'s')+' hoje';
     if(hoje.length === 0){
       var empty = document.createElement('div');
       empty.className = 'kanban-empty';
@@ -3240,6 +3287,23 @@
     } else {
       hoje.forEach(function(iv){ container.appendChild(buildInterviewRow(iv)); });
     }
+
+    var realizadasContainer = document.getElementById('dia-realizadas-detail');
+    realizadasContainer.innerHTML = '';
+    var realizadasHoje = interviewsHistoryData.filter(function(h){ return h.date === todayISO; });
+    realizadasHoje.sort(function(a,b){ return (a.time||'') < (b.time||'') ? -1 : ((a.time||'') > (b.time||'') ? 1 : 0); });
+    document.getElementById('dia-realizadas-count').textContent = realizadasHoje.length;
+    document.getElementById('dia-realizadas-label').textContent = 'entrevista'+(realizadasHoje.length===1?'':'s')+' realizada'+(realizadasHoje.length===1?'':'s')+' hoje';
+    if(realizadasHoje.length === 0){
+      var empty2 = document.createElement('div');
+      empty2.className = 'kanban-empty';
+      empty2.style.padding = '14px 18px';
+      empty2.textContent = 'Nenhuma entrevista realizada hoje ainda.';
+      realizadasContainer.appendChild(empty2);
+    } else {
+      realizadasHoje.forEach(function(h){ realizadasContainer.appendChild(buildHistoryRow(h)); });
+    }
+
     renderWeek();
     renderMonth();
   }
@@ -3421,6 +3485,7 @@
         safeDeleteAndSync(function(){
           var idx2 = reprovadosData.findIndex(function(x){ return x.id === alvoId; });
           if(idx2 !== -1) reprovadosData.splice(idx2, 1);
+          markDeleted('reprovados', alvoId);
           logAudit('Excluiu '+r.name+' de reprovados');
         }).then(function(){
           showToast('Registro excluído.');
@@ -3486,6 +3551,7 @@
         safeDeleteAndSync(function(){
           var idx2 = talentBankData.findIndex(function(x){ return x.id === alvoId; });
           if(idx2 !== -1) talentBankData.splice(idx2, 1);
+          markDeleted('talentBank', alvoId);
           logAudit('Excluiu '+t.name+' do banco de talentos');
         }).then(function(){
           showToast('Registro excluído.');
@@ -3703,32 +3769,35 @@
         obs = 'Reprovado na verificação jurídica (Jus).';
       }
 
-      interviewsData = interviewsData.filter(function(i){ return i.id !== id; });
+      safeDeleteAndSync(function(){
+        // Busca a entrevista na versão mais recente dos dados (pós-mesclagem), evitando
+        // que ela "volte" para agendadas caso outro usuário sincronize logo depois.
+        var idx = interviewsData.findIndex(function(x){ return x.id === id; });
+        var freshIv = idx !== -1 ? interviewsData[idx] : iv;
+        if(idx !== -1) interviewsData.splice(idx, 1);
+        markDeleted('interviews', id);
 
-      interviewsHistoryData.push({
-        id:genRecordId('hist'), name:iv.name, telefone:iv.telefone, cpf:cpf, endereco:iv.endereco, vaga:iv.role, cidade:iv.cidade,
-        date:iv.date, time:iv.time, entrevistador:iv.entrevistador, modalidade:iv.modalidade,
-        situacao:situacao, jus:jus, obs:obs, nota:nota
+        interviewsHistoryData.push({
+          id:genRecordId('hist'), name:freshIv.name, telefone:freshIv.telefone, cpf:cpf, endereco:freshIv.endereco, vaga:freshIv.role, cidade:freshIv.cidade,
+          date:freshIv.date, time:freshIv.time, entrevistador:freshIv.entrevistador, modalidade:freshIv.modalidade,
+          situacao:situacao, jus:jus, obs:obs, nota:nota
+        });
+
+        if(situacao === 'aprovado'){
+          var newId = 'cand-'+id;
+          candidatesData[newId] = {name:freshIv.name, role:freshIv.role, cargoPretendido:freshIv.role, cliente:null, cidade:freshIv.cidade, telefone:freshIv.telefone, cpf:cpf, endereco:freshIv.endereco, stage:'aprovado', checklist:null, jus:jus, nota:nota, stageSince:new Date().toISOString(), interviewDate:freshIv.date};
+        } else if(situacao === 'banco_talentos'){
+          talentBankData.push({id:genRecordId('tb'), name:freshIv.name, telefone:freshIv.telefone, cpf:cpf, endereco:freshIv.endereco, vaga:freshIv.role, cidade:freshIv.cidade, obs:obs, jus:jus, nota:nota});
+        } else {
+          reprovadosData.push({id:genRecordId('rep'), name:freshIv.name, telefone:freshIv.telefone, cpf:cpf, endereco:freshIv.endereco, vaga:freshIv.role, cidade:freshIv.cidade, situacao:situacao, jus:jus, obs:obs, nota:nota});
+          retornoData.push({id:genRecordId('ret'), name:freshIv.name, telefone:freshIv.telefone, vaga:freshIv.role, cidade:freshIv.cidade,
+            dataReprova:String(new Date().getDate()).padStart(2,'0')+'/'+String(new Date().getMonth()+1).padStart(2,'0')+'/'+new Date().getFullYear(), done:false});
+        }
+
+        logAudit('Decisão de entrevista: '+freshIv.name+' — '+(situacaoLabels[situacao] || situacao));
+      }).then(function(){
+        closeInterviewModal();
       });
-      renderInterviewsHistory();
-
-      if(situacao === 'aprovado'){
-        var newId = 'cand-'+id;
-        candidatesData[newId] = {name:iv.name, role:iv.role, cargoPretendido:iv.role, cliente:null, cidade:iv.cidade, telefone:iv.telefone, cpf:cpf, endereco:iv.endereco, stage:'aprovado', checklist:null, jus:jus, nota:nota, stageSince:new Date().toISOString(), interviewDate:iv.date};
-        renderKanban();
-      } else if(situacao === 'banco_talentos'){
-        talentBankData.push({id:genRecordId('tb'), name:iv.name, telefone:iv.telefone, cpf:cpf, endereco:iv.endereco, vaga:iv.role, cidade:iv.cidade, obs:obs, jus:jus, nota:nota});
-        renderTalentBank();
-      } else {
-        reprovadosData.push({id:genRecordId('rep'), name:iv.name, telefone:iv.telefone, cpf:cpf, endereco:iv.endereco, vaga:iv.role, cidade:iv.cidade, situacao:situacao, jus:jus, obs:obs, nota:nota});
-        renderReprovados();
-        addToRetorno({name:iv.name, telefone:iv.telefone, cpf:cpf, endereco:iv.endereco, vaga:iv.role, cidade:iv.cidade});
-      }
-
-      renderInterviews();
-      logAudit('Decisão de entrevista: '+iv.name+' — '+(situacaoLabels[situacao] || situacao));
-      syncAfterChange();
-      closeInterviewModal();
     };
   }
 
@@ -3961,6 +4030,7 @@
           if(!confirmed) return;
           safeDeleteAndSync(function(){
             delete candidatesData[id];
+            markDeleted('candidates', id);
             logAudit('Excluiu '+nomeAlvo+' da esteira');
           }).then(function(){
             showToast('Candidato excluído.');
@@ -4654,6 +4724,7 @@
           safeDeleteAndSync(function(){
             var idx2 = retornoData.findIndex(function(x){ return x.id === alvoId; });
             if(idx2 !== -1) retornoData.splice(idx2, 1);
+            markDeleted('retorno', alvoId);
             logAudit('Excluiu '+r.name+' de retorno');
           }).then(function(){
             showToast('Registro excluído.');
@@ -4711,7 +4782,8 @@
       retornoData: retornoData,
       auditLog: auditLog,
       cargosPretendidos: CARGOS_PRETENDIDOS,
-      interviewCounter: interviewCounter
+      interviewCounter: interviewCounter,
+      deletedIds: deletedIds
     };
   }
 
@@ -4795,6 +4867,7 @@
       if(document.getElementById('nv-cargo')) populateNvCargoSelect();
     }
     if(typeof s.interviewCounter === 'number') interviewCounter = Math.max(interviewCounter, s.interviewCounter);
+    if(s.deletedIds) deletedIds = mergeDeletedIds(deletedIds, s.deletedIds);
     renderAuditLog();
   }
 
@@ -4874,18 +4947,24 @@
 
   function buildMergedState(cloud, local){
     if(!cloud) return local;
+    var mergedDel = mergeDeletedIds(cloud.deletedIds, local.deletedIds);
+
+    var candidatesMerged = Object.assign({}, cloud.candidatesData||{}, local.candidatesData||{});
+    (mergedDel.candidates||[]).forEach(function(id){ delete candidatesMerged[id]; });
+
     return {
-      vagasData: mergeVagas(cloud.vagasData, local.vagasData),
-      clientesData: mergeClientes(cloud.clientesData, local.clientesData),
-      candidatesData: Object.assign({}, cloud.candidatesData||{}, local.candidatesData||{}),
-      interviewsData: mergeArraysByKey(cloud.interviewsData, local.interviewsData, function(i){ return i.id; }),
-      reprovadosData: mergeArraysByKey(cloud.reprovadosData, local.reprovadosData, function(i){ return i.id; }),
-      talentBankData: mergeArraysByKey(cloud.talentBankData, local.talentBankData, function(i){ return i.id; }),
+      vagasData: filterTombstoned(mergeVagas(cloud.vagasData, local.vagasData), mergedDel.vagas, vagaKey),
+      clientesData: filterTombstoned(mergeClientes(cloud.clientesData, local.clientesData), mergedDel.clientes, function(c){ return c.nome.toLowerCase(); }),
+      candidatesData: candidatesMerged,
+      interviewsData: filterTombstoned(mergeArraysByKey(cloud.interviewsData, local.interviewsData, function(i){ return i.id; }), mergedDel.interviews, function(i){ return i.id; }),
+      reprovadosData: filterTombstoned(mergeArraysByKey(cloud.reprovadosData, local.reprovadosData, function(i){ return i.id; }), mergedDel.reprovados, function(i){ return i.id; }),
+      talentBankData: filterTombstoned(mergeArraysByKey(cloud.talentBankData, local.talentBankData, function(i){ return i.id; }), mergedDel.talentBank, function(i){ return i.id; }),
       interviewsHistoryData: mergeArraysByKey(cloud.interviewsHistoryData, local.interviewsHistoryData, function(i){ return i.id; }),
-      retornoData: mergeArraysByKey(cloud.retornoData, local.retornoData, function(i){ return i.id; }),
+      retornoData: filterTombstoned(mergeArraysByKey(cloud.retornoData, local.retornoData, function(i){ return i.id; }), mergedDel.retorno, function(i){ return i.id; }),
       auditLog: mergeArraysByKey(cloud.auditLog, local.auditLog, function(i){ return i.id; }),
       cargosPretendidos: mergeCargos(cloud.cargosPretendidos, local.cargosPretendidos),
-      interviewCounter: Math.max(cloud.interviewCounter||0, local.interviewCounter||0)
+      interviewCounter: Math.max(cloud.interviewCounter||0, local.interviewCounter||0),
+      deletedIds: mergedDel
     };
   }
 
