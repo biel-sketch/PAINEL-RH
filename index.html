@@ -217,11 +217,12 @@
   .mini-list-value{font-family:var(--font-mono);font-size:13px;font-weight:500;}
   .rec-card{background:#0D1526;border:1px solid var(--line);border-radius:10px;padding:16px;}
   .rec-card-name{font-family:var(--font-display);font-weight:600;font-size:14.5px;margin-bottom:12px;}
-  .rec-card-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+  .rec-card-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;}
   .rec-card-stat{background:var(--card);border-radius:8px;padding:9px 10px;}
   .rec-card-stat-value{font-family:var(--font-mono);font-size:18px;font-weight:600;}
   .rec-card-stat-value.teal{color:var(--teal);}
   .rec-card-stat-value.red{color:var(--red);}
+  .rec-card-stat-value.amber{color:var(--amber);}
   .rec-card-stat-label{font-size:10.5px;color:var(--text-dim);margin-top:2px;}
   .rec-card-motivos{font-size:11px;color:var(--text-dim);border-top:1px solid var(--line);padding-top:10px;}
   .rec-card-motivos-title{font-size:10.5px;font-weight:600;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:6px;}
@@ -1041,7 +1042,7 @@
         </div>
       </div>
       <div class="panel" style="margin-top:14px;" id="produtividade-panel">
-        <div class="panel-head"><div class="panel-title">Produtividade por recrutador</div></div>
+        <div class="panel-head"><div class="panel-title">Produtividade por recrutador</div><div class="panel-title" id="produtividade-periodo-label" style="font-weight:400;color:var(--text-dim);font-size:12px;">no período selecionado</div></div>
         <div id="produtividade-cards" style="padding:18px;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;"></div>
       </div>
     </div>
@@ -1794,7 +1795,6 @@
     {user:'debora', email:'debora@loginserv.com.br', name:'Debora', role:'administrador'},
     {user:'carol', email:'carol@loginserv.com.br', name:'Carol', role:'administrador'},
     {user:'gabriel', email:'gabriel@loginserv.com.br', name:'Gabriel', role:'administrador'},
-    {user:'mariana', email:'mariana@loginserv.com.br', name:'Mariana', role:'administrador'},
     {user:'simone', email:'simone@loginserv.com.br', name:'Simone', role:'operacional'},
     {user:'elaine', email:'elaine@loginserv.com.br', name:'Elaine', role:'supervisor'},
     {user:'mariah', email:'dp@loginserv.com.br', name:'Mariah', role:'dp'},
@@ -2017,13 +2017,19 @@
     urgenteBtn.style.borderColor = vaga.urgente ? 'var(--red)' : '';
     urgenteBtn.textContent = vaga.urgente ? '★ Urgente (clique para desmarcar)' : '☆ Marcar como urgente';
     urgenteBtn.onclick = function(){
-      vaga.urgente = !vaga.urgente;
-      vaga.history = vaga.history || [];
-      vaga.history.push({ts:new Date().toISOString(), acao: vaga.urgente ? 'Marcada como urgente' : 'Removida a marcação de urgente'});
-      logAudit((vaga.urgente ? 'Marcou como urgente a vaga de ' : 'Desmarcou urgente da vaga de ')+vaga.cargo+' ('+vaga.cliente+')');
-      renderVagas();
-      syncAfterChange();
-      openVagaModal(idx);
+      var alvoKey = vagaKey(vaga);
+      safeDeleteAndSync(function(){
+        var freshVaga = vagasData.find(function(v){ return vagaKey(v) === alvoKey; });
+        if(freshVaga){
+          freshVaga.urgente = !freshVaga.urgente;
+          freshVaga.history = freshVaga.history || [];
+          freshVaga.history.push({ts:new Date().toISOString(), acao: freshVaga.urgente ? 'Marcada como urgente' : 'Removida a marcação de urgente'});
+          logAudit((freshVaga.urgente ? 'Marcou como urgente a vaga de ' : 'Desmarcou urgente da vaga de ')+freshVaga.cargo+' ('+freshVaga.cliente+')');
+        }
+      }).then(function(){
+        var novoIdx = vagasData.findIndex(function(v){ return vagaKey(v) === alvoKey; });
+        if(novoIdx !== -1) openVagaModal(novoIdx);
+      });
     };
 
     var slaBadgeEl = document.getElementById('vd-sla-badge');
@@ -2402,17 +2408,22 @@
     if(currentRole && !currentRole.editVagas) return;
     if(reopenVagaIndex === null || !reopenDecision) return;
     var v = vagasData[reopenVagaIndex];
+    var alvoKey = vagaKey(v);
 
     if(reopenDecision === 'sim'){
       var add = parseInt(document.getElementById('rv-qtd').value, 10) || 1;
-      v.qtd += add;
-      v.history = v.history || [];
-      v.history.push({ts:new Date().toISOString(), acao:'Vaga reaberta com +'+add+' posição(ões)'});
-      renderVagas();
-      logAudit('Reabriu a vaga de '+v.cargo+' ('+v.cliente+') com +'+add+' posição(ões)');
-      syncAfterChange();
-      closeReopenModal();
-      showToast('Vaga de '+v.cargo+' reaberta com +'+add+' posição(ões).');
+      safeDeleteAndSync(function(){
+        var freshV = vagasData.find(function(x){ return vagaKey(x) === alvoKey; });
+        if(freshV){
+          freshV.qtd += add;
+          freshV.history = freshV.history || [];
+          freshV.history.push({ts:new Date().toISOString(), acao:'Vaga reaberta com +'+add+' posição(ões)'});
+        }
+        logAudit('Reabriu a vaga de '+(freshV?freshV.cargo:v.cargo)+' ('+(freshV?freshV.cliente:v.cliente)+') com +'+add+' posição(ões)');
+      }).then(function(){
+        closeReopenModal();
+        showToast('Vaga de '+v.cargo+' reaberta com +'+add+' posição(ões).');
+      });
     } else {
       var checked = Array.prototype.slice.call(document.querySelectorAll('#rv-hired-list input[type=checkbox]:checked'));
       if(checked.length === 0){
@@ -2420,21 +2431,29 @@
         return;
       }
       var hIdxs = checked.map(function(cb){ return parseInt(cb.getAttribute('data-hidx'), 10); }).sort(function(a,b){ return b-a; });
-      var nomesDesistentes = [];
-      hIdxs.forEach(function(hIdx){
-        var pessoa = v.hired[hIdx];
-        nomesDesistentes.push(pessoa.name);
-        reprovadosData.push({id:genRecordId('rep'), name:pessoa.name, telefone:pessoa.telefone, vaga:v.cargo, cliente:v.cliente, situacao:'reprovado', jus:'sim', obs:'Desistência'});
-        v.hired.splice(hIdx, 1);
+      var pessoasAlvo = hIdxs.map(function(hIdx){ return v.hired[hIdx]; });
+
+      safeDeleteAndSync(function(){
+        var freshV = vagasData.find(function(x){ return vagaKey(x) === alvoKey; });
+        var nomesDesistentes = [];
+        if(freshV){
+          pessoasAlvo.forEach(function(pessoa){
+            var idxNaFresh = freshV.hired.findIndex(function(h){ return h.name === pessoa.name && h.telefone === pessoa.telefone; });
+            if(idxNaFresh !== -1){
+              nomesDesistentes.push(pessoa.name);
+              reprovadosData.push({id:genRecordId('rep'), name:pessoa.name, telefone:pessoa.telefone, vaga:freshV.cargo, cliente:freshV.cliente, situacao:'reprovado', jus:'sim', obs:'Desistência'});
+              freshV.hired.splice(idxNaFresh, 1);
+              markDeleted('hiredPeople', alvoKey+'|'+pessoa.name);
+            }
+          });
+          freshV.history = freshV.history || [];
+          freshV.history.push({ts:new Date().toISOString(), acao:nomesDesistentes.length+' desistência(s) registrada(s): '+nomesDesistentes.join(', ')});
+        }
+        logAudit('Registrou '+nomesDesistentes.length+' desistência(s) na vaga de '+(freshV?freshV.cargo:v.cargo)+' ('+(freshV?freshV.cliente:v.cliente)+'): '+nomesDesistentes.join(', '));
+      }).then(function(){
+        closeReopenModal();
+        showToast(hIdxs.length+' desistência(s) registrada(s) — vaga reaberta com '+hIdxs.length+' posição(ões).');
       });
-      v.history = v.history || [];
-      v.history.push({ts:new Date().toISOString(), acao:hIdxs.length+' desistência(s) registrada(s): '+nomesDesistentes.join(', ')});
-      renderReprovados();
-      renderVagas();
-      logAudit('Registrou '+hIdxs.length+' desistência(s) na vaga de '+v.cargo+' ('+v.cliente+'): '+nomesDesistentes.join(', '));
-      syncAfterChange();
-      closeReopenModal();
-      showToast(hIdxs.length+' desistência(s) registrada(s) — vaga reaberta com '+hIdxs.length+' posição(ões).');
     }
   });
 
@@ -2625,21 +2644,30 @@
     var cnpj = document.getElementById('cliente-cnpj').value.trim();
     var cidade = document.getElementById('cliente-cidade').value.trim();
     if(!nome) return;
+
     if(clienteEditIndex === null){
       clientesData.push({nome:nome, cnpj:cnpj, cidade:cidade});
+      clientesData.sort(function(a,b){ return a.nome.localeCompare(b.nome); });
+      renderClientes();
       logAudit('Cadastrou o cliente "'+nome+'"'+(cnpj?' (CNPJ '+cnpj+')':''));
+      syncAfterChange();
+      closeClienteModal();
       showToast('Cliente cadastrado.');
     } else {
-      clientesData[clienteEditIndex] = {nome:nome, cnpj:cnpj, cidade:cidade};
-      logAudit('Editou o cliente para "'+nome+'"');
-      showToast('Cliente atualizado.');
+      var nomeOriginal = clientesData[clienteEditIndex].nome;
+      safeDeleteAndSync(function(){
+        var idxFresh = clientesData.findIndex(function(x){ return x.nome === nomeOriginal; });
+        if(idxFresh !== -1) clientesData[idxFresh] = {nome:nome, cnpj:cnpj, cidade:cidade};
+        else clientesData.push({nome:nome, cnpj:cnpj, cidade:cidade});
+        clientesData.sort(function(a,b){ return a.nome.localeCompare(b.nome); });
+        logAudit('Editou o cliente para "'+nome+'"');
+      }).then(function(){
+        populateNvClienteSelect();
+        populateNcCidadeSelect();
+        closeClienteModal();
+        showToast('Cliente atualizado.');
+      });
     }
-    clientesData.sort(function(a,b){ return a.nome.localeCompare(b.nome); });
-    renderClientes();
-    populateNvClienteSelect();
-    populateNcCidadeSelect();
-    syncAfterChange();
-    closeClienteModal();
   });
 
   document.getElementById('cliente-search').addEventListener('input', renderClientes);
@@ -3020,7 +3048,7 @@
     talentBankData = [];
     retornoData = [];
     deletedIds.vagas = []; deletedIds.interviews = []; deletedIds.candidates = [];
-    deletedIds.reprovados = []; deletedIds.talentBank = []; deletedIds.retorno = [];
+    deletedIds.reprovados = []; deletedIds.talentBank = []; deletedIds.retorno = []; deletedIds.hiredPeople = [];
     renderAllViews();
     logAudit('Zerou vagas, entrevistas, esteira, reprovados, banco de talentos e retorno');
     forceOverwriteCloud();
@@ -3067,7 +3095,7 @@
     retornoData = [];
     auditLog = [];
     interviewCounter = 0;
-    deletedIds = {interviews:[], vagas:[], candidates:[], reprovados:[], talentBank:[], retorno:[], clientes:[]};
+    deletedIds = {interviews:[], vagas:[], candidates:[], reprovados:[], talentBank:[], retorno:[], clientes:[], hiredPeople:[]};
 
     renderAllViews();
     logAudit('Zerou TODOS os dados do sistema');
@@ -3128,8 +3156,8 @@
 
   // ---- Registro de exclusões (tombstones) ----
   // Evita que um dado apagado "volte" quando um navegador com dados desatualizados sincroniza.
-  var deletedIds = {interviews:[], vagas:[], candidates:[], reprovados:[], talentBank:[], retorno:[], clientes:[]};
-  var DELETED_CATEGORIES = ['interviews','vagas','candidates','reprovados','talentBank','retorno','clientes'];
+  var deletedIds = {interviews:[], vagas:[], candidates:[], reprovados:[], talentBank:[], retorno:[], clientes:[], hiredPeople:[]};
+  var DELETED_CATEGORIES = ['interviews','vagas','candidates','reprovados','talentBank','retorno','clientes','hiredPeople'];
 
   function markDeleted(category, key){
     if(!deletedIds[category]) deletedIds[category] = [];
@@ -3620,20 +3648,24 @@
     if(idx === -1) return;
     var t = talentBankData[idx];
     if(!window.confirm('Mover "'+t.name+'" do banco de talentos para a esteira de aprovação?')) return;
+    var alvoId = t.id;
 
-    var newId = genRecordId('cand');
-    candidatesData[newId] = {
-      name:t.name, role:t.vaga, cargoPretendido:t.vaga, cliente:null, cidade:t.cidade,
-      telefone:t.telefone, cpf:t.cpf, endereco:t.endereco, stage:'aprovado', checklist:null,
-      jus:t.jus || 'sim', nota:t.nota || 0, stageSince:new Date().toISOString(), interviewDate:null
-    };
-    talentBankData.splice(idx, 1);
-    renderKanban();
-    renderTalentBank();
-    logAudit('Moveu do banco de talentos para a esteira: '+t.name);
-    syncAfterChange();
-    showToast(t.name+' movido(a) para a esteira de aprovação.');
-    closeTalentAction();
+    safeDeleteAndSync(function(){
+      var idxFresh = talentBankData.findIndex(function(x){ return x.id === alvoId; });
+      var freshT = idxFresh !== -1 ? talentBankData[idxFresh] : t;
+      var newId = genRecordId('cand');
+      candidatesData[newId] = {
+        name:freshT.name, role:freshT.vaga, cargoPretendido:freshT.vaga, cliente:null, cidade:freshT.cidade,
+        telefone:freshT.telefone, cpf:freshT.cpf, endereco:freshT.endereco, stage:'aprovado', checklist:null,
+        jus:freshT.jus || 'sim', nota:freshT.nota || 0, stageSince:new Date().toISOString(), interviewDate:null
+      };
+      if(idxFresh !== -1) talentBankData.splice(idxFresh, 1);
+      markDeleted('talentBank', alvoId);
+      logAudit('Moveu do banco de talentos para a esteira: '+freshT.name);
+    }).then(function(){
+      showToast(t.name+' movido(a) para a esteira de aprovação.');
+      closeTalentAction();
+    });
   });
 
   document.getElementById('ta-btn-reagendar').addEventListener('click', function(){
@@ -3662,20 +3694,24 @@
       alert('Preencha data, horário e entrevistador para reagendar.');
       return;
     }
+    var alvoId = t.id;
 
-    interviewCounter++;
-    interviewsData.push({
-      id:'int-new-'+interviewCounter, time:horario, date:data, name:t.name, role:t.vaga,
-      cidade:t.cidade, telefone:t.telefone, cpf:t.cpf, endereco:t.endereco,
-      entrevistador:entrevistador, modalidade:selectedModalidadeTalent
+    safeDeleteAndSync(function(){
+      var idxFresh = talentBankData.findIndex(function(x){ return x.id === alvoId; });
+      var freshT = idxFresh !== -1 ? talentBankData[idxFresh] : t;
+      interviewCounter++;
+      interviewsData.push({
+        id:'int-new-'+interviewCounter, time:horario, date:data, name:freshT.name, role:freshT.vaga,
+        cidade:freshT.cidade, telefone:freshT.telefone, cpf:freshT.cpf, endereco:freshT.endereco,
+        entrevistador:entrevistador, modalidade:selectedModalidadeTalent
+      });
+      if(idxFresh !== -1) talentBankData.splice(idxFresh, 1);
+      markDeleted('talentBank', alvoId);
+      logAudit('Reagendou entrevista a partir do banco de talentos: '+freshT.name);
+    }).then(function(){
+      showToast('Entrevista de '+t.name+' reagendada.');
+      closeTalentAction();
     });
-    talentBankData.splice(idx, 1);
-    renderInterviews();
-    renderTalentBank();
-    logAudit('Reagendou entrevista a partir do banco de talentos: '+t.name);
-    syncAfterChange();
-    showToast('Entrevista de '+t.name+' reagendada.');
-    closeTalentAction();
   });
 
   function applyJusLock(){
@@ -4159,12 +4195,26 @@
       return;
     }
 
+    var range = getIndicPeriodRange();
+    var modeProdutividade = document.getElementById('indic-periodo').value;
+    var periodoLabelProdutividade = modeProdutividade === '7' ? 'nos últimos 7 dias' : modeProdutividade === '30' ? 'nos últimos 30 dias' : modeProdutividade === 'mes' ? 'neste mês' : modeProdutividade === 'custom' ? 'no período selecionado' : 'em todo o período';
+    var periodoLabelEl = document.getElementById('produtividade-periodo-label');
+    if(periodoLabelEl) periodoLabelEl.textContent = '(agendados: total atual · demais: '+periodoLabelProdutividade+')';
+    var historicoNoPeriodo = interviewsHistoryData.filter(function(h){
+      if(!h.date) return false;
+      var d = new Date(h.date+'T12:00:00');
+      if(range.start && d < range.start) return false;
+      if(range.end && d > range.end) return false;
+      return true;
+    });
+
     cardsEl.innerHTML = recrutadores.map(function(nome){
       var agendados = interviewsData.filter(function(iv){ return iv.entrevistador === nome; }).length;
-      var doRecrutador = interviewsHistoryData.filter(function(h){ return h.entrevistador === nome; });
+      var doRecrutador = historicoNoPeriodo.filter(function(h){ return h.entrevistador === nome; });
       var realizadas = doRecrutador.length;
       var aprovados = doRecrutador.filter(function(h){ return h.situacao === 'aprovado'; }).length;
-      var reprovados = doRecrutador.filter(function(h){ return h.situacao === 'reprovado'; });
+      var reprovados = doRecrutador.filter(function(h){ return h.situacao === 'reprovado' || h.situacao === 'nao_compareceu'; });
+      var bancoTalentos = doRecrutador.filter(function(h){ return h.situacao === 'banco_talentos'; }).length;
 
       var motivos = {};
       reprovados.forEach(function(h){
@@ -4187,6 +4237,7 @@
           '<div class="rec-card-stat"><div class="rec-card-stat-value">'+realizadas+'</div><div class="rec-card-stat-label">Entrevistas realizadas</div></div>' +
           '<div class="rec-card-stat"><div class="rec-card-stat-value teal">'+aprovados+'</div><div class="rec-card-stat-label">Aprovados</div></div>' +
           '<div class="rec-card-stat"><div class="rec-card-stat-value red">'+reprovados.length+'</div><div class="rec-card-stat-label">Reprovados</div></div>' +
+          '<div class="rec-card-stat"><div class="rec-card-stat-value amber">'+bancoTalentos+'</div><div class="rec-card-stat-label">Banco de talentos</div></div>' +
         '</div>' +
         motivosHtml +
         '</div>';
@@ -4223,13 +4274,11 @@
       tempoContratacaoEl.innerHTML = media+'<span style="font-size:15px;color:var(--text-faint);"> dias</span>';
     }
 
-    // Entrevistas no mês + agendadas hoje
+    // Entrevistas já decididas no mês + agendadas hoje
     var now = new Date();
     var inicioMes = toISODate(new Date(now.getFullYear(), now.getMonth(), 1));
     var fimMes = toISODate(new Date(now.getFullYear(), now.getMonth()+1, 0));
-    var entrevistasAgendadasMes = interviewsData.filter(function(iv){ return iv.date >= inicioMes && iv.date <= fimMes; }).length;
-    var entrevistasRealizadasMes = interviewsHistoryData.filter(function(h){ return h.date >= inicioMes && h.date <= fimMes; }).length;
-    var totalEntrevistasMes = entrevistasAgendadasMes + entrevistasRealizadasMes;
+    var totalEntrevistasMes = interviewsHistoryData.filter(function(h){ return h.date >= inicioMes && h.date <= fimMes; }).length;
     var hojeCount = interviewsData.filter(function(iv){ return iv.date === todayISO; }).length;
     document.getElementById('indic-entrevistas-mes').textContent = totalEntrevistasMes;
     document.getElementById('indic-entrevistas-hoje-sub').textContent = hojeCount+' agendada'+(hojeCount===1?'':'s')+' para hoje';
@@ -4410,17 +4459,20 @@
 
       document.getElementById('cm-designar-confirm').onclick = function(){
         if(!canEdit) return;
-        var idx = selectEl.value;
-        if(idx === ''){
+        var idxSel = selectEl.value;
+        if(idxSel === ''){
           selectEl.style.borderColor = 'var(--red)';
           return;
         }
-        var vaga = abertas[parseInt(idx, 10)];
-        c.cliente = vaga.cliente;
-        c.role = vaga.cargo;
-        logAudit('Designou '+c.name+' para a vaga de '+vaga.cargo+' — '+vaga.cliente+' ('+vaga.cidade+')');
-        syncAfterChange();
-        openCandidateModal(id);
+        var vagaEscolhida = abertas[parseInt(idxSel, 10)];
+        var vagaCliente = vagaEscolhida.cliente, vagaCargo = vagaEscolhida.cargo, vagaCidade = vagaEscolhida.cidade;
+        safeDeleteAndSync(function(){
+          var freshC = candidatesData[id];
+          if(freshC){ freshC.cliente = vagaCliente; freshC.role = vagaCargo; }
+          logAudit('Designou '+(freshC ? freshC.name : c.name)+' para a vaga de '+vagaCargo+' — '+vagaCliente+' ('+vagaCidade+')');
+        }).then(function(){
+          openCandidateModal(id);
+        });
       };
       document.getElementById('candidate-modal-overlay').classList.add('open');
       return;
@@ -4490,22 +4542,41 @@
       } else {
         wrap.querySelectorAll('.exm-status-btn').forEach(function(btn){
           btn.addEventListener('click', function(){
-            c.exame.status = btn.getAttribute('data-status');
-            logAudit('Atualizou status do exame de '+c.name+' para "'+({agendado:'Agendado',aprovado:'Aprovado',retido:'Retido'}[c.exame.status])+'"');
-            renderKanban();
-            syncAfterChange();
-            openCandidateModal(id);
+            var novoStatus = btn.getAttribute('data-status');
+            safeDeleteAndSync(function(){
+              var freshC = candidatesData[id];
+              if(freshC){
+                if(!freshC.exame) freshC.exame = {status:'agendado', data:'', obs:''};
+                freshC.exame.status = novoStatus;
+              }
+              logAudit('Atualizou status do exame de '+(freshC ? freshC.name : c.name)+' para "'+({agendado:'Agendado',aprovado:'Aprovado',retido:'Retido'}[novoStatus])+'"');
+            }).then(function(){
+              openCandidateModal(id);
+            });
           });
         });
         dataInput.addEventListener('change', function(){
-          c.exame.data = dataInput.value;
-          renderKanban();
-          syncAfterChange();
+          var novaData = dataInput.value;
+          safeDeleteAndSync(function(){
+            var freshC = candidatesData[id];
+            if(freshC){
+              if(!freshC.exame) freshC.exame = {status:'agendado', data:'', obs:''};
+              freshC.exame.data = novaData;
+            }
+            logAudit('Registrou data do exame de '+(freshC ? freshC.name : c.name)+': '+novaData);
+          });
         });
         obsInput.addEventListener('input', function(){ c.exame.obs = obsInput.value; });
         obsInput.addEventListener('blur', function(){
-          syncAfterChange();
-          logAudit('Atualizou observação do exame de '+c.name);
+          var novaObs = c.exame.obs;
+          safeDeleteAndSync(function(){
+            var freshC = candidatesData[id];
+            if(freshC){
+              if(!freshC.exame) freshC.exame = {status:'agendado', data:'', obs:''};
+              freshC.exame.obs = novaObs;
+            }
+            logAudit('Atualizou observação do exame de '+(freshC ? freshC.name : c.name));
+          });
         });
       }
     } else if(c.checklist){
@@ -4519,19 +4590,29 @@
         }
         row.innerHTML = '<input type="checkbox" id="'+cbId+'" '+(entry.done?'checked':'')+(canEdit?'':' disabled')+'><label for="'+cbId+'">'+entry.item+'</label>'+dateHtml;
         row.querySelector('input[type="checkbox"]').addEventListener('change', function(e){
-          entry.done = e.target.checked;
-          row.classList.toggle('done', entry.done);
-          renderKanban();
-          openCandidateModal(id);
+          var newVal = e.target.checked;
+          var itemLabel = entry.item;
+          safeDeleteAndSync(function(){
+            var freshC = candidatesData[id];
+            var freshEntry = freshC && freshC.checklist && freshC.checklist.find(function(x){ return x.item === itemLabel; });
+            if(freshEntry) freshEntry.done = newVal;
+            logAudit('Marcou "'+itemLabel+'" como '+(newVal?'concluído':'pendente')+' para '+(freshC ? freshC.name : c.name));
+          }).then(function(){
+            openCandidateModal(id);
+          });
         });
         var dateInputEl = row.querySelector('.chk-date-input');
         if(dateInputEl){
           if(!canEdit) dateInputEl.disabled = true;
           dateInputEl.addEventListener('change', function(){
-            entry.date = dateInputEl.value;
-            renderKanban();
-            syncAfterChange();
-            logAudit('Registrou data de "'+entry.item+'" para '+c.name+': '+dateInputEl.value);
+            var newDate = dateInputEl.value;
+            var itemLabel = entry.item;
+            safeDeleteAndSync(function(){
+              var freshC = candidatesData[id];
+              var freshEntry = freshC && freshC.checklist && freshC.checklist.find(function(x){ return x.item === itemLabel; });
+              if(freshEntry) freshEntry.date = newDate;
+              logAudit('Registrou data de "'+itemLabel+'" para '+(freshC ? freshC.name : c.name)+': '+newDate);
+            });
           });
         }
         listEl.appendChild(row);
@@ -4565,21 +4646,28 @@
       if(!canEdit || !checklistComplete) return;
       if(currentIndex < stageOrder.length - 1){
         var nextStage = stageOrder[currentIndex+1];
-        c.stage = nextStage;
-        c.stageSince = new Date().toISOString();
-        initStageState(c, nextStage);
-        renderKanban();
-        logAudit('Avançou '+c.name+' para a etapa "'+stageLabels[nextStage]+'"');
-        syncAfterChange();
-        openCandidateModal(id);
+        safeDeleteAndSync(function(){
+          var freshC = candidatesData[id];
+          if(freshC){
+            freshC.stage = nextStage;
+            freshC.stageSince = new Date().toISOString();
+            initStageState(freshC, nextStage);
+          }
+          logAudit('Avançou '+(freshC ? freshC.name : c.name)+' para a etapa "'+stageLabels[nextStage]+'"');
+        }).then(function(){
+          openCandidateModal(id);
+        });
       } else {
         var hiredName = c.name;
-        closeVagaForCandidate(c);
-        delete candidatesData[id];
-        closeCandidateModal();
-        renderKanban();
-        logAudit('Concluiu a integração de '+hiredName);
-        syncAfterChange();
+        safeDeleteAndSync(function(){
+          var freshC = candidatesData[id];
+          if(freshC) closeVagaForCandidate(freshC);
+          delete candidatesData[id];
+          markDeleted('candidates', id);
+          logAudit('Concluiu a integração de '+hiredName);
+        }).then(function(){
+          closeCandidateModal();
+        });
       }
     };
 
@@ -4590,13 +4678,17 @@
       if(!canEdit || currentIndex === 0) return;
       var prevIndex = currentIndex - 1;
       var prevStage = stageOrder[prevIndex];
-      c.stage = prevStage;
-      c.stageSince = new Date().toISOString();
-      initStageState(c, prevStage);
-      renderKanban();
-      logAudit('Retornou '+c.name+' para a etapa "'+stageLabels[prevStage]+'"');
-      syncAfterChange();
-      openCandidateModal(id);
+      safeDeleteAndSync(function(){
+        var freshC = candidatesData[id];
+        if(freshC){
+          freshC.stage = prevStage;
+          freshC.stageSince = new Date().toISOString();
+          initStageState(freshC, prevStage);
+        }
+        logAudit('Retornou '+(freshC ? freshC.name : c.name)+' para a etapa "'+stageLabels[prevStage]+'"');
+      }).then(function(){
+        openCandidateModal(id);
+      });
     };
 
     var desistBtn = document.getElementById('cm-desistencia');
@@ -4605,15 +4697,17 @@
       if(!canEdit) return;
       var confirmed = window.confirm('Registrar a desistência de '+c.name+'? O candidato será movido para Reprovados e essa ação não pode ser desfeita.');
       if(!confirmed) return;
-      var obsDesistencia = 'Desistência' + (c.cliente ? ' (estava designado para '+c.role+' — '+c.cliente+')' : '');
-      reprovadosData.push({id:genRecordId('rep'), name:c.name, telefone:c.telefone||'—', cpf:c.cpf, endereco:c.endereco, vaga:c.cargoPretendido||c.role, cidade:c.cidade, situacao:'reprovado', jus:c.jus||'sim', obs:obsDesistencia});
-      delete candidatesData[id];
-      renderReprovados();
-      renderKanban();
-      logAudit('Registrou desistência de '+c.name);
-      syncAfterChange();
-      closeCandidateModal();
-      showToast('Desistência registrada — candidato movido para Reprovados.');
+      safeDeleteAndSync(function(){
+        var freshC = candidatesData[id] || c;
+        var obsDesistencia = 'Desistência' + (freshC.cliente ? ' (estava designado para '+freshC.role+' — '+freshC.cliente+')' : '');
+        reprovadosData.push({id:genRecordId('rep'), name:freshC.name, telefone:freshC.telefone||'—', cpf:freshC.cpf, endereco:freshC.endereco, vaga:freshC.cargoPretendido||freshC.role, cidade:freshC.cidade, situacao:'reprovado', jus:freshC.jus||'sim', obs:obsDesistencia});
+        delete candidatesData[id];
+        markDeleted('candidates', id);
+        logAudit('Registrou desistência de '+freshC.name);
+      }).then(function(){
+        closeCandidateModal();
+        showToast('Desistência registrada — candidato movido para Reprovados.');
+      });
     };
 
     document.getElementById('candidate-modal-overlay').classList.add('open');
@@ -4631,8 +4725,6 @@
         vaga.history.push({ts:new Date().toISOString(), acao:'Todas as vagas preenchidas — posição fechada'});
         celebrateVagaFechada();
       }
-      renderVagas();
-      syncAfterChange();
       showToast('Integração concluída — vaga de '+vaga.cargo+' ('+vaga.cliente+') fechada.');
     } else {
       showToast('Integração concluída — nenhuma vaga em aberto correspondente foi encontrada.');
@@ -4712,11 +4804,13 @@
           '<td class="checkbox-cell"><input type="checkbox" data-idx="'+idx+'" '+(r.done?'checked':'')+(canEdit?'':' disabled')+'></td>'+
           '<td><button type="button" class="data-btn retorno-del-btn" style="padding:5px 10px;color:var(--red);">Excluir</button></td>';
         tr.querySelector('input').addEventListener('change', function(e){
-          retornoData[idx].done = e.target.checked;
-          updateRetornoStats();
-          logAudit((e.target.checked?'Marcou retorno concluído: ':'Desmarcou retorno concluído: ')+r.name);
-          syncAfterChange();
-          renderRetorno();
+          var newVal = e.target.checked;
+          var alvoId = r.id;
+          safeDeleteAndSync(function(){
+            var idxFresh = retornoData.findIndex(function(x){ return x.id === alvoId; });
+            if(idxFresh !== -1) retornoData[idxFresh].done = newVal;
+            logAudit((newVal?'Marcou retorno concluído: ':'Desmarcou retorno concluído: ')+r.name);
+          });
         });
         tr.querySelector('.retorno-del-btn').addEventListener('click', function(){
           var alvoId = r.id;
@@ -4904,20 +4998,24 @@
     });
   }
 
-  // merge genérico: mescla dois arrays por uma chave — em caso de conflito, o local vence,
-  // mas itens que só existem na nuvem (criados por outro usuário) são preservados.
+  // merge genérico: mescla dois arrays por uma chave — em caso de conflito, a nuvem vence
+  // (é sempre a versão mais recente confirmada); itens que só existem localmente (recém-criados)
+  // são preservados. A mudança específica que o usuário está fazendo é sempre reaplicada
+  // DEPOIS dessa mesclagem (dentro de safeDeleteAndSync), então ela nunca se perde.
   function mergeArraysByKey(cloudArr, localArr, keyFn){
     var map = {};
-    (cloudArr||[]).forEach(function(item){ map[keyFn(item)] = item; });
     (localArr||[]).forEach(function(item){ map[keyFn(item)] = item; });
+    (cloudArr||[]).forEach(function(item){ map[keyFn(item)] = item; });
     return Object.keys(map).map(function(k){ return map[k]; });
   }
 
   function vagaKey(v){ return v.cliente+'|'+v.cargo+'|'+v.cidade; }
-  function mergeVagas(cloudArr, localArr){
+  function mergeVagas(cloudArr, localArr, hiredDelSet){
+    var hiredDel = {};
+    (hiredDelSet||[]).forEach(function(k){ hiredDel[k] = true; });
     var map = {};
-    (cloudArr||[]).forEach(function(v){ map[vagaKey(v)] = JSON.parse(JSON.stringify(v)); });
-    (localArr||[]).forEach(function(v){
+    (localArr||[]).forEach(function(v){ map[vagaKey(v)] = JSON.parse(JSON.stringify(v)); });
+    (cloudArr||[]).forEach(function(v){
       var k = vagaKey(v);
       if(map[k]){
         var hiredMap = {};
@@ -4936,13 +5034,16 @@
         map[k] = v;
       }
     });
+    Object.keys(map).forEach(function(k){
+      map[k].hired = (map[k].hired||[]).filter(function(h){ return !hiredDel[k+'|'+h.name]; });
+    });
     return Object.keys(map).map(function(k){ return map[k]; });
   }
 
   function mergeClientes(cloudArr, localArr){
     var map = {};
-    normalizeClientesData(cloudArr).forEach(function(c){ map[c.nome.toLowerCase()] = c; });
     normalizeClientesData(localArr).forEach(function(c){ map[c.nome.toLowerCase()] = c; });
+    normalizeClientesData(cloudArr).forEach(function(c){ map[c.nome.toLowerCase()] = c; });
     return Object.keys(map).map(function(k){ return map[k]; }).sort(function(a,b){ return a.nome.localeCompare(b.nome); });
   }
 
@@ -4950,11 +5051,11 @@
     if(!cloud) return local;
     var mergedDel = mergeDeletedIds(cloud.deletedIds, local.deletedIds);
 
-    var candidatesMerged = Object.assign({}, cloud.candidatesData||{}, local.candidatesData||{});
+    var candidatesMerged = Object.assign({}, local.candidatesData||{}, cloud.candidatesData||{});
     (mergedDel.candidates||[]).forEach(function(id){ delete candidatesMerged[id]; });
 
     return {
-      vagasData: filterTombstoned(mergeVagas(cloud.vagasData, local.vagasData), mergedDel.vagas, vagaKey),
+      vagasData: filterTombstoned(mergeVagas(cloud.vagasData, local.vagasData, mergedDel.hiredPeople), mergedDel.vagas, vagaKey),
       clientesData: filterTombstoned(mergeClientes(cloud.clientesData, local.clientesData), mergedDel.clientes, function(c){ return c.nome.toLowerCase(); }),
       candidatesData: candidatesMerged,
       interviewsData: filterTombstoned(mergeArraysByKey(cloud.interviewsData, local.interviewsData, function(i){ return i.id; }), mergedDel.interviews, function(i){ return i.id; }),
