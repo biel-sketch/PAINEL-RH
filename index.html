@@ -3035,10 +3035,22 @@
   // Monta o texto do relatório de "aprovados do dia", no formato usado pra enviar no WhatsApp:
   // agrupado por cliente, com a quantidade por cargo/turno, separadores, e total por recrutador.
   function montarTextoAprovadosDoDia(){
-    var candidatosHoje = Object.keys(candidatesData).map(function(id){ return candidatesData[id]; })
-      .filter(function(c){
-        return c.stage === 'aprovado' && c.cliente && c.stageSince && c.stageSince.slice(0,10) === todayISO;
-      });
+    // Usa o histórico de decisões (que nunca muda depois de registrado) como fonte de quem foi
+    // aprovado hoje — assim, mesmo que a pessoa já tenha avançado de etapa no mesmo dia (ex: foi
+    // direto pra Documentação), ela continua aparecendo aqui. Só cruza com os dados atuais do
+    // candidato pra pegar cliente/cargo/turno (que podem já estar mais atualizados).
+    var aprovadosHojeHist = interviewsHistoryData.filter(function(h){
+      return h.date === todayISO && h.situacao === 'aprovado';
+    });
+
+    var candidatosHoje = [];
+    aprovadosHojeHist.forEach(function(h){
+      var c = Object.keys(candidatesData).map(function(id){ return candidatesData[id]; })
+        .find(function(cand){ return cand.name === h.name; });
+      if(c && c.cliente){
+        candidatosHoje.push({name:c.name, role:c.role, turno:c.turno, cliente:c.cliente, entrevistador:h.entrevistador});
+      }
+    });
 
     if(candidatosHoje.length === 0) return null;
 
@@ -3072,8 +3084,7 @@
     var porRecrutador = {};
     var ordemRecrutadores = [];
     candidatosHoje.forEach(function(c){
-      var hist = interviewsHistoryData.find(function(h){ return h.name === c.name && h.date === todayISO && h.situacao === 'aprovado'; });
-      var nome = hist ? hist.entrevistador : 'Não identificado';
+      var nome = c.entrevistador || 'Não identificado';
       if(!porRecrutador[nome]){ porRecrutador[nome] = 0; ordemRecrutadores.push(nome); }
       porRecrutador[nome]++;
     });
