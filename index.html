@@ -716,7 +716,7 @@
         </div>
         <div style="overflow-x:auto;">
         <table>
-          <thead><tr><th>Cliente</th><th>Cargo</th><th>Cidade</th><th>Qtd vagas</th><th>Fechadas</th><th>Faltantes</th><th>Alertas</th><th>Ações</th></tr></thead>
+          <thead><tr><th>Cliente</th><th>Cargo</th><th>Cidade</th><th>Qtd vagas</th><th>Fechadas</th><th>Faltantes</th><th>SLA (dias)</th><th>Alertas</th><th>Ações</th></tr></thead>
           <tbody id="vagas-tbody"></tbody>
         </table>
         </div>
@@ -1038,6 +1038,16 @@
             <div class="barchart-legend-item"><span class="barchart-legend-dot" style="background:var(--amber);"></span>Fechadas</div>
           </div>
           <div id="vagas-bar-chart" class="barchart"></div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:14px;">
+        <div class="panel-head"><div class="panel-title">Contratações do dia</div></div>
+        <div style="overflow-x:auto;">
+        <table>
+          <thead><tr><th>Nome</th><th>Posto (Cliente)</th><th>Cargo</th><th>Cidade</th><th>Turno</th></tr></thead>
+          <tbody id="vagas-fechadas-hoje-tbody"></tbody>
+        </table>
         </div>
       </div>
 
@@ -2279,13 +2289,15 @@
       var tr = document.createElement('tr');
       tr.style.cursor = 'pointer';
       var badges = '';
-      if(v.urgente) badges += '<span class="pill red" style="margin-right:4px;">Urgente</span>';
+      var daysOpen = null;
       if(v.createdAt){
-        var daysOpen = Math.floor((Date.now() - new Date(v.createdAt).getTime()) / 86400000);
-        if(daysOpen >= VAGA_SLA_DAYS){
-          badges += '<span class="pill amber">⚠ '+daysOpen+' dias em aberto</span>';
-        }
+        daysOpen = Math.floor((Date.now() - new Date(v.createdAt).getTime()) / 86400000);
       }
+      if(v.urgente) badges += '<span class="pill red" style="margin-right:4px;">Urgente</span>';
+      if(daysOpen !== null && daysOpen >= VAGA_SLA_DAYS){
+        badges += '<span class="pill amber">⚠ '+daysOpen+' dias em aberto</span>';
+      }
+      var slaCellClass = daysOpen === null ? '' : (daysOpen >= VAGA_SLA_DAYS ? ' style="color:var(--red);font-weight:600;"' : ' style="color:var(--teal);"');
       tr.innerHTML =
         '<td>'+v.cliente+'</td>'+
         '<td>'+v.cargo+'</td>'+
@@ -2293,6 +2305,7 @@
         '<td class="mono">'+v.qtd+'</td>'+
         '<td class="mono">'+fechadas+'</td>'+
         '<td class="mono">'+faltantes+'</td>'+
+        '<td class="mono"'+slaCellClass+'>'+(daysOpen === null ? '—' : daysOpen+'d')+'</td>'+
         '<td>'+(badges || '—')+'</td>'+
         '<td></td>';
       tr.addEventListener('click', function(){ openVagaModal(idx); });
@@ -2339,7 +2352,7 @@
       tbody.appendChild(tr);
     });
     if(!anyOpen){
-      tbody.innerHTML = '<tr><td colspan="8" class="kanban-empty">Nenhuma vaga em aberto para esse filtro.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9" class="kanban-empty">Nenhuma vaga em aberto para esse filtro.</td></tr>';
     }
     updateVagasStats();
     renderVagasFechadas();
@@ -4628,6 +4641,35 @@
     }).join('');
   }
 
+  function renderVagasFechadasHoje(){
+    var tbody = document.getElementById('vagas-fechadas-hoje-tbody');
+    if(!tbody) return;
+
+    var contratadosHoje = [];
+    vagasData.forEach(function(v){
+      (v.hired||[]).forEach(function(h){
+        if(h.hiredAt && h.hiredAt.slice(0,10) === todayISO){
+          contratadosHoje.push({nome:h.name, cliente:v.cliente, cargo:v.cargo, cidade:v.cidade, turno:v.turno});
+        }
+      });
+    });
+
+    if(contratadosHoje.length === 0){
+      tbody.innerHTML = '<tr><td colspan="5" class="kanban-empty">Nenhuma contratação hoje ainda.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = contratadosHoje.map(function(c){
+      return '<tr>'+
+        '<td>'+c.nome+'</td>'+
+        '<td>'+c.cliente+'</td>'+
+        '<td>'+c.cargo+'</td>'+
+        '<td>'+(c.cidade||'—')+'</td>'+
+        '<td>'+(c.turno||'—')+'</td>'+
+        '</tr>';
+    }).join('');
+  }
+
   function renderIndicadoresGerais(){
     var elVagas = document.getElementById('indic-vagas-abertas');
     if(!elVagas) return;
@@ -5728,6 +5770,7 @@
     renderVagas();
     renderClientes();
     renderCustos();
+    renderVagasFechadasHoje();
     renderAuditLog();
     renderIndicadoresPeriodo();
     renderAcompanhamento();
