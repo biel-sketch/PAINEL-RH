@@ -1414,6 +1414,65 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="edit-history-overlay">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <div class="modal-title">Editar entrevista realizada</div>
+        <div class="modal-sub" id="eh-subtitle">—</div>
+      </div>
+      <button class="modal-close" id="eh-close" aria-label="Fechar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <form id="eh-form">
+      <div class="modal-body">
+        <div class="perm-note" id="eh-warning" style="display:flex;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+          Isso corrige o registro histórico dessa entrevista. Se a pessoa já avançou na Esteira, foi contratada, ou já está em Reprovados/Banco de talentos, tente também ajustar o registro dela nessas telas, se necessário.
+        </div>
+        <div class="form-row">
+          <div class="form-field">
+            <label for="eh-nome">Nome</label>
+            <input type="text" id="eh-nome" required>
+          </div>
+          <div class="form-field">
+            <label for="eh-telefone">Telefone</label>
+            <input type="text" id="eh-telefone">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-field">
+            <label for="eh-cpf">CPF</label>
+            <input type="text" id="eh-cpf" class="mono" placeholder="000.000.000-00">
+          </div>
+          <div class="form-field">
+            <label for="eh-endereco">Endereço</label>
+            <input type="text" id="eh-endereco">
+          </div>
+        </div>
+        <div class="form-field">
+          <label for="eh-situacao">Situação</label>
+          <select id="eh-situacao">
+            <option value="aprovado">Aprovado</option>
+            <option value="reprovado">Reprovado</option>
+            <option value="nao_compareceu">Não compareceu</option>
+            <option value="banco_talentos">Aprovado — banco de talentos</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label for="eh-obs">Obs / motivo</label>
+          <textarea id="eh-obs"></textarea>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-ghost" id="eh-cancel" style="flex:1;">Cancelar</button>
+        <button type="submit" class="btn btn-primary" style="flex:1;">Salvar alterações</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <div class="modal-overlay" id="talent-action-overlay">
   <div class="modal">
     <div class="modal-head">
@@ -3725,7 +3784,12 @@
       '<div class="candidate-role">'+h.vaga+' · '+h.cidade+'</div>'+
       '<span class="pill '+modClass+'" style="flex-shrink:0;">'+modLabel+'</span>'+
       '<span class="pill '+resultClass+'" style="flex-shrink:0;">'+situacaoLabels[h.situacao]+'</span>'+
-      '<div class="interviewer"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>'+h.entrevistador+'</div>';
+      '<div class="interviewer"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>'+h.entrevistador+'</div>'+
+      '<button type="button" class="data-btn hist-edit-btn" style="padding:5px 10px;flex-shrink:0;">Editar</button>';
+    row.querySelector('.hist-edit-btn').addEventListener('click', function(e){
+      e.stopPropagation();
+      openEditHistoryModal(h.id);
+    });
     return row;
   }
 
@@ -5834,6 +5898,120 @@
       });
     });
   }
+
+  var editHistoryId = null;
+  function openEditHistoryModal(id){
+    var h = interviewsHistoryData.find(function(x){ return x.id === id; });
+    if(!h) return;
+    editHistoryId = id;
+    document.getElementById('eh-subtitle').textContent = h.vaga+' · '+h.cidade+' · '+formatDateBR(h.date);
+    document.getElementById('eh-nome').value = h.name || '';
+    document.getElementById('eh-telefone').value = h.telefone || '';
+    document.getElementById('eh-cpf').value = h.cpf || '';
+    document.getElementById('eh-endereco').value = h.endereco || '';
+    document.getElementById('eh-situacao').value = h.situacao || 'aprovado';
+    document.getElementById('eh-obs').value = h.obs || '';
+    document.getElementById('edit-history-overlay').classList.add('open');
+  }
+  function closeEditHistoryModal(){
+    document.getElementById('edit-history-overlay').classList.remove('open');
+    editHistoryId = null;
+  }
+  document.getElementById('eh-close').addEventListener('click', closeEditHistoryModal);
+  document.getElementById('eh-cancel').addEventListener('click', closeEditHistoryModal);
+  document.getElementById('edit-history-overlay').addEventListener('click', function(e){ if(e.target === this) closeEditHistoryModal(); });
+
+  document.getElementById('eh-form').addEventListener('submit', function(e){
+    e.preventDefault();
+    if(!editHistoryId) return;
+    var alvoId = editHistoryId;
+    var novoNome = document.getElementById('eh-nome').value.trim();
+    var novoTelefone = document.getElementById('eh-telefone').value.trim();
+    var novoCpf = document.getElementById('eh-cpf').value.trim();
+    var novoEndereco = document.getElementById('eh-endereco').value.trim();
+    var novaSituacao = document.getElementById('eh-situacao').value;
+    var novaObs = document.getElementById('eh-obs').value.trim();
+
+    if(!novoNome){ showToast('O nome não pode ficar vazio.'); return; }
+
+    var sincronizouOutroRegistro = false;
+
+    safeDeleteAndSync(function(){
+      var hIdx = interviewsHistoryData.findIndex(function(x){ return x.id === alvoId; });
+      if(hIdx === -1) return;
+      var h = interviewsHistoryData[hIdx];
+      var nomeAntigo = h.name;
+      var situacaoAntiga = h.situacao;
+
+      function criarNaSituacao(situacao){
+        if(situacao === 'aprovado'){
+          candidatesData[genRecordId('cand')] = {name:novoNome, role:h.vaga, cargoPretendido:h.vaga, cliente:null, cidade:h.cidade, telefone:novoTelefone, cpf:novoCpf, endereco:novoEndereco, stage:'aprovado', checklist:null, jus:'sim', nota:h.nota||0, stageSince:new Date().toISOString(), interviewDate:h.date};
+        } else if(situacao === 'banco_talentos'){
+          talentBankData.push({id:genRecordId('tb'), name:novoNome, telefone:novoTelefone, cpf:novoCpf, endereco:novoEndereco, vaga:h.vaga, cidade:h.cidade, obs:novaObs, jus:'sim', nota:h.nota||0});
+        } else {
+          reprovadosData.push({id:genRecordId('rep'), name:novoNome, telefone:novoTelefone, cpf:novoCpf, endereco:novoEndereco, vaga:h.vaga, cidade:h.cidade, situacao:situacao, jus:'sim', obs:novaObs});
+        }
+      }
+
+      // Tenta localizar o registro correspondente (se a pessoa ainda estiver na mesma tela de
+      // quando a decisão foi tomada) e sincronizar junto — se já tiver avançado ou sido removida
+      // de lá, só o histórico é corrigido mesmo.
+      if(situacaoAntiga === 'aprovado'){
+        var candId = Object.keys(candidatesData).find(function(cid){ return candidatesData[cid].name === nomeAntigo; });
+        if(candId){
+          if(novaSituacao === 'aprovado'){
+            var cand = candidatesData[candId];
+            cand.name = novoNome; cand.telefone = novoTelefone; cand.cpf = novoCpf; cand.endereco = novoEndereco;
+          } else {
+            delete candidatesData[candId];
+            markDeleted('candidates', candId);
+            criarNaSituacao(novaSituacao);
+          }
+          sincronizouOutroRegistro = true;
+        }
+      } else if(situacaoAntiga === 'reprovado' || situacaoAntiga === 'nao_compareceu'){
+        var repIdx = reprovadosData.findIndex(function(r){ return r.name === nomeAntigo; });
+        if(repIdx !== -1){
+          if(novaSituacao === 'reprovado' || novaSituacao === 'nao_compareceu'){
+            var rep = reprovadosData[repIdx];
+            rep.name = novoNome; rep.telefone = novoTelefone; rep.cpf = novoCpf; rep.endereco = novoEndereco; rep.situacao = novaSituacao; rep.obs = novaObs;
+          } else {
+            var repAlvo = reprovadosData[repIdx];
+            reprovadosData.splice(repIdx, 1);
+            markDeleted('reprovados', repAlvo.id);
+            criarNaSituacao(novaSituacao);
+          }
+          sincronizouOutroRegistro = true;
+        }
+      } else if(situacaoAntiga === 'banco_talentos'){
+        var tbIdx = talentBankData.findIndex(function(t){ return t.name === nomeAntigo; });
+        if(tbIdx !== -1){
+          if(novaSituacao === 'banco_talentos'){
+            var tb = talentBankData[tbIdx];
+            tb.name = novoNome; tb.telefone = novoTelefone; tb.cpf = novoCpf; tb.endereco = novoEndereco; tb.obs = novaObs;
+          } else {
+            var tbAlvo = talentBankData[tbIdx];
+            talentBankData.splice(tbIdx, 1);
+            markDeleted('talentBank', tbAlvo.id);
+            criarNaSituacao(novaSituacao);
+          }
+          sincronizouOutroRegistro = true;
+        }
+      }
+
+      // O histórico em si é sempre corrigido, independente de ter achado o registro em outro lugar.
+      h.name = novoNome; h.telefone = novoTelefone; h.cpf = novoCpf; h.endereco = novoEndereco; h.situacao = novaSituacao; h.obs = novaObs;
+
+      logAudit('Editou o registro de entrevista de '+nomeAntigo+
+        (novoNome !== nomeAntigo ? ' (nome corrigido para '+novoNome+')' : '')+
+        (situacaoAntiga !== novaSituacao ? ' — situação alterada de "'+situacaoLabels[situacaoAntiga]+'" para "'+situacaoLabels[novaSituacao]+'"' : ''));
+    }).then(function(){
+      closeEditHistoryModal();
+      showToast(sincronizouOutroRegistro
+        ? 'Entrevista atualizada — registro correspondente também foi sincronizado.'
+        : 'Histórico da entrevista atualizado. Não encontramos um registro ativo dessa pessoa em outra tela (pode já ter avançado ou sido removido) — se necessário, ajuste manualmente lá.');
+    });
+  });
 
   document.getElementById('alerts-bell-btn').addEventListener('click', openAlertsCenter);
   document.getElementById('alerts-close').addEventListener('click', closeAlertsCenter);
