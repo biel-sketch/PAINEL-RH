@@ -321,6 +321,11 @@
   .cfg-panel-head{display:flex;align-items:center;gap:8px;padding:14px 18px;border-bottom:1px solid var(--line);}
   .cfg-panel-head svg{color:var(--teal);flex-shrink:0;}
   .cfg-panel-title{font-family:var(--font-display);font-weight:600;font-size:14px;}
+  details summary{color:var(--text);list-style:none;user-select:none;}
+  details summary::-webkit-details-marker{display:none;}
+  details summary::before{content:'▸';display:inline-block;margin-right:8px;color:var(--teal);transition:transform 0.15s;}
+  details[open] summary::before{transform:rotate(90deg);}
+  details summary:hover{border-color:var(--line-strong);}
   .cfg-panel-body{padding:16px 18px;}
   .cfg-row{padding:12px 0;border-bottom:1px solid var(--line);}
   .cfg-row:last-child{border-bottom:none;}
@@ -893,6 +898,21 @@
         </table>
         </div>
       </div>
+
+      <details style="margin-top:14px;">
+        <summary style="cursor:pointer;padding:14px 18px;background:var(--card);border:1px solid var(--line);border-radius:10px;font-family:var(--font-display);font-weight:600;font-size:13px;">
+          Arquivados (<span id="retorno-arquivados-count">0</span>)
+        </summary>
+        <div class="panel" style="margin-top:8px;">
+          <div style="padding:10px 18px;font-size:11.5px;color:var(--text-dim);">Retornos concluídos há mais de 2 dias são arquivados automaticamente. Você pode desarquivar qualquer um se precisar.</div>
+          <div style="overflow-x:auto;">
+          <table>
+            <thead><tr><th>Nome</th><th>Telefone</th><th>Cargo pretendido</th><th>Cidade</th><th>Arquivado em</th><th>Ações</th></tr></thead>
+            <tbody id="retorno-arquivados-tbody"></tbody>
+          </table>
+          </div>
+        </div>
+      </details>
     </div>
 
     <div class="view" id="view-indicadores">
@@ -1915,7 +1935,7 @@
     {user:'marilia', email:'dp.3@loginserv.com.br', name:'Marilia', role:'dp'},
     {user:'elaine silva', email:'rh@loginserv.com.br', name:'Elaine Silva', role:'analista'},
     {user:'daniela', email:'rh.2@loginserv.com.br', name:'Daniela', role:'analista'},
-    {user:'marcella', email:'rh.1@loginserv.com.br', name:'Marcella', role:'assistente'},
+    {user:'marcela', email:'rh.1@loginserv.com.br', name:'Marcela', role:'assistente'},
     {user:'leonardo', email:'dp.2@loginserv.com.br', name:'Leonardo', role:'dp'},
     {user:'renata', email:'rh.3@loginserv.com.br', name:'Renata', role:'assistente'},
     {user:'comercial', email:'comercial@loginserv.com.br', name:'Comercial', role:'comercial'},
@@ -3160,7 +3180,11 @@
     });
     var recrutadores = ordemRecrutadores.map(function(nome){ return {nome: nome, qtd: porRecrutador[nome]}; });
 
-    return {total: candidatosHoje.length, grupos: gruposPorCliente, recrutadores: recrutadores};
+    var bancoTalentosQtd = interviewsHistoryData.filter(function(h){
+      return h.date === diaAlvo && h.situacao === 'banco_talentos';
+    }).length;
+
+    return {total: candidatosHoje.length, grupos: gruposPorCliente, recrutadores: recrutadores, bancoTalentosQtd: bancoTalentosQtd};
   }
 
   function montarTextoAprovadosDoDia(){
@@ -3184,6 +3208,11 @@
     dados.recrutadores.forEach(function(r){
       linhas.push(r.nome+' : '+String(r.qtd).padStart(2,'0'));
     });
+
+    if(dados.bancoTalentosQtd > 0){
+      linhas.push('');
+      linhas.push('BANCO DE TALENTOS: '+String(dados.bancoTalentosQtd).padStart(2,'0'));
+    }
 
     return linhas.join('\n');
   }
@@ -3231,6 +3260,10 @@
       }).join('') +
       '</div>';
 
+    var bancoTalentosHtml = dados.bancoTalentosQtd > 0
+      ? '<div class="rp-section"><div class="rp-section-title">Banco de talentos</div><div class="rp-stats-row"><div class="rp-stat"><div class="rp-stat-value amber">'+String(dados.bancoTalentosQtd).padStart(2,'0')+'</div><div class="rp-stat-label">pessoa(s) foram para o Banco de Talentos '+diaLabel+'</div></div></div></div>'
+      : '';
+
     var html =
       '<div class="rp-page">' +
         '<div class="rp-header">' +
@@ -3239,6 +3272,7 @@
         '</div>' +
         '<div class="rp-section"><div class="rp-section-title">Aprovados '+diaLabel+' — envio para exame médico</div>'+gruposHtml+'</div>' +
         '<div class="rp-section"><div class="rp-section-title">Total de aprovados por recrutador</div>'+recrutadoresHtml+'</div>' +
+        bancoTalentosHtml +
         '<div class="rp-footer">PAINEL-RH — Grupo Login Serv</div>' +
       '</div>';
 
@@ -5302,10 +5336,13 @@
   function renderRetorno(){
     var tbody = document.getElementById('retorno-tbody');
     tbody.innerHTML = '';
-    if(retornoData.length === 0){
+    var ativos = retornoData.filter(function(r){ return !r.arquivado; });
+    var arquivados = retornoData.filter(function(r){ return r.arquivado; });
+
+    if(ativos.length === 0){
       tbody.innerHTML = '<tr><td colspan="7" class="kanban-empty">Nenhum retorno pendente.</td></tr>';
     } else {
-      retornoData.forEach(function(r, idx){
+      ativos.forEach(function(r, idx){
         var tr = document.createElement('tr');
         var canEdit = !currentRole || currentRole.editRetorno;
         var mensagem = 'Olá '+r.name+'! Aqui é da Grupo Login Serv. Estamos entrando em contato sobre a vaga de '+r.vaga+' ('+r.cidade+'). Você ainda tem interesse em conversar sobre novas oportunidades?';
@@ -5337,7 +5374,10 @@
           var alvoId = r.id;
           safeDeleteAndSync(function(){
             var idxFresh = retornoData.findIndex(function(x){ return x.id === alvoId; });
-            if(idxFresh !== -1) retornoData[idxFresh].done = newVal;
+            if(idxFresh !== -1){
+              retornoData[idxFresh].done = newVal;
+              retornoData[idxFresh].doneAt = newVal ? new Date().toISOString() : null;
+            }
             logAudit((newVal?'Marcou retorno concluído: ':'Desmarcou retorno concluído: ')+r.name);
           });
         });
@@ -5357,12 +5397,50 @@
         tbody.appendChild(tr);
       });
     }
+
+    renderRetornoArquivados(arquivados);
     updateRetornoStats();
   }
 
+  function renderRetornoArquivados(arquivados){
+    var summaryCount = document.getElementById('retorno-arquivados-count');
+    var tbody = document.getElementById('retorno-arquivados-tbody');
+    if(!summaryCount || !tbody) return;
+
+    summaryCount.textContent = arquivados.length;
+    if(arquivados.length === 0){
+      tbody.innerHTML = '<tr><td colspan="6" class="kanban-empty">Nenhum retorno arquivado ainda.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = '';
+    arquivados.forEach(function(r){
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td>'+r.name+'</td>'+
+        '<td class="mono">'+r.telefone+'</td>'+
+        '<td>'+r.vaga+'</td>'+
+        '<td>'+r.cidade+'</td>'+
+        '<td class="mono">'+(r.arquivadoAt ? formatDateBR(r.arquivadoAt.slice(0,10)) : '—')+'</td>'+
+        '<td><button type="button" class="data-btn retorno-desarquivar-btn" style="padding:5px 10px;">Desarquivar</button></td>';
+      tr.querySelector('.retorno-desarquivar-btn').addEventListener('click', function(){
+        var alvoId = r.id;
+        safeDeleteAndSync(function(){
+          var idx = retornoData.findIndex(function(x){ return x.id === alvoId; });
+          if(idx !== -1){ retornoData[idx].arquivado = false; retornoData[idx].arquivadoAt = null; }
+          logAudit('Desarquivou o retorno de '+r.name);
+        }).then(function(){
+          showToast('Retorno desarquivado.');
+        });
+      });
+      tbody.appendChild(tr);
+    });
+  }
+
   function updateRetornoStats(){
-    var total = retornoData.length;
-    var done = retornoData.filter(function(r){ return r.done; }).length;
+    var ativos = retornoData.filter(function(r){ return !r.arquivado; });
+    var total = ativos.length;
+    var done = ativos.filter(function(r){ return r.done; }).length;
     var pct = total === 0 ? 0 : Math.round((done/total)*100);
     var doneCountEl = document.getElementById('retorno-done-count');
     var totalLabelEl = document.getElementById('retorno-total-label');
@@ -5745,8 +5823,32 @@
   function scheduleNextSync(){
     if(cloudSyncTimer) clearTimeout(cloudSyncTimer);
     cloudSyncTimer = setTimeout(function(){
-      syncFromCloud().then(scheduleNextSync).catch(scheduleNextSync);
+      syncFromCloud().then(function(){
+        limparRetornosExpirados();
+        scheduleNextSync();
+      }).catch(scheduleNextSync);
     }, CLOUD_SYNC_INTERVAL);
+  }
+
+  // Retornos marcados como concluídos (enviados) há mais de 2 dias são removidos automaticamente
+  // — não precisam mais ficar ocupando a lista depois desse prazo.
+  function limparRetornosExpirados(){
+    var doisDiasMs = 2 * 86400000;
+    var expirados = retornoData.filter(function(r){
+      return r.done && !r.arquivado && r.doneAt && (Date.now() - new Date(r.doneAt).getTime()) >= doisDiasMs;
+    });
+    if(expirados.length === 0) return;
+
+    safeDeleteAndSync(function(){
+      expirados.forEach(function(r){
+        var idx = retornoData.findIndex(function(x){ return x.id === r.id; });
+        if(idx !== -1){
+          retornoData[idx].arquivado = true;
+          retornoData[idx].arquivadoAt = new Date().toISOString();
+        }
+      });
+      logAudit('Arquivou automaticamente '+expirados.length+' retorno(s) concluído(s) há mais de 2 dias');
+    });
   }
 
   function startCloudSync(){
@@ -5754,7 +5856,10 @@
     if(cached) applyAppState(cached);
     renderAllViews();
     cloudSyncActive = true;
-    syncFromCloud().then(scheduleNextSync).catch(scheduleNextSync);
+    syncFromCloud().then(function(){
+      limparRetornosExpirados();
+      scheduleNextSync();
+    }).catch(scheduleNextSync);
   }
 
   // Enquanto a aba estiver em segundo plano (usuário trocou de aba, minimizou, etc.), pausa
