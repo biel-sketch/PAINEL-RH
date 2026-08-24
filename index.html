@@ -592,6 +592,10 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 21V8l9-5 9 5v13"/><path d="M9 21v-6h6v6"/></svg>
         <span class="nav-label">Clientes</span>
       </div>
+      <div class="nav-item" data-view="custos">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5a2.5 2.5 0 0 1 2.5-1.5h.5a2 2 0 0 1 0 4h-1a2 2 0 0 0 0 4h.5a2.5 2.5 0 0 0 2.5-1.5"/></svg>
+        <span class="nav-label">Custos</span>
+      </div>
       <div class="nav-item" data-view="config">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V21a2 2 0 1 1-4 0v-.2a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.6-1H3a2 2 0 1 1 0-4h.2a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.6V3a2 2 0 1 1 4 0v.2a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.6 1H21a2 2 0 1 1 0 4h-.2a1.7 1.7 0 0 0-1.6 1z"/></svg>
         <span class="nav-label">Configurações</span>
@@ -988,7 +992,7 @@
         </div>
       </div>
 
-      <div class="indic-grid" style="grid-template-columns:repeat(2,1fr);">
+      <div class="indic-grid" style="grid-template-columns:repeat(5,1fr);">
         <div class="stat-card">
           <div class="stat-label">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 6L9 17l-5-5"/></svg>
@@ -1004,6 +1008,30 @@
           </div>
           <div class="stat-value red" id="indic-desistencias">0</div>
           <div class="stat-sub" id="indic-desistencias-sub">candidatos ou contratados que desistiram</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+            No Banco de talentos
+          </div>
+          <div class="stat-value amber" id="indic-banco-talentos">0</div>
+          <div class="stat-sub" id="indic-banco-talentos-sub">candidatos aprovados aguardando vaga</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+            SLA de contratação
+          </div>
+          <div class="stat-value" id="indic-sla-contratacao">—</div>
+          <div class="stat-sub" id="indic-sla-contratacao-sub">média de dias em aberto (vagas atuais)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 9v4M12 17h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+            Prejuízo desistência de exames
+          </div>
+          <div class="stat-value red" id="indic-prejuizo-exames">R$ 0,00</div>
+          <div class="stat-sub" id="indic-prejuizo-exames-sub">0 caso(s)</div>
         </div>
       </div>
 
@@ -1067,6 +1095,38 @@
       </div>
     </div>
 
+    <div class="view" id="view-custos">
+      <div class="topbar">
+        <div class="page-title">Custos de exames</div>
+      </div>
+      <div class="stats" style="grid-template-columns:repeat(3,1fr);">
+        <div class="stat-card">
+          <div class="stat-label">Total investido em exames</div>
+          <div class="stat-value" id="custos-total-investido">R$ 0,00</div>
+          <div class="stat-sub" id="custos-total-sub">0 exame(s) confirmado(s)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Prejuízo com desistência</div>
+          <div class="stat-value red" id="custos-total-prejuizo">R$ 0,00</div>
+          <div class="stat-sub" id="custos-prejuizo-sub">0 caso(s)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Aproveitamento</div>
+          <div class="stat-value teal" id="custos-aproveitamento">—</div>
+          <div class="stat-sub">exames que não viraram prejuízo</div>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:14px;">
+        <div class="panel-head"><div class="panel-title">Exames realizados</div></div>
+        <div style="overflow-x:auto;">
+        <table>
+          <thead><tr><th>Nome</th><th>Cargo</th><th>Cliente</th><th>Exames feitos</th><th>Custo</th><th>Situação</th><th>Ações</th></tr></thead>
+          <tbody id="custos-tbody"></tbody>
+        </table>
+        </div>
+      </div>
+    </div>
+
     <div class="view" id="view-config">
       <div class="topbar"><div class="page-title">Configurações</div></div>
       <div class="perm-note" id="config-perm-note" style="display:none;">
@@ -1125,6 +1185,29 @@
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg>
             Arquivar mês anterior
           </button>
+        </div>
+      </div>
+
+      <div class="cfg-panel">
+        <div class="cfg-panel-head">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5a2.5 2.5 0 0 1 2.5-1.5h.5a2 2 0 0 1 0 4h-1a2 2 0 0 0 0 4h.5a2.5 2.5 0 0 0 2.5-1.5"/></svg>
+          <div class="cfg-panel-title">Exames por cargo e cidade</div>
+        </div>
+        <div class="cfg-panel-body">
+          <div style="font-size:12px;color:var(--text-dim);margin-bottom:12px;">Defina quais exames (e o valor de cada um) são exigidos para cada combinação de cargo + cidade — o valor pode mudar de cidade pra cidade. Isso é usado na Esteira, na etapa Exames, e nos custos/prejuízo de desistência.</div>
+          <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+            <select id="epc-cargo-select" style="flex:1;min-width:180px;background:#0D1526;border:1px solid var(--line-strong);border-radius:8px;padding:8px 10px;color:var(--text);font-family:var(--font-body);font-size:13px;">
+              <option value="">Selecione um cargo...</option>
+            </select>
+            <input type="text" id="epc-cidade-input" list="epc-cidades-list" placeholder="Cidade (ex: MARILIA - SP)" style="flex:1;min-width:180px;background:#0D1526;border:1px solid var(--line-strong);border-radius:8px;padding:8px 10px;color:var(--text);font-family:var(--font-body);font-size:13px;">
+            <datalist id="epc-cidades-list"></datalist>
+          </div>
+          <div id="epc-exames-do-cargo" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;"></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <input type="text" id="epc-novo-nome" placeholder="Nome do exame" style="flex:2;min-width:160px;background:#0D1526;border:1px solid var(--line-strong);border-radius:8px;padding:8px 10px;color:var(--text);font-family:var(--font-body);font-size:13px;">
+            <input type="number" id="epc-novo-valor" placeholder="Valor (R$)" min="0" step="0.01" style="flex:1;min-width:100px;background:#0D1526;border:1px solid var(--line-strong);border-radius:8px;padding:8px 10px;color:var(--text);font-family:var(--font-body);font-size:13px;">
+            <button class="btn btn-primary" id="epc-add-btn" type="button" style="flex-shrink:0;">Adicionar</button>
+          </div>
         </div>
       </div>
 
@@ -1795,7 +1878,6 @@
     {user:'debora', email:'debora@loginserv.com.br', name:'Debora', role:'administrador'},
     {user:'carol', email:'carol@loginserv.com.br', name:'Carol', role:'administrador'},
     {user:'gabriel', email:'gabriel@loginserv.com.br', name:'Gabriel', role:'administrador'},
-    {user:'mariana', email:'mariana@loginserv.com.br', name:'Mariana', role:'administrador'},
     {user:'simone', email:'simone@loginserv.com.br', name:'Simone', role:'operacional'},
     {user:'elaine', email:'elaine@loginserv.com.br', name:'Elaine', role:'supervisor'},
     {user:'mariah', email:'dp@loginserv.com.br', name:'Mariah', role:'dp'},
@@ -1807,7 +1889,8 @@
     {user:'leonardo', email:'dp.2@loginserv.com.br', name:'Leonardo', role:'dp'},
     {user:'renata', email:'rh.3@loginserv.com.br', name:'Renata', role:'assistente'},
     {user:'comercial', email:'comercial@loginserv.com.br', name:'Comercial', role:'comercial'},
-    {user:'joao', email:'joaovitor@loginserv.com.br', name:'Joao', role:'comercial'}
+    {user:'joao', email:'joaovitor@loginserv.com.br', name:'Joao', role:'comercial'},
+    {user:'mariana', email:'mariana@loginserv.com.br', name:'Mariana', role:'administrador'}
   ];
 
   function findUserRoleByUsername(username){
@@ -2443,6 +2526,16 @@
             if(idxNaFresh !== -1){
               nomesDesistentes.push(pessoa.name);
               reprovadosData.push({id:genRecordId('rep'), name:pessoa.name, telefone:pessoa.telefone, vaga:freshV.cargo, cliente:freshV.cliente, situacao:'reprovado', jus:'sim', obs:'Desistência'});
+              var pessoaFresh = freshV.hired[idxNaFresh];
+              if(pessoaFresh.custoExameId){
+                var custoRef = custosExameData.find(function(x){ return x.id === pessoaFresh.custoExameId; });
+                if(custoRef && !custoRef.prejuizo){
+                  custoRef.prejuizo = true;
+                  custoRef.motivoPrejuizo = 'Desistência após contratação';
+                  custoRef.dataPrejuizo = new Date().toISOString();
+                  logAudit('Prejuízo de exame registrado — '+pessoa.name+' desistiu após contratado, exame já realizado (R$ '+(custoRef.custoTotal||0).toFixed(2).replace('.',',')+')');
+                }
+              }
               freshV.hired.splice(idxNaFresh, 1);
               markDeleted('hiredPeople', alvoKey+'|'+pessoa.name);
             }
@@ -2512,6 +2605,38 @@
 
     contratadosEl.textContent = totalContratados;
     desistenciasEl.textContent = totalDesistencias;
+
+    var bancoTalentosEl = document.getElementById('indic-banco-talentos');
+    if(bancoTalentosEl) bancoTalentosEl.textContent = talentBankData.length;
+
+    var slaEl = document.getElementById('indic-sla-contratacao');
+    var slaSubEl = document.getElementById('indic-sla-contratacao-sub');
+    if(slaEl){
+      var vagasAbertasComData = vagasData.filter(function(v){
+        return (v.qtd - v.hired.length) > 0 && v.createdAt;
+      });
+      if(vagasAbertasComData.length === 0){
+        slaEl.textContent = '—';
+        if(slaSubEl) slaSubEl.textContent = 'nenhuma vaga em aberto no momento';
+      } else {
+        var somaDiasAbertos = vagasAbertasComData.reduce(function(s,v){
+          return s + Math.floor((Date.now() - new Date(v.createdAt).getTime()) / 86400000);
+        }, 0);
+        var mediaDias = (somaDiasAbertos / vagasAbertasComData.length).toFixed(1);
+        slaEl.innerHTML = mediaDias+'<span style="font-size:15px;color:var(--text-faint);"> dias</span>';
+        slaEl.className = 'stat-value' + (parseFloat(mediaDias) >= VAGA_SLA_DAYS ? ' red' : ' teal');
+        if(slaSubEl) slaSubEl.textContent = 'média entre '+vagasAbertasComData.length+' vaga(s) em aberto';
+      }
+    }
+
+    var prejuizoEl = document.getElementById('indic-prejuizo-exames');
+    var prejuizoSubEl = document.getElementById('indic-prejuizo-exames-sub');
+    if(prejuizoEl){
+      var casosPrejuizo = custosExameData.filter(function(c){ return c.prejuizo; });
+      var totalPrejuizo = casosPrejuizo.reduce(function(s,c){ return s+(c.custoTotal||0); }, 0);
+      prejuizoEl.textContent = 'R$ '+totalPrejuizo.toFixed(2).replace('.',',');
+      if(prejuizoSubEl) prejuizoSubEl.textContent = casosPrejuizo.length+' caso(s)';
+    }
   }
 
   var clientesData = [
@@ -2522,6 +2647,119 @@
     'EUCATEX','FEMSA - MARÍLIA'
   ].sort().map(function(nome){ return {nome:nome, cnpj:'', cidade:''}; });
   var clienteEditIndex = null;
+
+  function populateEpcCargoSelect(){
+    var sel = document.getElementById('epc-cargo-select');
+    if(!sel || typeof CARGOS_PRETENDIDOS === 'undefined') return;
+    var valorAtual = sel.value;
+    sel.innerHTML = '<option value="">Selecione um cargo...</option>' +
+      CARGOS_PRETENDIDOS.map(function(c){ return '<option value="'+c+'">'+c+'</option>'; }).join('');
+    if(valorAtual && CARGOS_PRETENDIDOS.indexOf(valorAtual) !== -1) sel.value = valorAtual;
+
+    var datalist = document.getElementById('epc-cidades-list');
+    if(datalist){
+      var cidadesSet = {};
+      (clientesData||[]).forEach(function(c){ if(c.cidade) cidadesSet[c.cidade] = true; });
+      Object.keys(candidatesData||{}).forEach(function(id){ if(candidatesData[id].cidade) cidadesSet[candidatesData[id].cidade] = true; });
+      datalist.innerHTML = Object.keys(cidadesSet).sort().map(function(c){ return '<option value="'+c+'">'; }).join('');
+    }
+  }
+
+  function renderEpcExamesDoCargo(){
+    var container = document.getElementById('epc-exames-do-cargo');
+    var sel = document.getElementById('epc-cargo-select');
+    var cidadeInput = document.getElementById('epc-cidade-input');
+    if(!container || !sel || !cidadeInput) return;
+    var cargo = sel.value;
+    var cidade = cidadeInput.value.trim();
+    if(!cargo || !cidade){
+      container.innerHTML = '<div class="kanban-empty" style="padding:10px 0;">Selecione um cargo e digite a cidade acima para ver ou editar os exames dessa combinação.</div>';
+      return;
+    }
+    var chave = examesCargoKey(cargo, cidade);
+    var lista = EXAMES_POR_CARGO_CIDADE[chave] || [];
+    if(lista.length === 0){
+      container.innerHTML = '<div class="kanban-empty" style="padding:10px 0;">Nenhum exame cadastrado para "'+cargo+'" em "'+cidade+'" ainda.</div>';
+      return;
+    }
+    container.innerHTML = lista.map(function(ex, i){
+      return '<div style="display:flex;align-items:center;gap:10px;background:#0D1526;border:1px solid var(--line);border-radius:8px;padding:8px 12px;">'+
+        '<span style="flex:1;font-size:13px;">'+ex.nome+'</span>'+
+        '<span class="mono" style="color:var(--teal);">R$ '+ex.valor.toFixed(2).replace('.',',')+'</span>'+
+        '<button type="button" class="epc-del-exame" data-idx="'+i+'" style="background:transparent;border:none;color:var(--red);cursor:pointer;padding:2px;">'+
+          '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"/></svg>'+
+        '</button>'+
+        '</div>';
+    }).join('');
+    container.querySelectorAll('.epc-del-exame').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var idx = parseInt(btn.getAttribute('data-idx'), 10);
+        var exameNome = lista[idx].nome;
+        safeDeleteAndSync(function(){
+          if(EXAMES_POR_CARGO_CIDADE[chave]){
+            EXAMES_POR_CARGO_CIDADE[chave] = EXAMES_POR_CARGO_CIDADE[chave].filter(function(e){ return e.nome !== exameNome; });
+          }
+          logAudit('Removeu o exame "'+exameNome+'" do cargo "'+cargo+'" em "'+cidade+'"');
+        }).then(function(){
+          renderEpcExamesDoCargo();
+          showToast('Exame removido.');
+        });
+      });
+    });
+  }
+
+  function renderCustos(){
+    var tbody = document.getElementById('custos-tbody');
+    if(!tbody) return;
+
+    var totalInvestido = custosExameData.reduce(function(s,c){ return s+(c.custoTotal||0); }, 0);
+    var registrosPrejuizo = custosExameData.filter(function(c){ return c.prejuizo; });
+    var totalPrejuizo = registrosPrejuizo.reduce(function(s,c){ return s+(c.custoTotal||0); }, 0);
+    var aproveitamento = custosExameData.length === 0 ? null : Math.round(((custosExameData.length - registrosPrejuizo.length) / custosExameData.length) * 100);
+
+    document.getElementById('custos-total-investido').textContent = 'R$ '+totalInvestido.toFixed(2).replace('.',',');
+    document.getElementById('custos-total-sub').textContent = custosExameData.length+' exame(s) confirmado(s)';
+    document.getElementById('custos-total-prejuizo').textContent = 'R$ '+totalPrejuizo.toFixed(2).replace('.',',');
+    document.getElementById('custos-prejuizo-sub').textContent = registrosPrejuizo.length+' caso(s)';
+    document.getElementById('custos-aproveitamento').textContent = aproveitamento === null ? '—' : aproveitamento+'%';
+
+    if(custosExameData.length === 0){
+      tbody.innerHTML = '<tr><td colspan="7" class="kanban-empty">Nenhum custo de exame registrado ainda.</td></tr>';
+      return;
+    }
+
+    var ordenado = custosExameData.slice().sort(function(a,b){ return new Date(b.dataConfirmacao) - new Date(a.dataConfirmacao); });
+    tbody.innerHTML = '';
+    ordenado.forEach(function(c){
+      var tr = document.createElement('tr');
+      var examesTexto = (c.exames||[]).map(function(e){ return e.nome; }).join(', ');
+      var situacaoHtml = c.prejuizo
+        ? '<span class="pill red">Prejuízo — '+(c.motivoPrejuizo||'Desistência')+'</span>'
+        : '<span class="pill teal">Normal</span>';
+      tr.innerHTML =
+        '<td>'+c.name+'</td>'+
+        '<td>'+(c.role||'—')+'</td>'+
+        '<td>'+(c.cliente||'—')+'</td>'+
+        '<td>'+(examesTexto||'—')+'</td>'+
+        '<td class="mono">R$ '+(c.custoTotal||0).toFixed(2).replace('.',',')+'</td>'+
+        '<td>'+situacaoHtml+'</td>'+
+        '<td><button type="button" class="data-btn custo-del-btn" style="padding:5px 10px;color:var(--red);">Excluir</button></td>';
+      tr.querySelector('.custo-del-btn').addEventListener('click', function(){
+        var alvoId = c.id;
+        var confirmed = window.confirm('Excluir o registro de custo de exame de "'+c.name+'"?');
+        if(!confirmed) return;
+        safeDeleteAndSync(function(){
+          var idx2 = custosExameData.findIndex(function(x){ return x.id === alvoId; });
+          if(idx2 !== -1) custosExameData.splice(idx2, 1);
+          markDeleted('custos', alvoId);
+          logAudit('Excluiu o registro de custo de exame de '+c.name);
+        }).then(function(){
+          showToast('Registro excluído.');
+        });
+      });
+      tbody.appendChild(tr);
+    });
+  }
 
   function renderClientes(){
     var tbody = document.getElementById('clientes-tbody');
@@ -2892,6 +3130,9 @@
       '<div class="rp-stat"><div class="rp-stat-value">'+txt('indic-comparecimento')+'</div><div class="rp-stat-label">Comparecimento no mês</div></div>' +
       '<div class="rp-stat"><div class="rp-stat-value">'+txt('indic-contratados')+'</div><div class="rp-stat-label">Contratados</div></div>' +
       '<div class="rp-stat"><div class="rp-stat-value">'+txt('indic-desistencias')+'</div><div class="rp-stat-label">Desistências</div></div>' +
+      '<div class="rp-stat"><div class="rp-stat-value">'+txt('indic-banco-talentos')+'</div><div class="rp-stat-label">No Banco de talentos</div></div>' +
+      '<div class="rp-stat"><div class="rp-stat-value">'+txt('indic-sla-contratacao')+'</div><div class="rp-stat-label">SLA de contratação</div></div>' +
+      '<div class="rp-stat"><div class="rp-stat-value">'+txt('indic-prejuizo-exames')+'</div><div class="rp-stat-label">Prejuízo exames</div></div>' +
       '</div>';
 
     // ---- 5. Alertas pendentes ----
@@ -3048,8 +3289,9 @@
     reprovadosData = [];
     talentBankData = [];
     retornoData = [];
+    custosExameData = [];
     deletedIds.vagas = []; deletedIds.interviews = []; deletedIds.candidates = [];
-    deletedIds.reprovados = []; deletedIds.talentBank = []; deletedIds.retorno = []; deletedIds.hiredPeople = [];
+    deletedIds.reprovados = []; deletedIds.talentBank = []; deletedIds.retorno = []; deletedIds.hiredPeople = []; deletedIds.custos = [];
     renderAllViews();
     logAudit('Zerou vagas, entrevistas, esteira, reprovados, banco de talentos e retorno');
     forceOverwriteCloud();
@@ -3094,9 +3336,10 @@
     talentBankData = [];
     interviewsHistoryData = [];
     retornoData = [];
+    custosExameData = [];
     auditLog = [];
     interviewCounter = 0;
-    deletedIds = {interviews:[], vagas:[], candidates:[], reprovados:[], talentBank:[], retorno:[], clientes:[], hiredPeople:[]};
+    deletedIds = {interviews:[], vagas:[], candidates:[], reprovados:[], talentBank:[], retorno:[], clientes:[], hiredPeople:[], custos:[]};
 
     renderAllViews();
     logAudit('Zerou TODOS os dados do sistema');
@@ -3155,10 +3398,27 @@
   var talentBankData = [];
   var interviewCounter = 0;
 
+  // ⚠️ DADOS DE EXEMPLO — serão substituídos pela lista real de exames e valores por cargo+cidade que o usuário vai enviar.
+  // Estrutura: chave "CARGO|CIDADE" -> lista de exames exigidos para essa combinação, cada um com seu valor.
+  function examesCargoKey(cargo, cidade){ return (cargo||'')+'|'+(cidade||''); }
+  var EXAMES_POR_CARGO_CIDADE = {
+    'AUXILIAR DE EXPEDIÇÃO|MARILIA - SP': [
+      {nome:'Exame admissional', valor:50},
+      {nome:'Audiometria', valor:60}
+    ],
+    'OPERADOR DE EMPILHADEIRA|BAURU - SP': [
+      {nome:'Exame admissional', valor:55},
+      {nome:'Exame toxicológico', valor:120},
+      {nome:'Audiometria', valor:65}
+    ]
+  };
+
+  var custosExameData = [];
+
   // ---- Registro de exclusões (tombstones) ----
   // Evita que um dado apagado "volte" quando um navegador com dados desatualizados sincroniza.
-  var deletedIds = {interviews:[], vagas:[], candidates:[], reprovados:[], talentBank:[], retorno:[], clientes:[], hiredPeople:[]};
-  var DELETED_CATEGORIES = ['interviews','vagas','candidates','reprovados','talentBank','retorno','clientes','hiredPeople'];
+  var deletedIds = {interviews:[], vagas:[], candidates:[], reprovados:[], talentBank:[], retorno:[], clientes:[], hiredPeople:[], custos:[]};
+  var DELETED_CATEGORIES = ['interviews','vagas','candidates','reprovados','talentBank','retorno','clientes','hiredPeople','custos'];
 
   function markDeleted(category, key){
     if(!deletedIds[category]) deletedIds[category] = [];
@@ -3754,6 +4014,18 @@
     return '<span style="color:var(--amber);letter-spacing:1px;">'+s+'</span>';
   }
 
+  function updateNaoCompareceuAvailability(){
+    var cpfVal = document.getElementById('ia-cpf').value.trim();
+    var situacaoSel = document.getElementById('ia-situacao');
+    var opt = situacaoSel.querySelector('option[value="nao_compareceu"]');
+    if(opt){
+      opt.disabled = !!cpfVal;
+      if(cpfVal && situacaoSel.value === 'nao_compareceu'){
+        situacaoSel.value = 'aprovado';
+      }
+    }
+  }
+
   function openInterviewModal(id){
     var iv = interviewsData.find(function(i){ return i.id === id; });
     if(!iv) return;
@@ -3768,6 +4040,8 @@
     document.getElementById('ia-nota').value = '0';
     updateStarDisplay(0);
     applyJusLock();
+    updateNaoCompareceuAvailability();
+    document.getElementById('ia-cpf').oninput = updateNaoCompareceuAvailability;
 
     var canEdit = !currentRole || currentRole.editCandidatos;
     document.getElementById('ia-jus').disabled = !canEdit;
@@ -3789,19 +4063,29 @@
       var nota = parseInt(document.getElementById('ia-nota').value, 10) || 0;
       var cpf = document.getElementById('ia-cpf').value.trim() || iv.cpf;
 
-      if(!cpf){
-        document.getElementById('ia-cpf').style.borderColor = 'var(--red)';
-        document.getElementById('ia-cpf').focus();
-        showToast('Informe o CPF do candidato para registrar a decisão.');
-        return;
+      if(situacao === 'nao_compareceu'){
+        if(cpf){
+          document.getElementById('ia-cpf').style.borderColor = 'var(--red)';
+          document.getElementById('ia-cpf').focus();
+          showToast('"Não compareceu" só pode ser usado quando o CPF está vazio — limpe o campo ou escolha outra situação.');
+          return;
+        }
+        document.getElementById('ia-cpf').style.borderColor = '';
+      } else {
+        if(!cpf){
+          document.getElementById('ia-cpf').style.borderColor = 'var(--red)';
+          document.getElementById('ia-cpf').focus();
+          showToast('Informe o CPF do candidato para registrar essa decisão.');
+          return;
+        }
+        if(!isValidCPF(cpf)){
+          document.getElementById('ia-cpf').style.borderColor = 'var(--red)';
+          document.getElementById('ia-cpf').focus();
+          showToast('CPF inválido. Verifique o número digitado.');
+          return;
+        }
+        document.getElementById('ia-cpf').style.borderColor = '';
       }
-      if(!isValidCPF(cpf)){
-        document.getElementById('ia-cpf').style.borderColor = 'var(--red)';
-        document.getElementById('ia-cpf').focus();
-        showToast('CPF inválido. Verifique o número digitado.');
-        return;
-      }
-      document.getElementById('ia-cpf').style.borderColor = '';
 
       if(jus === 'nao' && !obs){
         obs = 'Reprovado na verificação jurídica (Jus).';
@@ -4491,7 +4775,8 @@
       listEl.appendChild(note);
     }
     if(c.stage === 'exames'){
-      if(!c.exame) c.exame = {status:'agendado', data:'', obs:''};
+      if(!c.exame) c.exame = {status:'agendado', data:'', obs:'', examesSelecionados:[], custoTotal:0, feito:false};
+      if(!c.exame.examesSelecionados) c.exame.examesSelecionados = [];
       var wrap = document.createElement('div');
       wrap.innerHTML =
         '<div class="form-field">'+
@@ -4506,6 +4791,12 @@
           '<label for="exm-data-input">Data do exame</label>'+
           '<input type="date" id="exm-data-input">'+
         '</div>'+
+        '<div class="form-field" id="exm-lista-field" style="display:none;">'+
+          '<label>Exames a realizar <span style="color:var(--text-faint);font-weight:400;">(selecione um ou mais)</span></label>'+
+          '<div id="exm-lista-checks" style="display:flex;flex-direction:column;gap:6px;background:#0D1526;border:1px solid var(--line-strong);border-radius:8px;padding:10px 12px;"></div>'+
+          '<div style="margin-top:6px;font-size:12.5px;color:var(--text-dim);">Custo total: <b id="exm-custo-total" style="color:var(--teal);font-family:var(--font-mono);">R$ 0,00</b></div>'+
+        '</div>'+
+        (c.exame.feito ? '<div class="form-field"><div class="pill teal" style="display:inline-block;">✓ Exame confirmado como realizado — custo de R$ '+(c.exame.custoTotal||0).toFixed(2).replace('.',',')+' registrado</div></div>' : '')+
         '<div class="form-field" id="exm-obs-field" style="display:none;">'+
           '<label for="exm-obs-input">Motivo / observação</label>'+
           '<textarea id="exm-obs-input" placeholder="Descreva o motivo da retenção..."></textarea>'+
@@ -4514,10 +4805,35 @@
 
       var dataField = wrap.querySelector('#exm-data-field');
       var obsField = wrap.querySelector('#exm-obs-field');
+      var listaField = wrap.querySelector('#exm-lista-field');
+      var listaChecks = wrap.querySelector('#exm-lista-checks');
+      var custoTotalEl = wrap.querySelector('#exm-custo-total');
       var dataInput = wrap.querySelector('#exm-data-input');
       var obsInput = wrap.querySelector('#exm-obs-input');
       dataInput.value = c.exame.data || '';
       obsInput.value = c.exame.obs || '';
+
+      function formatBRL(v){ return 'R$ '+(v||0).toFixed(2).replace('.',','); }
+      var examesDoCargo = EXAMES_POR_CARGO_CIDADE[examesCargoKey(c.role, c.cidade)] || [];
+
+      function renderListaExames(){
+        if(examesDoCargo.length === 0){
+          listaChecks.innerHTML = '<div style="font-size:12px;color:var(--text-faint);font-style:italic;">Nenhum exame configurado para "'+c.role+'" em "'+(c.cidade||'—')+'" ainda. Configure em Configurações → Exames por cargo e cidade.</div>';
+          custoTotalEl.textContent = formatBRL(0);
+          return;
+        }
+        listaChecks.innerHTML = examesDoCargo.map(function(ex, i){
+          var marcado = c.exame.examesSelecionados.some(function(s){ return s.nome === ex.nome; });
+          return '<label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">'+
+            '<input type="checkbox" class="exm-exame-check" data-idx="'+i+'" '+(marcado?'checked':'')+(canEdit && !c.exame.feito ? '' : ' disabled')+'>'+
+            '<span style="flex:1;">'+ex.nome+'</span>'+
+            '<span class="mono" style="color:var(--text-dim);">'+formatBRL(ex.valor)+'</span>'+
+            '</label>';
+        }).join('');
+        var total = c.exame.examesSelecionados.reduce(function(s,e){ return s+(e.valor||0); }, 0);
+        custoTotalEl.textContent = formatBRL(total);
+      }
+      renderListaExames();
 
       function refreshExameUI(){
         wrap.querySelectorAll('.exm-status-btn').forEach(function(b){
@@ -4534,6 +4850,7 @@
           }
         });
         dataField.style.display = c.exame.status === 'agendado' ? 'block' : 'none';
+        listaField.style.display = 'block';
         obsField.style.display = c.exame.status === 'retido' ? 'block' : 'none';
       }
       refreshExameUI();
@@ -4541,19 +4858,71 @@
       if(!canEdit){
         wrap.querySelectorAll('button, input, textarea').forEach(function(el){ el.disabled = true; });
       } else {
-        wrap.querySelectorAll('.exm-status-btn').forEach(function(btn){
-          btn.addEventListener('click', function(){
-            var novoStatus = btn.getAttribute('data-status');
+        listaChecks.querySelectorAll('.exm-exame-check').forEach(function(chk){
+          chk.addEventListener('change', function(){
+            var ex = examesDoCargo[parseInt(chk.getAttribute('data-idx'), 10)];
             safeDeleteAndSync(function(){
               var freshC = candidatesData[id];
               if(freshC){
-                if(!freshC.exame) freshC.exame = {status:'agendado', data:'', obs:''};
-                freshC.exame.status = novoStatus;
+                if(!freshC.exame) freshC.exame = {status:'agendado', data:'', obs:'', examesSelecionados:[], custoTotal:0, feito:false};
+                if(!freshC.exame.examesSelecionados) freshC.exame.examesSelecionados = [];
+                var jaTem = freshC.exame.examesSelecionados.findIndex(function(s){ return s.nome === ex.nome; });
+                if(chk.checked && jaTem === -1) freshC.exame.examesSelecionados.push({nome:ex.nome, valor:ex.valor});
+                else if(!chk.checked && jaTem !== -1) freshC.exame.examesSelecionados.splice(jaTem, 1);
+                freshC.exame.custoTotal = freshC.exame.examesSelecionados.reduce(function(s,e){ return s+(e.valor||0); }, 0);
               }
-              logAudit('Atualizou status do exame de '+(freshC ? freshC.name : c.name)+' para "'+({agendado:'Agendado',aprovado:'Aprovado',retido:'Retido'}[novoStatus])+'"');
+              logAudit('Atualizou exames selecionados de '+(freshC ? freshC.name : c.name));
             }).then(function(){
               openCandidateModal(id);
             });
+          });
+        });
+
+        wrap.querySelectorAll('.exm-status-btn').forEach(function(btn){
+          btn.addEventListener('click', function(){
+            var novoStatus = btn.getAttribute('data-status');
+            var precisaConfirmar = (novoStatus === 'aprovado' || novoStatus === 'retido') && !c.exame.feito;
+
+            if(precisaConfirmar){
+              if(c.exame.examesSelecionados.length === 0){
+                showToast('Selecione ao menos um exame antes de marcar como '+(novoStatus==='aprovado'?'Aprovado':'Retido')+'.');
+                return;
+              }
+              var jaFeito = window.confirm('O exame já foi feito?\n\nSe confirmar, o custo de '+formatBRL(c.exame.custoTotal)+' será registrado na aba Custos.');
+              safeDeleteAndSync(function(){
+                var freshC = candidatesData[id];
+                if(freshC){
+                  if(!freshC.exame) freshC.exame = {status:'agendado', data:'', obs:'', examesSelecionados:[], custoTotal:0, feito:false};
+                  freshC.exame.status = novoStatus;
+                  if(jaFeito && !freshC.exame.feito){
+                    freshC.exame.feito = true;
+                    var novoCusto = {
+                      id: genRecordId('custo'), candidateRef: id,
+                      name: freshC.name, role: freshC.role, cliente: freshC.cliente || '—', cidade: freshC.cidade || '—',
+                      exames: freshC.exame.examesSelecionados.slice(), custoTotal: freshC.exame.custoTotal,
+                      dataConfirmacao: new Date().toISOString(), prejuizo:false, motivoPrejuizo:null, dataPrejuizo:null
+                    };
+                    custosExameData.push(novoCusto);
+                    freshC.custoExameId = novoCusto.id;
+                    logAudit('Confirmou exame realizado de '+freshC.name+' — custo de '+formatBRL(freshC.exame.custoTotal)+' registrado');
+                  }
+                }
+                logAudit('Atualizou status do exame de '+(freshC ? freshC.name : c.name)+' para "'+({agendado:'Agendado',aprovado:'Aprovado',retido:'Retido'}[novoStatus])+'"');
+              }).then(function(){
+                openCandidateModal(id);
+              });
+            } else {
+              safeDeleteAndSync(function(){
+                var freshC = candidatesData[id];
+                if(freshC){
+                  if(!freshC.exame) freshC.exame = {status:'agendado', data:'', obs:'', examesSelecionados:[], custoTotal:0, feito:false};
+                  freshC.exame.status = novoStatus;
+                }
+                logAudit('Atualizou status do exame de '+(freshC ? freshC.name : c.name)+' para "'+({agendado:'Agendado',aprovado:'Aprovado',retido:'Retido'}[novoStatus])+'"');
+              }).then(function(){
+                openCandidateModal(id);
+              });
+            }
           });
         });
         dataInput.addEventListener('change', function(){
@@ -4561,7 +4930,7 @@
           safeDeleteAndSync(function(){
             var freshC = candidatesData[id];
             if(freshC){
-              if(!freshC.exame) freshC.exame = {status:'agendado', data:'', obs:''};
+              if(!freshC.exame) freshC.exame = {status:'agendado', data:'', obs:'', examesSelecionados:[], custoTotal:0, feito:false};
               freshC.exame.data = novaData;
             }
             logAudit('Registrou data do exame de '+(freshC ? freshC.name : c.name)+': '+novaData);
@@ -4573,7 +4942,7 @@
           safeDeleteAndSync(function(){
             var freshC = candidatesData[id];
             if(freshC){
-              if(!freshC.exame) freshC.exame = {status:'agendado', data:'', obs:''};
+              if(!freshC.exame) freshC.exame = {status:'agendado', data:'', obs:'', examesSelecionados:[], custoTotal:0, feito:false};
               freshC.exame.obs = novaObs;
             }
             logAudit('Atualizou observação do exame de '+(freshC ? freshC.name : c.name));
@@ -4704,6 +5073,15 @@
         reprovadosData.push({id:genRecordId('rep'), name:freshC.name, telefone:freshC.telefone||'—', cpf:freshC.cpf, endereco:freshC.endereco, vaga:freshC.cargoPretendido||freshC.role, cidade:freshC.cidade, situacao:'reprovado', jus:freshC.jus||'sim', obs:obsDesistencia});
         delete candidatesData[id];
         markDeleted('candidates', id);
+        if(freshC.custoExameId){
+          var custoRef = custosExameData.find(function(x){ return x.id === freshC.custoExameId; });
+          if(custoRef && !custoRef.prejuizo){
+            custoRef.prejuizo = true;
+            custoRef.motivoPrejuizo = 'Desistência na esteira';
+            custoRef.dataPrejuizo = new Date().toISOString();
+            logAudit('Prejuízo de exame registrado — '+freshC.name+' desistiu após exame já realizado (R$ '+(custoRef.custoTotal||0).toFixed(2).replace('.',',')+')');
+          }
+        }
         logAudit('Registrou desistência de '+freshC.name);
       }).then(function(){
         closeCandidateModal();
@@ -4719,7 +5097,7 @@
       return v.cargo === c.role && v.cliente === c.cliente && (v.qtd - v.hired.length) > 0;
     });
     if(vaga){
-      vaga.hired.push({name:c.name, telefone:c.telefone || '—', cpf:c.cpf, endereco:c.endereco, hiredAt:new Date().toISOString(), interviewDate:c.interviewDate || null});
+      vaga.hired.push({name:c.name, telefone:c.telefone || '—', cpf:c.cpf, endereco:c.endereco, hiredAt:new Date().toISOString(), interviewDate:c.interviewDate || null, custoExameId:c.custoExameId || null});
       vaga.history = vaga.history || [];
       vaga.history.push({ts:new Date().toISOString(), acao:'Integração de '+c.name});
       if(vaga.qtd - vaga.hired.length <= 0){
@@ -4853,14 +5231,23 @@
   // SINCRONIZAÇÃO EM NUVEM (Firebase Realtime Database)
   // Sincroniza os dados entre todos os usuários ativos a cada 20s.
   // ============================================================
-  var CLOUD_DB_URL = 'https://painel-rh-loginserv-default-rtdb.firebaseio.com/painel-rh.json';
-  var CLOUD_SYNC_INTERVAL = 20000;
+  var CLOUD_DB_BASE = 'https://painel-rh-b5d12-default-rtdb.firebaseio.com/painel-rh';
+  var CLOUD_DB_URL = CLOUD_DB_BASE + '.json';
+  var CLOUD_META_URL = CLOUD_DB_BASE + '/_meta/lastUpdated.json';
+  var CLOUD_SYNC_INTERVAL = 25000;
   var CLOUD_CACHE_KEY = 'painelrh_cloud_cache_v1';
   var CLOUD_PENDING_KEY = 'painelrh_cloud_pending_v1';
 
   var cloudSyncBusy = false;
   var cloudSyncTimer = null;
   var cloudLastSync = null;
+  var cloudSyncActive = false;
+  // Guarda o último "carimbo de hora" que sabemos que está na nuvem. Antes de baixar o banco
+  // inteiro, checamos só esse valor (poucos bytes) — se não mudou, ninguém alterou nada desde
+  // a última vez, e a gente economiza a transferência completa. Isso reduz MUITO o consumo de
+  // dados do plano gratuito do Firebase, já que a maior parte das checagens periódicas não
+  // encontra nenhuma mudança real.
+  var lastKnownCloudTimestamp = 0;
 
   function genRecordId(prefix){
     return prefix+'-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,8);
@@ -4876,6 +5263,8 @@
       talentBankData: talentBankData,
       interviewsHistoryData: interviewsHistoryData,
       retornoData: retornoData,
+      custosExameData: custosExameData,
+      examesPorCargo: EXAMES_POR_CARGO_CIDADE,
       auditLog: auditLog,
       cargosPretendidos: CARGOS_PRETENDIDOS,
       interviewCounter: interviewCounter,
@@ -4932,8 +5321,12 @@
         exame: (c.exame && typeof c.exame === 'object') ? {
           status: c.exame.status || 'agendado',
           data: c.exame.data || '',
-          obs: c.exame.obs || ''
-        } : undefined
+          obs: c.exame.obs || '',
+          examesSelecionados: Array.isArray(c.exame.examesSelecionados) ? c.exame.examesSelecionados : [],
+          custoTotal: typeof c.exame.custoTotal === 'number' ? c.exame.custoTotal : 0,
+          feito: !!c.exame.feito
+        } : undefined,
+        custoExameId: c.custoExameId || undefined
       });
     });
     return result;
@@ -4954,6 +5347,12 @@
     if(s.talentBankData) talentBankData = normalizeArray(s.talentBankData);
     if(s.interviewsHistoryData) interviewsHistoryData = normalizeArray(s.interviewsHistoryData);
     if(s.retornoData) retornoData = normalizeArray(s.retornoData);
+    if(s.custosExameData) custosExameData = normalizeArray(s.custosExameData);
+    if(s.examesPorCargo && typeof s.examesPorCargo === 'object'){
+      Object.keys(s.examesPorCargo).forEach(function(k){
+        EXAMES_POR_CARGO_CIDADE[k] = s.examesPorCargo[k];
+      });
+    }
     if(s.auditLog) auditLog = normalizeArray(s.auditLog);
     if(s.cargosPretendidos){
       var mergedCargos = mergeCargos(s.cargosPretendidos, CARGOS_PRETENDIDOS);
@@ -4988,6 +5387,12 @@
       return r.json();
     });
   }
+  function cloudGetTimestamp(){
+    return fetch(CLOUD_META_URL + '?_ts=' + Date.now(), {cache: 'no-store'}).then(function(r){
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      return r.json();
+    });
+  }
   function cloudPut(state){
     return fetch(CLOUD_DB_URL, {
       method:'PUT',
@@ -4996,6 +5401,16 @@
     }).then(function(r){
       if(!r.ok) throw new Error('HTTP '+r.status);
       return r.json();
+    });
+  }
+  // Sempre que gravamos o estado inteiro na nuvem, carimbamos com a hora atual e guardamos
+  // esse valor localmente — assim, da próxima vez, a checagem leve sabe que já está em dia.
+  function stampAndPut(state){
+    var ts = Date.now();
+    state._meta = {lastUpdated: ts};
+    return cloudPut(state).then(function(){
+      lastKnownCloudTimestamp = ts;
+      return state;
     });
   }
 
@@ -5064,6 +5479,8 @@
       talentBankData: filterTombstoned(mergeArraysByKey(cloud.talentBankData, local.talentBankData, function(i){ return i.id; }), mergedDel.talentBank, function(i){ return i.id; }),
       interviewsHistoryData: mergeArraysByKey(cloud.interviewsHistoryData, local.interviewsHistoryData, function(i){ return i.id; }),
       retornoData: filterTombstoned(mergeArraysByKey(cloud.retornoData, local.retornoData, function(i){ return i.id; }), mergedDel.retorno, function(i){ return i.id; }),
+      custosExameData: filterTombstoned(mergeArraysByKey(cloud.custosExameData, local.custosExameData, function(i){ return i.id; }), mergedDel.custos, function(i){ return i.id; }),
+      examesPorCargo: Object.assign({}, local.examesPorCargo||{}, cloud.examesPorCargo||{}),
       auditLog: mergeArraysByKey(cloud.auditLog, local.auditLog, function(i){ return i.id; }),
       cargosPretendidos: mergeCargos(cloud.cargosPretendidos, local.cargosPretendidos),
       interviewCounter: Math.max(cloud.interviewCounter||0, local.interviewCounter||0),
@@ -5105,34 +5522,68 @@
       return pushToCloud();
     }
 
-    setSyncIndicator('syncing', 'Sincronizando...');
-    return cloudGet().then(function(cloud){
-      applyAppState(cloud);
-      renderAllViews();
-      saveLocalCache(collectAppState());
-      cloudLastSync = new Date();
-      setSyncIndicator('ok', 'Sincronizado');
-      cloudSyncBusy = false;
+    function fazerFetchCompleto(){
+      setSyncIndicator('syncing', 'Sincronizando...');
+      return cloudGet().then(function(cloud){
+        applyAppState(cloud);
+        renderAllViews();
+        saveLocalCache(collectAppState());
+        cloudLastSync = new Date();
+        lastKnownCloudTimestamp = (cloud._meta && cloud._meta.lastUpdated) || Date.now();
+        setSyncIndicator('ok', 'Sincronizado');
+        cloudSyncBusy = false;
+      });
+    }
+
+    return cloudGetTimestamp().then(function(remoteTs){
+      if(remoteTs && remoteTs === lastKnownCloudTimestamp){
+        // Nada mudou na nuvem desde a última vez — não precisa baixar tudo de novo.
+        setSyncIndicator('ok', 'Sincronizado');
+        cloudSyncBusy = false;
+        return;
+      }
+      return fazerFetchCompleto();
     }).catch(function(err){
-      console.error('Erro ao sincronizar:', err);
-      setSyncIndicator('err', 'Sem conexão');
-      cloudSyncBusy = false;
+      console.error('Erro na checagem leve, tentando o caminho completo:', err);
+      return fazerFetchCompleto().catch(function(err2){
+        console.error('Erro ao sincronizar:', err2);
+        setSyncIndicator('err', 'Sem conexão');
+        cloudSyncBusy = false;
+      });
     });
   }
 
   function pushToCloud(){
     setSyncIndicator('syncing', 'Salvando...');
     var local = collectAppState();
-    return cloudGet().then(function(cloud){
-      var merged = buildMergedState(cloud, local);
-      return cloudPut(merged).then(function(){
-        applyAppState(merged);
-        renderAllViews();
-        clearPendingChanges();
-        saveLocalCache(collectAppState());
-        cloudLastSync = new Date();
-        setSyncIndicator('ok', 'Sincronizado');
+
+    function mesclarComNuvemCompleta(){
+      return cloudGet().then(function(cloud){
+        var merged = buildMergedState(cloud, local);
+        return stampAndPut(merged).then(function(){
+          applyAppState(merged);
+          renderAllViews();
+          clearPendingChanges();
+          saveLocalCache(collectAppState());
+          cloudLastSync = new Date();
+          setSyncIndicator('ok', 'Sincronizado');
+        });
       });
+    }
+
+    return cloudGetTimestamp().then(function(remoteTs){
+      if(remoteTs && remoteTs === lastKnownCloudTimestamp){
+        // Nossa cópia local já está em dia com a nuvem — não precisa buscar tudo antes de gravar.
+        return stampAndPut(local).then(function(){
+          applyAppState(local);
+          renderAllViews();
+          clearPendingChanges();
+          saveLocalCache(collectAppState());
+          cloudLastSync = new Date();
+          setSyncIndicator('ok', 'Sincronizado');
+        });
+      }
+      return mesclarComNuvemCompleta();
     }).catch(function(err){
       console.error('Erro ao salvar na nuvem:', err);
       markPendingChanges();
@@ -5152,8 +5603,22 @@
     var cached = loadLocalCache();
     if(cached) applyAppState(cached);
     renderAllViews();
+    cloudSyncActive = true;
     syncFromCloud().then(scheduleNextSync).catch(scheduleNextSync);
   }
+
+  // Enquanto a aba estiver em segundo plano (usuário trocou de aba, minimizou, etc.), pausa
+  // completamente a sincronização automática — economiza dados sem prejudicar nada, já que
+  // ninguém está olhando pra tela mesmo. Assim que a aba volta a ficar visível, sincroniza na
+  // hora e retoma o ciclo normal.
+  document.addEventListener('visibilitychange', function(){
+    if(!cloudSyncActive) return;
+    if(document.hidden){
+      if(cloudSyncTimer) clearTimeout(cloudSyncTimer);
+    } else {
+      syncFromCloud().then(scheduleNextSync).catch(scheduleNextSync);
+    }
+  });
 
   // ============================================================
   // SIDEBAR COLAPSÁVEL
@@ -5176,6 +5641,7 @@
   })();
 
   function stopCloudSync(){
+    cloudSyncActive = false;
     if(cloudSyncTimer) clearTimeout(cloudSyncTimer);
     cloudSyncTimer = null;
   }
@@ -5187,13 +5653,22 @@
   // aplica a exclusão e sobrescreve a nuvem diretamente (sem merge, senão o item "voltaria"
   // no próximo merge, do mesmo jeito que acontecia no bug do "Zerar tudo").
   function safeDeleteAndSync(applyDeletion){
-    setSyncIndicator('syncing', 'Excluindo...');
-    return cloudGet().then(function(cloud){
-      var merged = buildMergedState(cloud, collectAppState());
-      applyAppState(merged);
-      applyDeletion();
-      renderAllViews();
-      return forceOverwriteCloud();
+    setSyncIndicator('syncing', 'Salvando...');
+    return cloudGetTimestamp().then(function(remoteTs){
+      if(remoteTs && remoteTs === lastKnownCloudTimestamp){
+        // Já sabemos que nosso estado local está igual ao da nuvem — aplica a mudança direto,
+        // sem precisar buscar tudo de novo.
+        applyDeletion();
+        renderAllViews();
+        return forceOverwriteCloud();
+      }
+      return cloudGet().then(function(cloud){
+        var merged = buildMergedState(cloud, collectAppState());
+        applyAppState(merged);
+        applyDeletion();
+        renderAllViews();
+        return forceOverwriteCloud();
+      });
     }).catch(function(err){
       console.error('Erro ao excluir (aplicando localmente e tentando de novo depois):', err);
       applyDeletion();
@@ -5208,7 +5683,7 @@
   function forceOverwriteCloud(){
     setSyncIndicator('syncing', 'Salvando...');
     var local = collectAppState();
-    return cloudPut(local).then(function(){
+    return stampAndPut(local).then(function(){
       clearPendingChanges();
       saveLocalCache(local);
       cloudLastSync = new Date();
@@ -5238,10 +5713,12 @@
     renderRetorno();
     renderVagas();
     renderClientes();
+    renderCustos();
     renderAuditLog();
     renderIndicadoresPeriodo();
     renderAcompanhamento();
     renderAlertsCenter();
+    populateEpcCargoSelect();
   }
 
   renderAllViews();
@@ -5268,6 +5745,33 @@
         primaryBtn.click();
       }
     }
+  });
+
+  document.getElementById('epc-cargo-select').addEventListener('change', renderEpcExamesDoCargo);
+  document.getElementById('epc-cidade-input').addEventListener('input', renderEpcExamesDoCargo);
+  document.getElementById('epc-add-btn').addEventListener('click', function(){
+    var cargo = document.getElementById('epc-cargo-select').value;
+    var cidade = document.getElementById('epc-cidade-input').value.trim();
+    var nome = document.getElementById('epc-novo-nome').value.trim();
+    var valor = parseFloat(document.getElementById('epc-novo-valor').value);
+    if(!cargo){ showToast('Selecione um cargo primeiro.'); return; }
+    if(!cidade){ showToast('Digite a cidade primeiro.'); return; }
+    if(!nome){ showToast('Digite o nome do exame.'); return; }
+    if(isNaN(valor) || valor < 0){ showToast('Digite um valor válido.'); return; }
+
+    var chave = examesCargoKey(cargo, cidade);
+    safeDeleteAndSync(function(){
+      if(!EXAMES_POR_CARGO_CIDADE[chave]) EXAMES_POR_CARGO_CIDADE[chave] = [];
+      var jaExiste = EXAMES_POR_CARGO_CIDADE[chave].findIndex(function(e){ return e.nome.toLowerCase() === nome.toLowerCase(); });
+      if(jaExiste !== -1) EXAMES_POR_CARGO_CIDADE[chave][jaExiste].valor = valor;
+      else EXAMES_POR_CARGO_CIDADE[chave].push({nome:nome, valor:valor});
+      logAudit('Adicionou/atualizou o exame "'+nome+'" ('+cargo+' — '+cidade+') — R$ '+valor.toFixed(2).replace('.',','));
+    }).then(function(){
+      document.getElementById('epc-novo-nome').value = '';
+      document.getElementById('epc-novo-valor').value = '';
+      renderEpcExamesDoCargo();
+      showToast('Exame salvo para "'+cargo+'" em "'+cidade+'".');
+    });
   });
 
   document.getElementById('alerts-bell-btn').addEventListener('click', openAlertsCenter);
