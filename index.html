@@ -592,10 +592,6 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 21V8l9-5 9 5v13"/><path d="M9 21v-6h6v6"/></svg>
         <span class="nav-label">Clientes</span>
       </div>
-      <div class="nav-item" data-view="custos">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5a2.5 2.5 0 0 1 2.5-1.5h.5a2 2 0 0 1 0 4h-1a2 2 0 0 0 0 4h.5a2.5 2.5 0 0 0 2.5-1.5"/></svg>
-        <span class="nav-label">Custos</span>
-      </div>
       <div class="nav-item" data-view="config">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V21a2 2 0 1 1-4 0v-.2a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.6-1H3a2 2 0 1 1 0-4h.2a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.6V3a2 2 0 1 1 4 0v.2a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.6 1H21a2 2 0 1 1 0 4h-.2a1.7 1.7 0 0 0-1.6 1z"/></svg>
         <span class="nav-label">Configurações</span>
@@ -992,7 +988,7 @@
         </div>
       </div>
 
-      <div class="indic-grid" style="grid-template-columns:repeat(5,1fr);">
+      <div class="indic-grid" style="grid-template-columns:repeat(4,1fr);">
         <div class="stat-card">
           <div class="stat-label">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 6L9 17l-5-5"/></svg>
@@ -1024,14 +1020,6 @@
           </div>
           <div class="stat-value" id="indic-sla-contratacao">—</div>
           <div class="stat-sub" id="indic-sla-contratacao-sub">média de dias em aberto (vagas atuais)</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 9v4M12 17h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
-            Prejuízo desistência de exames
-          </div>
-          <div class="stat-value red" id="indic-prejuizo-exames">R$ 0,00</div>
-          <div class="stat-sub" id="indic-prejuizo-exames-sub">0 caso(s)</div>
         </div>
       </div>
 
@@ -1095,38 +1083,6 @@
       </div>
     </div>
 
-    <div class="view" id="view-custos">
-      <div class="topbar">
-        <div class="page-title">Custos de exames</div>
-      </div>
-      <div class="stats" style="grid-template-columns:repeat(3,1fr);">
-        <div class="stat-card">
-          <div class="stat-label">Total investido em exames</div>
-          <div class="stat-value" id="custos-total-investido">R$ 0,00</div>
-          <div class="stat-sub" id="custos-total-sub">0 exame(s) confirmado(s)</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Prejuízo com desistência</div>
-          <div class="stat-value red" id="custos-total-prejuizo">R$ 0,00</div>
-          <div class="stat-sub" id="custos-prejuizo-sub">0 caso(s)</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Aproveitamento</div>
-          <div class="stat-value teal" id="custos-aproveitamento">—</div>
-          <div class="stat-sub">exames que não viraram prejuízo</div>
-        </div>
-      </div>
-      <div class="panel" style="margin-top:14px;">
-        <div class="panel-head"><div class="panel-title">Exames realizados</div></div>
-        <div style="overflow-x:auto;">
-        <table>
-          <thead><tr><th>Nome</th><th>Cargo</th><th>Cliente</th><th>Exames feitos</th><th>Custo</th><th>Situação</th><th>Ações</th></tr></thead>
-          <tbody id="custos-tbody"></tbody>
-        </table>
-        </div>
-      </div>
-    </div>
-
     <div class="view" id="view-config">
       <div class="topbar"><div class="page-title">Configurações</div></div>
       <div class="perm-note" id="config-perm-note" style="display:none;">
@@ -1172,6 +1128,14 @@
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
               Relatório PDF
             </button>
+            <button class="data-btn" id="btn-pdf-aprovados-dia">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+              Aprovados do dia (PDF)
+            </button>
+            <button class="data-btn" id="btn-copiar-aprovados-dia">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              Copiar texto (WhatsApp)
+            </button>
             <button class="data-btn" id="btn-csv-comparecimento">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
               Comparecimento CSV
@@ -1185,29 +1149,6 @@
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg>
             Arquivar mês anterior
           </button>
-        </div>
-      </div>
-
-      <div class="cfg-panel">
-        <div class="cfg-panel-head">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5a2.5 2.5 0 0 1 2.5-1.5h.5a2 2 0 0 1 0 4h-1a2 2 0 0 0 0 4h.5a2.5 2.5 0 0 0 2.5-1.5"/></svg>
-          <div class="cfg-panel-title">Exames por cargo e cidade</div>
-        </div>
-        <div class="cfg-panel-body">
-          <div style="font-size:12px;color:var(--text-dim);margin-bottom:12px;">Defina quais exames (e o valor de cada um) são exigidos para cada combinação de cargo + cidade — o valor pode mudar de cidade pra cidade. Isso é usado na Esteira, na etapa Exames, e nos custos/prejuízo de desistência.</div>
-          <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
-            <select id="epc-cargo-select" style="flex:1;min-width:180px;background:#0D1526;border:1px solid var(--line-strong);border-radius:8px;padding:8px 10px;color:var(--text);font-family:var(--font-body);font-size:13px;">
-              <option value="">Selecione um cargo...</option>
-            </select>
-            <input type="text" id="epc-cidade-input" list="epc-cidades-list" placeholder="Cidade (ex: MARILIA - SP)" style="flex:1;min-width:180px;background:#0D1526;border:1px solid var(--line-strong);border-radius:8px;padding:8px 10px;color:var(--text);font-family:var(--font-body);font-size:13px;">
-            <datalist id="epc-cidades-list"></datalist>
-          </div>
-          <div id="epc-exames-do-cargo" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;"></div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <input type="text" id="epc-novo-nome" placeholder="Nome do exame" style="flex:2;min-width:160px;background:#0D1526;border:1px solid var(--line-strong);border-radius:8px;padding:8px 10px;color:var(--text);font-family:var(--font-body);font-size:13px;">
-            <input type="number" id="epc-novo-valor" placeholder="Valor (R$)" min="0" step="0.01" style="flex:1;min-width:100px;background:#0D1526;border:1px solid var(--line-strong);border-radius:8px;padding:8px 10px;color:var(--text);font-family:var(--font-body);font-size:13px;">
-            <button class="btn btn-primary" id="epc-add-btn" type="button" style="flex-shrink:0;">Adicionar</button>
-          </div>
         </div>
       </div>
 
@@ -1678,6 +1619,15 @@
           </div>
         </div>
         <div class="form-field">
+          <label for="ev-turno">Turno <span style="color:var(--text-faint);font-weight:400;">(opcional)</span></label>
+          <select id="ev-turno">
+            <option value="">Sem turno definido</option>
+            <option value="Turno A">Turno A</option>
+            <option value="Turno B">Turno B</option>
+            <option value="Turno C">Turno C</option>
+          </select>
+        </div>
+        <div class="form-field">
           <label for="ev-obs">Observação</label>
           <textarea id="ev-obs" placeholder="Alguma informação importante sobre essa vaga..." style="width:100%;min-height:70px;background:#0D1526;border:1px solid var(--line-strong);border-radius:8px;padding:9px 10px;color:var(--text);font-family:var(--font-body);font-size:13px;resize:vertical;"></textarea>
         </div>
@@ -1736,6 +1686,15 @@
             <label for="nv-qtd">Qtd de vagas</label>
             <input type="number" id="nv-qtd" min="1" value="1" required>
           </div>
+        </div>
+        <div class="form-field">
+          <label for="nv-turno">Turno <span style="color:var(--text-faint);font-weight:400;">(opcional)</span></label>
+          <select id="nv-turno">
+            <option value="">Sem turno definido</option>
+            <option value="Turno A">Turno A</option>
+            <option value="Turno B">Turno B</option>
+            <option value="Turno C">Turno C</option>
+          </select>
         </div>
         <div class="form-field">
           <label for="nv-obs">Observação</label>
@@ -2046,6 +2005,7 @@
     document.getElementById('ev-subtitle').textContent = v.cargo+' — '+v.cliente;
     document.getElementById('ev-cidade').value = v.cidade || '';
     document.getElementById('ev-qtd').value = v.qtd;
+    document.getElementById('ev-turno').value = v.turno || '';
     document.getElementById('ev-obs').value = v.obs || '';
     document.getElementById('ev-urgente').checked = !!v.urgente;
     document.getElementById('edit-vaga-overlay').classList.add('open');
@@ -2065,6 +2025,7 @@
     var alvoKey = editVagaKey;
     var novaCidade = document.getElementById('ev-cidade').value.trim();
     var novaQtd = parseInt(document.getElementById('ev-qtd').value, 10) || 1;
+    var novoTurno = document.getElementById('ev-turno').value;
     var novaObs = document.getElementById('ev-obs').value.trim();
     var novaUrgente = document.getElementById('ev-urgente').checked;
 
@@ -2075,6 +2036,7 @@
       var wasUrgente = !!v2.urgente;
       v2.cidade = novaCidade;
       v2.qtd = novaQtd;
+      v2.turno = novoTurno;
       v2.obs = novaObs;
       v2.urgente = novaUrgente;
       v2.history = v2.history || [];
@@ -2950,15 +2912,17 @@
     var cargo = document.getElementById('nv-cargo').value;
     var cidade = document.getElementById('nv-cidade').value;
     var qtd = parseInt(document.getElementById('nv-qtd').value, 10) || 1;
+    var turno = document.getElementById('nv-turno').value;
     var obs = document.getElementById('nv-obs').value.trim();
 
-    vagasData.push({cliente:cliente, cargo:cargo, cidade:cidade, qtd:qtd, obs:obs, urgente:false, createdAt:new Date().toISOString(), history:[{ts:new Date().toISOString(), acao:'Vaga cadastrada'}], hired:[]});
+    vagasData.push({cliente:cliente, cargo:cargo, cidade:cidade, qtd:qtd, turno:turno, obs:obs, urgente:false, createdAt:new Date().toISOString(), history:[{ts:new Date().toISOString(), acao:'Vaga cadastrada'}], hired:[]});
     renderVagas();
     logAudit('Cadastrou a vaga de '+cargo+' ('+cliente+' - '+cidade+', '+qtd+' vaga(s))');
     syncAfterChange();
 
     this.reset();
     document.getElementById('nv-qtd').value = 1;
+    document.getElementById('nv-turno').value = '';
     document.getElementById('nv-cargo-new-row').style.display = 'none';
     closeNewVaga();
     showToast('Vaga cadastrada.');
@@ -3068,6 +3032,99 @@
     gerarRelatorioPDF();
   });
 
+  // Monta o texto do relatório de "aprovados do dia", no formato usado pra enviar no WhatsApp:
+  // agrupado por cliente, com a quantidade por cargo/turno, separadores, e total por recrutador.
+  function montarTextoAprovadosDoDia(){
+    var candidatosHoje = Object.keys(candidatesData).map(function(id){ return candidatesData[id]; })
+      .filter(function(c){
+        return c.stage === 'aprovado' && c.cliente && c.stageSince && c.stageSince.slice(0,10) === todayISO;
+      });
+
+    if(candidatosHoje.length === 0) return null;
+
+    var porCliente = {};
+    var ordemClientes = [];
+    candidatosHoje.forEach(function(c){
+      if(!porCliente[c.cliente]){ porCliente[c.cliente] = []; ordemClientes.push(c.cliente); }
+      porCliente[c.cliente].push(c);
+    });
+
+    var linhas = [];
+    linhas.push('Hoje aprovamos e enviamos p exame médico na próxima semana:');
+    linhas.push('');
+
+    ordemClientes.forEach(function(cliente){
+      linhas.push(cliente.toUpperCase());
+      var porCargo = {};
+      var ordemCargos = [];
+      porCliente[cliente].forEach(function(c){
+        var chave = c.role + (c.turno ? ' '+c.turno : '');
+        if(!porCargo[chave]){ porCargo[chave] = 0; ordemCargos.push(chave); }
+        porCargo[chave]++;
+      });
+      ordemCargos.forEach(function(chave){
+        linhas.push(String(porCargo[chave]).padStart(2,'0')+' '+chave);
+      });
+      linhas.push('◇◇◇◇◇◇◇◇◇◇◇◇◇');
+    });
+
+    linhas.push('TOTAL DE APROVADOS');
+    var porRecrutador = {};
+    var ordemRecrutadores = [];
+    candidatosHoje.forEach(function(c){
+      var hist = interviewsHistoryData.find(function(h){ return h.name === c.name && h.date === todayISO && h.situacao === 'aprovado'; });
+      var nome = hist ? hist.entrevistador : 'Não identificado';
+      if(!porRecrutador[nome]){ porRecrutador[nome] = 0; ordemRecrutadores.push(nome); }
+      porRecrutador[nome]++;
+    });
+    ordemRecrutadores.forEach(function(nome){
+      linhas.push(nome+' : '+String(porRecrutador[nome]).padStart(2,'0'));
+    });
+
+    return linhas.join('\n');
+  }
+
+  document.getElementById('btn-copiar-aprovados-dia').addEventListener('click', function(){
+    var texto = montarTextoAprovadosDoDia();
+    if(!texto){
+      showToast('Nenhum candidato aprovado e designado hoje ainda.');
+      return;
+    }
+    navigator.clipboard.writeText(texto).then(function(){
+      showToast('Texto copiado — já pode colar no WhatsApp.');
+    }).catch(function(){
+      showToast('Não foi possível copiar automaticamente. Copie manualmente pelo PDF.');
+    });
+  });
+
+  document.getElementById('btn-pdf-aprovados-dia').addEventListener('click', function(){
+    var texto = montarTextoAprovadosDoDia();
+    if(!texto){
+      showToast('Nenhum candidato aprovado e designado hoje ainda.');
+      return;
+    }
+    var agora = new Date();
+    var dataGeracao = agora.toLocaleDateString('pt-BR')+' às '+agora.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+    var logoEl = document.querySelector('.brand-logo-img');
+    var logoSrc = logoEl ? logoEl.src : '';
+    var textoHtml = texto.split('\n').map(function(linha){
+      return '<div>'+(linha === '' ? '&nbsp;' : linha.replace(/</g,'&lt;'))+'</div>';
+    }).join('');
+
+    var html =
+      '<div class="rp-page">' +
+        '<div class="rp-header">' +
+          (logoSrc ? '<img src="'+logoSrc+'" alt="Logo">' : '') +
+          '<div><div class="rp-header-title">Aprovados do dia — Grupo Login Serv</div><div class="rp-header-sub">Gerado em '+dataGeracao+'</div></div>' +
+        '</div>' +
+        '<div class="rp-section" style="font-family:var(--font-mono);font-size:13.5px;line-height:1.7;white-space:pre-wrap;">'+textoHtml+'</div>' +
+        '<div class="rp-footer">PAINEL-RH — Grupo Login Serv</div>' +
+      '</div>';
+
+    document.getElementById('relatorio-print-content').innerHTML = html;
+    window.print();
+  });
+
   function gerarRelatorioPDF(){
     renderIndicadoresGerais();
     updateHiringIndicators();
@@ -3132,7 +3189,6 @@
       '<div class="rp-stat"><div class="rp-stat-value">'+txt('indic-desistencias')+'</div><div class="rp-stat-label">Desistências</div></div>' +
       '<div class="rp-stat"><div class="rp-stat-value">'+txt('indic-banco-talentos')+'</div><div class="rp-stat-label">No Banco de talentos</div></div>' +
       '<div class="rp-stat"><div class="rp-stat-value">'+txt('indic-sla-contratacao')+'</div><div class="rp-stat-label">SLA de contratação</div></div>' +
-      '<div class="rp-stat"><div class="rp-stat-value">'+txt('indic-prejuizo-exames')+'</div><div class="rp-stat-label">Prejuízo exames</div></div>' +
       '</div>';
 
     // ---- 5. Alertas pendentes ----
@@ -4750,11 +4806,11 @@
           return;
         }
         var vagaEscolhida = abertas[parseInt(idxSel, 10)];
-        var vagaCliente = vagaEscolhida.cliente, vagaCargo = vagaEscolhida.cargo, vagaCidade = vagaEscolhida.cidade;
+        var vagaCliente = vagaEscolhida.cliente, vagaCargo = vagaEscolhida.cargo, vagaCidade = vagaEscolhida.cidade, vagaTurno = vagaEscolhida.turno || '';
         safeDeleteAndSync(function(){
           var freshC = candidatesData[id];
-          if(freshC){ freshC.cliente = vagaCliente; freshC.role = vagaCargo; }
-          logAudit('Designou '+(freshC ? freshC.name : c.name)+' para a vaga de '+vagaCargo+' — '+vagaCliente+' ('+vagaCidade+')');
+          if(freshC){ freshC.cliente = vagaCliente; freshC.role = vagaCargo; freshC.turno = vagaTurno; freshC.dataDesignacao = new Date().toISOString(); }
+          logAudit('Designou '+(freshC ? freshC.name : c.name)+' para a vaga de '+vagaCargo+' — '+vagaCliente+' ('+vagaCidade+')'+(vagaTurno?' — '+vagaTurno:''));
         }).then(function(){
           openCandidateModal(id);
         });
@@ -4775,8 +4831,7 @@
       listEl.appendChild(note);
     }
     if(c.stage === 'exames'){
-      if(!c.exame) c.exame = {status:'agendado', data:'', obs:'', examesSelecionados:[], custoTotal:0, feito:false};
-      if(!c.exame.examesSelecionados) c.exame.examesSelecionados = [];
+      if(!c.exame) c.exame = {status:'agendado', data:'', obs:''};
       var wrap = document.createElement('div');
       wrap.innerHTML =
         '<div class="form-field">'+
@@ -4791,12 +4846,6 @@
           '<label for="exm-data-input">Data do exame</label>'+
           '<input type="date" id="exm-data-input">'+
         '</div>'+
-        '<div class="form-field" id="exm-lista-field" style="display:none;">'+
-          '<label>Exames a realizar <span style="color:var(--text-faint);font-weight:400;">(selecione um ou mais)</span></label>'+
-          '<div id="exm-lista-checks" style="display:flex;flex-direction:column;gap:6px;background:#0D1526;border:1px solid var(--line-strong);border-radius:8px;padding:10px 12px;"></div>'+
-          '<div style="margin-top:6px;font-size:12.5px;color:var(--text-dim);">Custo total: <b id="exm-custo-total" style="color:var(--teal);font-family:var(--font-mono);">R$ 0,00</b></div>'+
-        '</div>'+
-        (c.exame.feito ? '<div class="form-field"><div class="pill teal" style="display:inline-block;">✓ Exame confirmado como realizado — custo de R$ '+(c.exame.custoTotal||0).toFixed(2).replace('.',',')+' registrado</div></div>' : '')+
         '<div class="form-field" id="exm-obs-field" style="display:none;">'+
           '<label for="exm-obs-input">Motivo / observação</label>'+
           '<textarea id="exm-obs-input" placeholder="Descreva o motivo da retenção..."></textarea>'+
@@ -4805,35 +4854,10 @@
 
       var dataField = wrap.querySelector('#exm-data-field');
       var obsField = wrap.querySelector('#exm-obs-field');
-      var listaField = wrap.querySelector('#exm-lista-field');
-      var listaChecks = wrap.querySelector('#exm-lista-checks');
-      var custoTotalEl = wrap.querySelector('#exm-custo-total');
       var dataInput = wrap.querySelector('#exm-data-input');
       var obsInput = wrap.querySelector('#exm-obs-input');
       dataInput.value = c.exame.data || '';
       obsInput.value = c.exame.obs || '';
-
-      function formatBRL(v){ return 'R$ '+(v||0).toFixed(2).replace('.',','); }
-      var examesDoCargo = EXAMES_POR_CARGO_CIDADE[examesCargoKey(c.role, c.cidade)] || [];
-
-      function renderListaExames(){
-        if(examesDoCargo.length === 0){
-          listaChecks.innerHTML = '<div style="font-size:12px;color:var(--text-faint);font-style:italic;">Nenhum exame configurado para "'+c.role+'" em "'+(c.cidade||'—')+'" ainda. Configure em Configurações → Exames por cargo e cidade.</div>';
-          custoTotalEl.textContent = formatBRL(0);
-          return;
-        }
-        listaChecks.innerHTML = examesDoCargo.map(function(ex, i){
-          var marcado = c.exame.examesSelecionados.some(function(s){ return s.nome === ex.nome; });
-          return '<label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">'+
-            '<input type="checkbox" class="exm-exame-check" data-idx="'+i+'" '+(marcado?'checked':'')+(canEdit && !c.exame.feito ? '' : ' disabled')+'>'+
-            '<span style="flex:1;">'+ex.nome+'</span>'+
-            '<span class="mono" style="color:var(--text-dim);">'+formatBRL(ex.valor)+'</span>'+
-            '</label>';
-        }).join('');
-        var total = c.exame.examesSelecionados.reduce(function(s,e){ return s+(e.valor||0); }, 0);
-        custoTotalEl.textContent = formatBRL(total);
-      }
-      renderListaExames();
 
       function refreshExameUI(){
         wrap.querySelectorAll('.exm-status-btn').forEach(function(b){
@@ -4850,7 +4874,6 @@
           }
         });
         dataField.style.display = c.exame.status === 'agendado' ? 'block' : 'none';
-        listaField.style.display = 'block';
         obsField.style.display = c.exame.status === 'retido' ? 'block' : 'none';
       }
       refreshExameUI();
@@ -4858,71 +4881,19 @@
       if(!canEdit){
         wrap.querySelectorAll('button, input, textarea').forEach(function(el){ el.disabled = true; });
       } else {
-        listaChecks.querySelectorAll('.exm-exame-check').forEach(function(chk){
-          chk.addEventListener('change', function(){
-            var ex = examesDoCargo[parseInt(chk.getAttribute('data-idx'), 10)];
-            safeDeleteAndSync(function(){
-              var freshC = candidatesData[id];
-              if(freshC){
-                if(!freshC.exame) freshC.exame = {status:'agendado', data:'', obs:'', examesSelecionados:[], custoTotal:0, feito:false};
-                if(!freshC.exame.examesSelecionados) freshC.exame.examesSelecionados = [];
-                var jaTem = freshC.exame.examesSelecionados.findIndex(function(s){ return s.nome === ex.nome; });
-                if(chk.checked && jaTem === -1) freshC.exame.examesSelecionados.push({nome:ex.nome, valor:ex.valor});
-                else if(!chk.checked && jaTem !== -1) freshC.exame.examesSelecionados.splice(jaTem, 1);
-                freshC.exame.custoTotal = freshC.exame.examesSelecionados.reduce(function(s,e){ return s+(e.valor||0); }, 0);
-              }
-              logAudit('Atualizou exames selecionados de '+(freshC ? freshC.name : c.name));
-            }).then(function(){
-              openCandidateModal(id);
-            });
-          });
-        });
-
         wrap.querySelectorAll('.exm-status-btn').forEach(function(btn){
           btn.addEventListener('click', function(){
             var novoStatus = btn.getAttribute('data-status');
-            var precisaConfirmar = (novoStatus === 'aprovado' || novoStatus === 'retido') && !c.exame.feito;
-
-            if(precisaConfirmar){
-              if(c.exame.examesSelecionados.length === 0){
-                showToast('Selecione ao menos um exame antes de marcar como '+(novoStatus==='aprovado'?'Aprovado':'Retido')+'.');
-                return;
+            safeDeleteAndSync(function(){
+              var freshC = candidatesData[id];
+              if(freshC){
+                if(!freshC.exame) freshC.exame = {status:'agendado', data:'', obs:''};
+                freshC.exame.status = novoStatus;
               }
-              var jaFeito = window.confirm('O exame já foi feito?\n\nSe confirmar, o custo de '+formatBRL(c.exame.custoTotal)+' será registrado na aba Custos.');
-              safeDeleteAndSync(function(){
-                var freshC = candidatesData[id];
-                if(freshC){
-                  if(!freshC.exame) freshC.exame = {status:'agendado', data:'', obs:'', examesSelecionados:[], custoTotal:0, feito:false};
-                  freshC.exame.status = novoStatus;
-                  if(jaFeito && !freshC.exame.feito){
-                    freshC.exame.feito = true;
-                    var novoCusto = {
-                      id: genRecordId('custo'), candidateRef: id,
-                      name: freshC.name, role: freshC.role, cliente: freshC.cliente || '—', cidade: freshC.cidade || '—',
-                      exames: freshC.exame.examesSelecionados.slice(), custoTotal: freshC.exame.custoTotal,
-                      dataConfirmacao: new Date().toISOString(), prejuizo:false, motivoPrejuizo:null, dataPrejuizo:null
-                    };
-                    custosExameData.push(novoCusto);
-                    freshC.custoExameId = novoCusto.id;
-                    logAudit('Confirmou exame realizado de '+freshC.name+' — custo de '+formatBRL(freshC.exame.custoTotal)+' registrado');
-                  }
-                }
-                logAudit('Atualizou status do exame de '+(freshC ? freshC.name : c.name)+' para "'+({agendado:'Agendado',aprovado:'Aprovado',retido:'Retido'}[novoStatus])+'"');
-              }).then(function(){
-                openCandidateModal(id);
-              });
-            } else {
-              safeDeleteAndSync(function(){
-                var freshC = candidatesData[id];
-                if(freshC){
-                  if(!freshC.exame) freshC.exame = {status:'agendado', data:'', obs:'', examesSelecionados:[], custoTotal:0, feito:false};
-                  freshC.exame.status = novoStatus;
-                }
-                logAudit('Atualizou status do exame de '+(freshC ? freshC.name : c.name)+' para "'+({agendado:'Agendado',aprovado:'Aprovado',retido:'Retido'}[novoStatus])+'"');
-              }).then(function(){
-                openCandidateModal(id);
-              });
-            }
+              logAudit('Atualizou status do exame de '+(freshC ? freshC.name : c.name)+' para "'+({agendado:'Agendado',aprovado:'Aprovado',retido:'Retido'}[novoStatus])+'"');
+            }).then(function(){
+              openCandidateModal(id);
+            });
           });
         });
         dataInput.addEventListener('change', function(){
@@ -4930,7 +4901,7 @@
           safeDeleteAndSync(function(){
             var freshC = candidatesData[id];
             if(freshC){
-              if(!freshC.exame) freshC.exame = {status:'agendado', data:'', obs:'', examesSelecionados:[], custoTotal:0, feito:false};
+              if(!freshC.exame) freshC.exame = {status:'agendado', data:'', obs:''};
               freshC.exame.data = novaData;
             }
             logAudit('Registrou data do exame de '+(freshC ? freshC.name : c.name)+': '+novaData);
@@ -4942,7 +4913,7 @@
           safeDeleteAndSync(function(){
             var freshC = candidatesData[id];
             if(freshC){
-              if(!freshC.exame) freshC.exame = {status:'agendado', data:'', obs:'', examesSelecionados:[], custoTotal:0, feito:false};
+              if(!freshC.exame) freshC.exame = {status:'agendado', data:'', obs:''};
               freshC.exame.obs = novaObs;
             }
             logAudit('Atualizou observação do exame de '+(freshC ? freshC.name : c.name));
@@ -5747,32 +5718,36 @@
     }
   });
 
-  document.getElementById('epc-cargo-select').addEventListener('change', renderEpcExamesDoCargo);
-  document.getElementById('epc-cidade-input').addEventListener('input', renderEpcExamesDoCargo);
-  document.getElementById('epc-add-btn').addEventListener('click', function(){
-    var cargo = document.getElementById('epc-cargo-select').value;
-    var cidade = document.getElementById('epc-cidade-input').value.trim();
-    var nome = document.getElementById('epc-novo-nome').value.trim();
-    var valor = parseFloat(document.getElementById('epc-novo-valor').value);
-    if(!cargo){ showToast('Selecione um cargo primeiro.'); return; }
-    if(!cidade){ showToast('Digite a cidade primeiro.'); return; }
-    if(!nome){ showToast('Digite o nome do exame.'); return; }
-    if(isNaN(valor) || valor < 0){ showToast('Digite um valor válido.'); return; }
+  // Painel "Exames por cargo e cidade" removido temporariamente da tela — a lógica abaixo só
+  // roda se os elementos existirem (evita erro caso a UI volte a existir no futuro).
+  if(document.getElementById('epc-cargo-select')){
+    document.getElementById('epc-cargo-select').addEventListener('change', renderEpcExamesDoCargo);
+    document.getElementById('epc-cidade-input').addEventListener('input', renderEpcExamesDoCargo);
+    document.getElementById('epc-add-btn').addEventListener('click', function(){
+      var cargo = document.getElementById('epc-cargo-select').value;
+      var cidade = document.getElementById('epc-cidade-input').value.trim();
+      var nome = document.getElementById('epc-novo-nome').value.trim();
+      var valor = parseFloat(document.getElementById('epc-novo-valor').value);
+      if(!cargo){ showToast('Selecione um cargo primeiro.'); return; }
+      if(!cidade){ showToast('Digite a cidade primeiro.'); return; }
+      if(!nome){ showToast('Digite o nome do exame.'); return; }
+      if(isNaN(valor) || valor < 0){ showToast('Digite um valor válido.'); return; }
 
-    var chave = examesCargoKey(cargo, cidade);
-    safeDeleteAndSync(function(){
-      if(!EXAMES_POR_CARGO_CIDADE[chave]) EXAMES_POR_CARGO_CIDADE[chave] = [];
-      var jaExiste = EXAMES_POR_CARGO_CIDADE[chave].findIndex(function(e){ return e.nome.toLowerCase() === nome.toLowerCase(); });
-      if(jaExiste !== -1) EXAMES_POR_CARGO_CIDADE[chave][jaExiste].valor = valor;
-      else EXAMES_POR_CARGO_CIDADE[chave].push({nome:nome, valor:valor});
-      logAudit('Adicionou/atualizou o exame "'+nome+'" ('+cargo+' — '+cidade+') — R$ '+valor.toFixed(2).replace('.',','));
-    }).then(function(){
-      document.getElementById('epc-novo-nome').value = '';
-      document.getElementById('epc-novo-valor').value = '';
-      renderEpcExamesDoCargo();
-      showToast('Exame salvo para "'+cargo+'" em "'+cidade+'".');
+      var chave = examesCargoKey(cargo, cidade);
+      safeDeleteAndSync(function(){
+        if(!EXAMES_POR_CARGO_CIDADE[chave]) EXAMES_POR_CARGO_CIDADE[chave] = [];
+        var jaExiste = EXAMES_POR_CARGO_CIDADE[chave].findIndex(function(e){ return e.nome.toLowerCase() === nome.toLowerCase(); });
+        if(jaExiste !== -1) EXAMES_POR_CARGO_CIDADE[chave][jaExiste].valor = valor;
+        else EXAMES_POR_CARGO_CIDADE[chave].push({nome:nome, valor:valor});
+        logAudit('Adicionou/atualizou o exame "'+nome+'" ('+cargo+' — '+cidade+') — R$ '+valor.toFixed(2).replace('.',','));
+      }).then(function(){
+        document.getElementById('epc-novo-nome').value = '';
+        document.getElementById('epc-novo-valor').value = '';
+        renderEpcExamesDoCargo();
+        showToast('Exame salvo para "'+cargo+'" em "'+cidade+'".');
+      });
     });
-  });
+  }
 
   document.getElementById('alerts-bell-btn').addEventListener('click', openAlertsCenter);
   document.getElementById('alerts-close').addEventListener('click', closeAlertsCenter);
