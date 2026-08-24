@@ -910,8 +910,10 @@
             <option value="30">Últimos 30 dias</option>
             <option value="mes">Este mês</option>
             <option value="tudo" selected>Todo o período</option>
+            <option value="dia">Dia específico</option>
             <option value="custom">Personalizado</option>
           </select>
+          <input type="date" id="indic-periodo-dia-input" style="display:none;background:#0D1526;border:1px solid var(--line-strong);border-radius:8px;padding:7px 10px;color:var(--text);font-family:var(--font-body);font-size:12.5px;">
           <input type="date" id="indic-periodo-de" style="display:none;background:#0D1526;border:1px solid var(--line-strong);border-radius:8px;padding:7px 10px;color:var(--text);font-family:var(--font-body);font-size:12.5px;">
           <span id="indic-periodo-ate-label" style="display:none;color:var(--text-faint);font-size:12px;">até</span>
           <input type="date" id="indic-periodo-ate" style="display:none;background:#0D1526;border:1px solid var(--line-strong);border-radius:8px;padding:7px 10px;color:var(--text);font-family:var(--font-body);font-size:12.5px;">
@@ -3112,8 +3114,9 @@
   // direto pra Documentação), ela continua aparecendo aqui. Só cruza com os dados atuais do
   // candidato pra pegar cliente/cargo/turno (que podem já estar mais atualizados).
   function coletarAprovadosDoDia(){
+    var diaAlvo = getDiaSelecionadoOuHoje();
     var aprovadosHojeHist = interviewsHistoryData.filter(function(h){
-      return h.date === todayISO && h.situacao === 'aprovado';
+      return h.date === diaAlvo && h.situacao === 'aprovado';
     });
 
     var candidatosHoje = [];
@@ -3164,8 +3167,9 @@
     var dados = coletarAprovadosDoDia();
     if(!dados) return null;
 
+    var diaAlvo = getDiaSelecionadoOuHoje();
     var linhas = [];
-    linhas.push('Hoje aprovamos e enviamos p exame médico na próxima semana:');
+    linhas.push((diaAlvo === todayISO ? 'Hoje' : 'Em '+formatDateBR(diaAlvo))+' aprovamos e enviamos p exame médico na próxima semana:');
     linhas.push('');
 
     dados.grupos.forEach(function(grupo){
@@ -3187,7 +3191,7 @@
   document.getElementById('btn-copiar-aprovados-dia').addEventListener('click', function(){
     var texto = montarTextoAprovadosDoDia();
     if(!texto){
-      showToast('Nenhum candidato aprovado e designado hoje ainda.');
+      showToast('Nenhum candidato aprovado e designado na data selecionada.');
       return;
     }
     navigator.clipboard.writeText(texto).then(function(){
@@ -3200,9 +3204,11 @@
   document.getElementById('btn-pdf-aprovados-dia').addEventListener('click', function(){
     var dados = coletarAprovadosDoDia();
     if(!dados){
-      showToast('Nenhum candidato aprovado e designado hoje ainda.');
+      showToast('Nenhum candidato aprovado e designado na data selecionada.');
       return;
     }
+    var diaAlvo = getDiaSelecionadoOuHoje();
+    var diaLabel = diaAlvo === todayISO ? 'hoje' : formatDateBR(diaAlvo);
     var agora = new Date();
     var dataGeracao = agora.toLocaleDateString('pt-BR')+' às '+agora.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
     var logoEl = document.querySelector('.brand-logo-img');
@@ -3229,9 +3235,9 @@
       '<div class="rp-page">' +
         '<div class="rp-header">' +
           (logoSrc ? '<img src="'+logoSrc+'" alt="Logo">' : '') +
-          '<div><div class="rp-header-title">Aprovados do dia — Grupo Login Serv</div><div class="rp-header-sub">Gerado em '+dataGeracao+' · '+dados.total+' aprovado(s)</div></div>' +
+          '<div><div class="rp-header-title">Aprovados do dia — Grupo Login Serv</div><div class="rp-header-sub">Referente a '+diaLabel+' · gerado em '+dataGeracao+' · '+dados.total+' aprovado(s)</div></div>' +
         '</div>' +
-        '<div class="rp-section"><div class="rp-section-title">Aprovados hoje — envio para exame médico</div>'+gruposHtml+'</div>' +
+        '<div class="rp-section"><div class="rp-section-title">Aprovados '+diaLabel+' — envio para exame médico</div>'+gruposHtml+'</div>' +
         '<div class="rp-section"><div class="rp-section-title">Total de aprovados por recrutador</div>'+recrutadoresHtml+'</div>' +
         '<div class="rp-footer">PAINEL-RH — Grupo Login Serv</div>' +
       '</div>';
@@ -4832,6 +4838,12 @@
       var ateVal = document.getElementById('indic-periodo-ate').value;
       start = deVal ? new Date(deVal+'T00:00:00') : null;
       end = ateVal ? new Date(ateVal+'T23:59:59') : end;
+    } else if(mode === 'dia'){
+      var diaVal = document.getElementById('indic-periodo-dia-input').value;
+      if(diaVal){
+        start = new Date(diaVal+'T00:00:00');
+        end = new Date(diaVal+'T23:59:59');
+      }
     }
     return {start:start, end: (mode === 'tudo') ? null : end};
   }
@@ -4858,20 +4870,38 @@
     document.getElementById('indic-taxa-aprovacao-sub').textContent = aprovados+' de '+total+' candidatos';
 
     var mode = document.getElementById('indic-periodo').value;
-    var periodoLabel = mode === '7' ? 'nos últimos 7 dias' : mode === '30' ? 'nos últimos 30 dias' : mode === 'mes' ? 'neste mês' : mode === 'custom' ? 'no período selecionado' : 'em todo o período';
+    var periodoLabel = mode === '7' ? 'nos últimos 7 dias' : mode === '30' ? 'nos últimos 30 dias' : mode === 'mes' ? 'neste mês' : mode === 'dia' ? 'no dia selecionado' : mode === 'custom' ? 'no período selecionado' : 'em todo o período';
     document.getElementById('indic-aprovados-sub').textContent = periodoLabel;
     document.getElementById('indic-reprovados-sub').textContent = periodoLabel;
   }
 
+  // Retorna a data (AAAA-MM-DD) a usar como "o dia" para relatórios diários (ex: Aprovados do
+  // dia). Se o filtro de período estiver em "Dia específico" com uma data escolhida, usa essa
+  // data; senão, usa hoje — assim o relatório sempre funciona mesmo sem tocar no filtro.
+  function getDiaSelecionadoOuHoje(){
+    var mode = document.getElementById('indic-periodo') ? document.getElementById('indic-periodo').value : 'tudo';
+    if(mode === 'dia'){
+      var diaVal = document.getElementById('indic-periodo-dia-input').value;
+      if(diaVal) return diaVal;
+    }
+    return todayISO;
+  }
+
   document.getElementById('indic-periodo').addEventListener('change', function(){
     var isCustom = this.value === 'custom';
+    var isDia = this.value === 'dia';
     document.getElementById('indic-periodo-de').style.display = isCustom ? 'inline-block' : 'none';
     document.getElementById('indic-periodo-ate-label').style.display = isCustom ? 'inline' : 'none';
     document.getElementById('indic-periodo-ate').style.display = isCustom ? 'inline-block' : 'none';
-    renderIndicadoresPeriodo();
+    document.getElementById('indic-periodo-dia-input').style.display = isDia ? 'inline-block' : 'none';
+    if(isDia && !document.getElementById('indic-periodo-dia-input').value){
+      document.getElementById('indic-periodo-dia-input').value = todayISO;
+    }
+    renderAllViews();
   });
   document.getElementById('indic-periodo-de').addEventListener('change', renderIndicadoresPeriodo);
   document.getElementById('indic-periodo-ate').addEventListener('change', renderIndicadoresPeriodo);
+  document.getElementById('indic-periodo-dia-input').addEventListener('change', renderAllViews);
 
   function openStageDetail(stage){
     var f = getVagaFilters();
