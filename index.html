@@ -3034,11 +3034,12 @@
 
   // Monta o texto do relatório de "aprovados do dia", no formato usado pra enviar no WhatsApp:
   // agrupado por cliente, com a quantidade por cargo/turno, separadores, e total por recrutador.
-  function montarTextoAprovadosDoDia(){
-    // Usa o histórico de decisões (que nunca muda depois de registrado) como fonte de quem foi
-    // aprovado hoje — assim, mesmo que a pessoa já tenha avançado de etapa no mesmo dia (ex: foi
-    // direto pra Documentação), ela continua aparecendo aqui. Só cruza com os dados atuais do
-    // candidato pra pegar cliente/cargo/turno (que podem já estar mais atualizados).
+  // Coleta e agrupa os aprovados do dia — usada tanto pelo texto (WhatsApp) quanto pelo PDF.
+  // Usa o histórico de decisões (que nunca muda depois de registrado) como fonte de quem foi
+  // aprovado hoje — assim, mesmo que a pessoa já tenha avançado de etapa no mesmo dia (ex: foi
+  // direto pra Documentação), ela continua aparecendo aqui. Só cruza com os dados atuais do
+  // candidato pra pegar cliente/cargo/turno (que podem já estar mais atualizados).
+  function coletarAprovadosDoDia(){
     var aprovadosHojeHist = interviewsHistoryData.filter(function(h){
       return h.date === todayISO && h.situacao === 'aprovado';
     });
@@ -3061,12 +3062,7 @@
       porCliente[c.cliente].push(c);
     });
 
-    var linhas = [];
-    linhas.push('Hoje aprovamos e enviamos p exame médico na próxima semana:');
-    linhas.push('');
-
-    ordemClientes.forEach(function(cliente){
-      linhas.push(cliente.toUpperCase());
+    var gruposPorCliente = ordemClientes.map(function(cliente){
       var porCargo = {};
       var ordemCargos = [];
       porCliente[cliente].forEach(function(c){
@@ -3074,13 +3070,12 @@
         if(!porCargo[chave]){ porCargo[chave] = 0; ordemCargos.push(chave); }
         porCargo[chave]++;
       });
-      ordemCargos.forEach(function(chave){
-        linhas.push(String(porCargo[chave]).padStart(2,'0')+' '+chave);
-      });
-      linhas.push('◇◇◇◇◇◇◇◇◇◇◇◇◇');
+      return {
+        cliente: cliente,
+        cargos: ordemCargos.map(function(chave){ return {label: chave, qtd: porCargo[chave]}; })
+      };
     });
 
-    linhas.push('TOTAL DE APROVADOS');
     var porRecrutador = {};
     var ordemRecrutadores = [];
     candidatosHoje.forEach(function(c){
@@ -3088,8 +3083,30 @@
       if(!porRecrutador[nome]){ porRecrutador[nome] = 0; ordemRecrutadores.push(nome); }
       porRecrutador[nome]++;
     });
-    ordemRecrutadores.forEach(function(nome){
-      linhas.push(nome+' : '+String(porRecrutador[nome]).padStart(2,'0'));
+    var recrutadores = ordemRecrutadores.map(function(nome){ return {nome: nome, qtd: porRecrutador[nome]}; });
+
+    return {total: candidatosHoje.length, grupos: gruposPorCliente, recrutadores: recrutadores};
+  }
+
+  function montarTextoAprovadosDoDia(){
+    var dados = coletarAprovadosDoDia();
+    if(!dados) return null;
+
+    var linhas = [];
+    linhas.push('Hoje aprovamos e enviamos p exame médico na próxima semana:');
+    linhas.push('');
+
+    dados.grupos.forEach(function(grupo){
+      linhas.push(grupo.cliente.toUpperCase());
+      grupo.cargos.forEach(function(c){
+        linhas.push(String(c.qtd).padStart(2,'0')+' '+c.label);
+      });
+      linhas.push('◇◇◇◇◇◇◇◇◇◇◇◇◇');
+    });
+
+    linhas.push('TOTAL DE APROVADOS');
+    dados.recrutadores.forEach(function(r){
+      linhas.push(r.nome+' : '+String(r.qtd).padStart(2,'0'));
     });
 
     return linhas.join('\n');
@@ -3109,8 +3126,8 @@
   });
 
   document.getElementById('btn-pdf-aprovados-dia').addEventListener('click', function(){
-    var texto = montarTextoAprovadosDoDia();
-    if(!texto){
+    var dados = coletarAprovadosDoDia();
+    if(!dados){
       showToast('Nenhum candidato aprovado e designado hoje ainda.');
       return;
     }
@@ -3118,17 +3135,32 @@
     var dataGeracao = agora.toLocaleDateString('pt-BR')+' às '+agora.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
     var logoEl = document.querySelector('.brand-logo-img');
     var logoSrc = logoEl ? logoEl.src : '';
-    var textoHtml = texto.split('\n').map(function(linha){
-      return '<div>'+(linha === '' ? '&nbsp;' : linha.replace(/</g,'&lt;'))+'</div>';
+
+    var gruposHtml = dados.grupos.map(function(grupo){
+      return '<div style="margin-bottom:14px;">' +
+        '<div style="font-family:var(--font-display);font-weight:600;font-size:13px;color:var(--teal);margin-bottom:6px;">'+grupo.cliente.toUpperCase()+'</div>' +
+        '<table class="rp-table"><tbody>' +
+          grupo.cargos.map(function(c){
+            return '<tr><td>'+c.label+'</td><td class="mono" style="text-align:right;width:40px;">'+String(c.qtd).padStart(2,'0')+'</td></tr>';
+          }).join('') +
+        '</tbody></table>' +
+      '</div>';
     }).join('');
+
+    var recrutadoresHtml = '<div class="rp-stats-row">' +
+      dados.recrutadores.map(function(r){
+        return '<div class="rp-stat"><div class="rp-stat-value">'+String(r.qtd).padStart(2,'0')+'</div><div class="rp-stat-label">'+r.nome+'</div></div>';
+      }).join('') +
+      '</div>';
 
     var html =
       '<div class="rp-page">' +
         '<div class="rp-header">' +
           (logoSrc ? '<img src="'+logoSrc+'" alt="Logo">' : '') +
-          '<div><div class="rp-header-title">Aprovados do dia — Grupo Login Serv</div><div class="rp-header-sub">Gerado em '+dataGeracao+'</div></div>' +
+          '<div><div class="rp-header-title">Aprovados do dia — Grupo Login Serv</div><div class="rp-header-sub">Gerado em '+dataGeracao+' · '+dados.total+' aprovado(s)</div></div>' +
         '</div>' +
-        '<div class="rp-section" style="font-family:var(--font-mono);font-size:13.5px;line-height:1.7;white-space:pre-wrap;">'+textoHtml+'</div>' +
+        '<div class="rp-section"><div class="rp-section-title">Aprovados hoje — envio para exame médico</div>'+gruposHtml+'</div>' +
+        '<div class="rp-section"><div class="rp-section-title">Total de aprovados por recrutador</div>'+recrutadoresHtml+'</div>' +
         '<div class="rp-footer">PAINEL-RH — Grupo Login Serv</div>' +
       '</div>';
 
