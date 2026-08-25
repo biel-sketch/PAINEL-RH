@@ -3514,27 +3514,17 @@
           var faltamCor = r.faltam > 0 ? 'color:var(--amber);font-weight:600;' : 'color:var(--teal);';
           return '<tr><td>'+r.cliente+'</td><td>'+r.cargo+'</td><td class="mono">'+r.abertas+'</td><td class="mono">'+r.andamento+'</td><td class="mono" style="'+faltamCor+'">'+r.faltam+'</td></tr>';
         }).join('') + '</tbody></table>';
-    var totalFaltando = Math.max(0,
-      vagasAbertas.reduce(function(s,v){ return s + (v.qtd - v.hired.length); }, 0) -
-      rowsAndamento.reduce(function(s,r){ return s + r.documentacao + r.exames + r.dp + r.contratacao; }, 0)
-    );
+    var totalFaltando = rowsFaltando.reduce(function(s,r){ return s + r.faltam; }, 0);
 
-    var abertasPorCidadePdf = {};
-    vagasAbertas.forEach(function(v){
-      var cidade = v.cidade || '—';
-      abertasPorCidadePdf[cidade] = (abertasPorCidadePdf[cidade] || 0) + (v.qtd - v.hired.length);
+    // Usa a mesma base da tabela de cima (linha por linha, cliente+cargo), garantindo que a
+    // soma dos cards de cidade bate exatamente com o total.
+    var faltamPorCidadePdf = {};
+    rowsFaltando.forEach(function(r){
+      var cidade = cidadeConfiavelPdf(r.cliente, r.cargo, null);
+      faltamPorCidadePdf[cidade] = (faltamPorCidadePdf[cidade] || 0) + r.faltam;
     });
-    var andamentoPorCidadePdf = {};
-    rowsAndamento.forEach(function(r){
-      andamentoPorCidadePdf[r.cidade] = (andamentoPorCidadePdf[r.cidade] || 0) + (r.documentacao + r.exames + r.dp + r.contratacao);
-    });
-    var todasCidadesPdf = {};
-    Object.keys(abertasPorCidadePdf).forEach(function(c){ todasCidadesPdf[c] = true; });
-    Object.keys(andamentoPorCidadePdf).forEach(function(c){ todasCidadesPdf[c] = true; });
-    var faltandoPorCidade = Object.keys(todasCidadesPdf).map(function(cidade){
-      var abertas = abertasPorCidadePdf[cidade] || 0;
-      var andamento = andamentoPorCidadePdf[cidade] || 0;
-      return {cidade: cidade, faltam: Math.max(0, abertas - andamento)};
+    var faltandoPorCidade = Object.keys(faltamPorCidadePdf).map(function(cidade){
+      return {cidade: cidade, faltam: faltamPorCidadePdf[cidade]};
     }).filter(function(r){ return r.faltam > 0; })
       .sort(function(a,b){ return b.faltam - a.faltam; });
     var faltandoPorCidadeHtml = faltandoPorCidade.length === 0
@@ -5074,35 +5064,23 @@
     }
     var totalFaltandoEl = document.getElementById('ig-faltando-total');
     if(totalFaltandoEl){
-      // Conta simples e direta: total de vagas abertas menos total de pessoas em andamento —
-      // sem "capar" por combinação individual, pra bater exatamente com a soma bruta.
-      var totalAbertasGeral = vagasAbertas.reduce(function(s,v){ return s + (v.qtd - v.hired.length); }, 0);
-      var totalAndamentoGeral = rowsAndamento.reduce(function(s,r){ return s + r.documentacao + r.exames + r.dp + r.contratacao; }, 0);
-      totalFaltandoEl.textContent = Math.max(0, totalAbertasGeral - totalAndamentoGeral);
+      // O total tem que ser exatamente a soma das linhas mostradas na tabela abaixo — senão os
+      // dois números não batem entre si e fica confuso de conferir.
+      totalFaltandoEl.textContent = rowsFaltando.reduce(function(s,r){ return s + r.faltam; }, 0);
     }
 
     // ---- Vagas sem ninguém em andamento, por cidade (cards) ----
-    // Importante: calcula por combinação exata (cliente + cargo + cidade) ANTES de somar por
-    // cidade — soma bruta e direta: total de vagas abertas naquela cidade menos total de
-    // pessoas em andamento naquela cidade.
+    // Usa a mesma base da tabela de cima (linha por linha, cliente+cargo) — assim a soma dos
+    // cards sempre bate exatamente com o "Total" mostrado ali em cima.
     var cardsCidadesEl = document.getElementById('ig-cidades-cards');
     if(cardsCidadesEl){
-      var abertasPorCidade = {};
-      vagasAbertas.forEach(function(v){
-        var cidade = v.cidade || '—';
-        abertasPorCidade[cidade] = (abertasPorCidade[cidade] || 0) + (v.qtd - v.hired.length);
+      var faltamPorCidade = {};
+      rowsFaltando.forEach(function(r){
+        var cidade = cidadeConfiavel(r.cliente, r.cargo, null);
+        faltamPorCidade[cidade] = (faltamPorCidade[cidade] || 0) + r.faltam;
       });
-      var andamentoPorCidade = {};
-      rowsAndamento.forEach(function(r){
-        andamentoPorCidade[r.cidade] = (andamentoPorCidade[r.cidade] || 0) + (r.documentacao + r.exames + r.dp + r.contratacao);
-      });
-      var todasCidades = {};
-      Object.keys(abertasPorCidade).forEach(function(c){ todasCidades[c] = true; });
-      Object.keys(andamentoPorCidade).forEach(function(c){ todasCidades[c] = true; });
-      var faltandoPorCidade = Object.keys(todasCidades).map(function(cidade){
-        var abertas = abertasPorCidade[cidade] || 0;
-        var andamento = andamentoPorCidade[cidade] || 0;
-        return {cidade: cidade, faltam: Math.max(0, abertas - andamento)};
+      var faltandoPorCidade = Object.keys(faltamPorCidade).map(function(cidade){
+        return {cidade: cidade, faltam: faltamPorCidade[cidade]};
       }).filter(function(r){ return r.faltam > 0; })
         .sort(function(a,b){ return b.faltam - a.faltam; });
 
