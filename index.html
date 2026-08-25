@@ -1152,13 +1152,24 @@
       </div>
 
       <div class="panel" style="margin-top:14px;">
-        <div class="panel-head"><div class="panel-title">Vagas faltando para fechar (abertas − em andamento)</div></div>
+        <div class="panel-head">
+          <div class="panel-title">Vagas faltando para fechar (abertas − em andamento)</div>
+          <div style="font-size:13px;color:var(--text-dim);">Total: <b id="ig-faltando-total" class="mono" style="color:var(--amber);">0</b></div>
+        </div>
         <div style="overflow-x:auto;">
         <table>
           <thead><tr><th>Cliente</th><th>Cargo</th><th>Abertas</th><th>Em andamento</th><th>Faltam</th></tr></thead>
           <tbody id="ig-faltando-tbody"></tbody>
         </table>
         </div>
+      </div>
+
+      <div class="panel" style="margin-top:14px;">
+        <div class="panel-head">
+          <div class="panel-title">Vagas sem ninguém em andamento, por cidade</div>
+          <div style="font-size:11.5px;color:var(--text-faint);">Posições que ainda não têm nenhum candidato em Documentação, Exames, DP ou Integração</div>
+        </div>
+        <div id="ig-cidades-cards" style="display:flex;flex-wrap:wrap;gap:10px;padding:16px;"></div>
       </div>
 
       <div class="panel" style="margin-top:14px;">
@@ -2233,7 +2244,7 @@
     var slaBadgeEl = document.getElementById('vd-sla-badge');
     slaBadgeEl.innerHTML = '';
     if(vaga.createdAt){
-      var daysOpen = Math.floor((Date.now() - new Date(vaga.createdAt).getTime()) / 86400000);
+      var daysOpen = diasUteisDesde(vaga.createdAt);
       var slaClass = daysOpen >= VAGA_SLA_DAYS ? 'amber' : 'teal';
       slaBadgeEl.innerHTML = '<span class="pill '+slaClass+'">'+daysOpen+' dias em aberto</span>';
     }
@@ -2311,15 +2322,44 @@
   }
 
   var VAGA_SLA_DAYS = 15;
-  // SLA da Gestão: dentro de 3 dias após abrir a vaga, alguém já deveria ter sido aprovado e
-  // entrado em andamento — senão a vaga está "em atraso".
+  // SLA da Gestão: dentro de 3 dias úteis após abrir a vaga, alguém já deveria ter sido
+  // aprovado e entrado em andamento — senão a vaga está "em atraso".
   var VAGA_APROVACAO_SLA_DIAS = 3;
-  // SLA de andamento até a contratação: 3 dias no geral, 7 dias pra clientes SPAL ou Eucatex.
+  // SLA de andamento até a contratação: 3 dias úteis no geral, 7 dias úteis pra clientes SPAL
+  // ou Eucatex.
   var ANDAMENTO_SLA_PADRAO_DIAS = 3;
   var ANDAMENTO_SLA_SPAL_EUCATEX_DIAS = 7;
   function slaAndamentoDoCliente(cliente){
     var c = (cliente||'').toUpperCase();
     return (c.indexOf('SPAL') !== -1 || c.indexOf('EUCATEX') !== -1) ? ANDAMENTO_SLA_SPAL_EUCATEX_DIAS : ANDAMENTO_SLA_PADRAO_DIAS;
+  }
+  // Conta dias ÚTEIS (segunda a sexta, sem contar sábado/domingo) desde uma data até agora —
+  // usado em todos os cálculos de SLA de vagas (aberta, aprovação, andamento).
+  function diasUteisDesde(dataISO){
+    if(!dataISO) return null;
+    var start = new Date(dataISO);
+    start.setHours(0,0,0,0);
+    var end = new Date();
+    end.setHours(0,0,0,0);
+    if(end <= start) return 0;
+    var count = 0;
+    var cur = new Date(start);
+    while(cur < end){
+      cur.setDate(cur.getDate() + 1);
+      var dow = cur.getDay();
+      if(dow !== 0 && dow !== 6) count++;
+    }
+    return count;
+  }
+
+  // Recebe uma lista de datas (pode ter repetidas, de pessoas diferentes) e monta um texto
+  // mostrando a quantidade de pessoas por data distinta — ex: "1 28/08/2026, 2 30/08/2026".
+  function formatarDatasComQtd(datas){
+    if(!datas || datas.length === 0) return '—';
+    var porData = {};
+    datas.forEach(function(d){ porData[d] = (porData[d]||0) + 1; });
+    var ordenadas = Object.keys(porData).sort();
+    return ordenadas.map(function(d){ return porData[d]+' '+formatDateBR(d); }).join(', ');
   }
 
   var CHART_PALETTE = ['#3B82F6','#8B5CF6','#14B8A6','#EC4899','#F59E0B','#10B981','#6B7280','#84CC16','#06B6D4','#F97316','#A855F7','#EF4444'];
@@ -2443,7 +2483,7 @@
       var badges = '';
       var daysOpen = null;
       if(v.createdAt){
-        daysOpen = Math.floor((Date.now() - new Date(v.createdAt).getTime()) / 86400000);
+        daysOpen = diasUteisDesde(v.createdAt);
       }
       if(v.urgente) badges += '<span class="pill red" style="margin-right:4px;">Urgente</span>';
       if(daysOpen !== null && daysOpen >= VAGA_SLA_DAYS){
@@ -2744,7 +2784,7 @@
         if(slaSubEl) slaSubEl.textContent = 'nenhuma vaga em aberto no momento';
       } else {
         var somaDiasAbertos = vagasAbertasComData.reduce(function(s,v){
-          return s + Math.floor((Date.now() - new Date(v.createdAt).getTime()) / 86400000);
+          return s + diasUteisDesde(v.createdAt);
         }, 0);
         var mediaDias = (somaDiasAbertos / vagasAbertasComData.length).toFixed(1);
         slaEl.innerHTML = mediaDias+'<span style="font-size:15px;color:var(--text-faint);"> dias</span>';
@@ -3407,7 +3447,7 @@
       : '<table class="rp-table"><thead><tr><th>Cliente</th><th>Cargo</th><th>Cidade</th><th>Vagas</th><th>Abertura</th><th>SLA</th><th>Status</th></tr></thead><tbody>' +
         vagasAbertas.map(function(v){
           var faltantes = v.qtd - v.hired.length;
-          var diasAberta = v.createdAt ? Math.floor((Date.now() - new Date(v.createdAt).getTime()) / 86400000) : null;
+          var diasAberta = diasUteisDesde(v.createdAt);
           var slaTexto = diasAberta === null ? '—' : diasAberta+'d';
           var slaTag = diasAberta !== null && diasAberta >= VAGA_SLA_DAYS ? ' <span class="rp-tag danger">⚠</span>' : '';
           var aberturaTexto = v.createdAt ? formatDateBR(v.createdAt.slice(0,10)) : '—';
@@ -3422,9 +3462,9 @@
       : '<table class="rp-table"><thead><tr><th>Cliente</th><th>Cargo</th><th>Cidade</th><th>Vagas</th><th>Doc</th><th>Exames</th><th>DP</th><th>Integração</th><th>Início</th><th>SLA</th><th>Status</th></tr></thead><tbody>' +
         rowsAndamento.map(function(r){
           var total = r.documentacao + r.exames + r.dp + r.contratacao;
-          var inicioTexto = r.inicioDatas.length ? formatDateBR(r.inicioDatas.sort()[0]) : '—';
+          var inicioTexto = formatarDatasComQtd(r.inicioDatas);
           var maisAntiga = r.andamentoDesde.filter(Boolean).sort()[0];
-          var diasAndamento = maisAntiga ? Math.floor((Date.now() - new Date(maisAntiga).getTime()) / 86400000) : null;
+          var diasAndamento = maisAntiga ? diasUteisDesde(maisAntiga) : null;
           var limiteSla = slaAndamentoDoCliente(r.cliente);
           var slaTexto = diasAndamento === null ? '—' : diasAndamento+'d';
           var emAtraso = diasAndamento !== null && diasAndamento > limiteSla;
@@ -3463,6 +3503,34 @@
           var faltamCor = r.faltam > 0 ? 'color:var(--amber);font-weight:600;' : 'color:var(--teal);';
           return '<tr><td>'+r.cliente+'</td><td>'+r.cargo+'</td><td class="mono">'+r.abertas+'</td><td class="mono">'+r.andamento+'</td><td class="mono" style="'+faltamCor+'">'+r.faltam+'</td></tr>';
         }).join('') + '</tbody></table>';
+    var totalFaltando = Math.max(0,
+      vagasAbertas.reduce(function(s,v){ return s + (v.qtd - v.hired.length); }, 0) -
+      rowsAndamento.reduce(function(s,r){ return s + r.documentacao + r.exames + r.dp + r.contratacao; }, 0)
+    );
+
+    var abertasPorCidadePdf = {};
+    vagasAbertas.forEach(function(v){
+      var cidade = v.cidade || '—';
+      abertasPorCidadePdf[cidade] = (abertasPorCidadePdf[cidade] || 0) + (v.qtd - v.hired.length);
+    });
+    var andamentoPorCidadePdf = {};
+    rowsAndamento.forEach(function(r){
+      andamentoPorCidadePdf[r.cidade] = (andamentoPorCidadePdf[r.cidade] || 0) + (r.documentacao + r.exames + r.dp + r.contratacao);
+    });
+    var todasCidadesPdf = {};
+    Object.keys(abertasPorCidadePdf).forEach(function(c){ todasCidadesPdf[c] = true; });
+    Object.keys(andamentoPorCidadePdf).forEach(function(c){ todasCidadesPdf[c] = true; });
+    var faltandoPorCidade = Object.keys(todasCidadesPdf).map(function(cidade){
+      var abertas = abertasPorCidadePdf[cidade] || 0;
+      var andamento = andamentoPorCidadePdf[cidade] || 0;
+      return {cidade: cidade, faltam: Math.max(0, abertas - andamento)};
+    }).filter(function(r){ return r.faltam > 0; })
+      .sort(function(a,b){ return b.faltam - a.faltam; });
+    var faltandoPorCidadeHtml = faltandoPorCidade.length === 0
+      ? '<div class="rp-empty">Nenhuma vaga faltando pra fechar no momento.</div>'
+      : '<div class="rp-stats-row">' + faltandoPorCidade.map(function(r){
+          return '<div class="rp-stat"><div class="rp-stat-value">'+r.faltam+'</div><div class="rp-stat-label">'+r.cidade+'</div></div>';
+        }).join('') + '</div>';
 
     var totalPessoasAndamento = rowsAndamento.reduce(function(s,r){ return s + r.documentacao + r.exames + r.dp + r.contratacao; }, 0);
 
@@ -3496,7 +3564,8 @@
 
     return '<div class="rp-section"><div class="rp-section-title">Vagas abertas ('+totalPosicoesAbertas+' posição(ões) · '+vagasAbertas.length+' vaga(s))</div>'+abertasHtml+'</div>' +
       '<div class="rp-section"><div class="rp-section-title">Vagas em andamento ('+totalPessoasAndamento+' pessoa(s) · '+rowsAndamento.length+' vaga(s))</div>'+andamentoHtml+'</div>' +
-      '<div class="rp-section"><div class="rp-section-title">Vagas faltando para fechar</div>'+faltandoHtml+'</div>' +
+      '<div class="rp-section"><div class="rp-section-title">Vagas faltando para fechar (total: '+totalFaltando+' · abertas menos as já em andamento)</div>'+faltandoHtml+'</div>' +
+      '<div class="rp-section"><div class="rp-section-title">Vagas sem ninguém em andamento, por cidade</div>'+faltandoPorCidadeHtml+'</div>' +
       '<div class="rp-section"><div class="rp-section-title">Produtividade por recrutador — '+igModeLabelPdf+'</div>'+produtividadeGestaoHtml+'</div>';
   }
 
@@ -3530,7 +3599,7 @@
       : '<table class="rp-table"><thead><tr><th>Cliente</th><th>Cargo</th><th>Cidade</th><th>Faltantes</th><th>SLA (dias)</th></tr></thead><tbody>' +
         vagasAbertas.map(function(v){
           var faltantes = v.qtd - (v.hired?v.hired.length:0);
-          var diasAberta = v.createdAt ? Math.floor((Date.now() - new Date(v.createdAt).getTime()) / 86400000) : null;
+          var diasAberta = diasUteisDesde(v.createdAt);
           var slaTexto = diasAberta === null ? '—' : diasAberta+'d';
           var slaTag = diasAberta !== null && diasAberta >= VAGA_SLA_DAYS ? ' <span class="rp-tag danger">⚠</span>' : '';
           return '<tr><td>'+v.cliente+(v.urgente?' <span class="rp-tag danger">Urgente</span>':'')+'</td><td>'+v.cargo+'</td><td>'+(v.cidade||'—')+'</td><td>'+faltantes+'</td><td class="mono">'+slaTexto+slaTag+'</td></tr>';
@@ -4912,7 +4981,7 @@
     } else {
       tbodyAbertas.innerHTML = vagasAbertas.map(function(v){
         var faltantes = v.qtd - v.hired.length;
-        var diasAberta = v.createdAt ? Math.floor((Date.now() - new Date(v.createdAt).getTime()) / 86400000) : null;
+        var diasAberta = diasUteisDesde(v.createdAt);
         var slaTexto = diasAberta === null ? '—' : diasAberta+'d';
         var slaEstilo = diasAberta !== null && diasAberta >= VAGA_SLA_DAYS ? ' style="color:var(--red);font-weight:600;"' : ' style="color:var(--teal);"';
         var aberturaTexto = v.createdAt ? formatDateBR(v.createdAt.slice(0,10)) : '—';
@@ -4931,9 +5000,9 @@
     } else {
       tbodyAndamento.innerHTML = rowsAndamento.map(function(r){
         var total = r.documentacao + r.exames + r.dp + r.contratacao;
-        var inicioTexto = r.inicioDatas.length ? formatDateBR(r.inicioDatas.sort()[0]) : '—';
+        var inicioTexto = formatarDatasComQtd(r.inicioDatas);
         var maisAntiga = r.andamentoDesde.filter(Boolean).sort()[0];
-        var diasAndamento = maisAntiga ? Math.floor((Date.now() - new Date(maisAntiga).getTime()) / 86400000) : null;
+        var diasAndamento = maisAntiga ? diasUteisDesde(maisAntiga) : null;
         var limiteSla = slaAndamentoDoCliente(r.cliente);
         var slaTexto = diasAndamento === null ? '—' : diasAndamento+'d';
         var emAtraso = diasAndamento !== null && diasAndamento > limiteSla;
@@ -4977,6 +5046,51 @@
         var faltamEstilo = r.faltam > 0 ? ' style="color:var(--amber);font-weight:600;"' : ' style="color:var(--teal);"';
         return '<tr><td>'+r.cliente+'</td><td>'+r.cargo+'</td><td class="mono">'+r.abertas+'</td><td class="mono">'+r.andamento+'</td><td class="mono"'+faltamEstilo+'>'+r.faltam+'</td></tr>';
       }).join('');
+    }
+    var totalFaltandoEl = document.getElementById('ig-faltando-total');
+    if(totalFaltandoEl){
+      // Conta simples e direta: total de vagas abertas menos total de pessoas em andamento —
+      // sem "capar" por combinação individual, pra bater exatamente com a soma bruta.
+      var totalAbertasGeral = vagasAbertas.reduce(function(s,v){ return s + (v.qtd - v.hired.length); }, 0);
+      var totalAndamentoGeral = rowsAndamento.reduce(function(s,r){ return s + r.documentacao + r.exames + r.dp + r.contratacao; }, 0);
+      totalFaltandoEl.textContent = Math.max(0, totalAbertasGeral - totalAndamentoGeral);
+    }
+
+    // ---- Vagas sem ninguém em andamento, por cidade (cards) ----
+    // Importante: calcula por combinação exata (cliente + cargo + cidade) ANTES de somar por
+    // cidade — soma bruta e direta: total de vagas abertas naquela cidade menos total de
+    // pessoas em andamento naquela cidade.
+    var cardsCidadesEl = document.getElementById('ig-cidades-cards');
+    if(cardsCidadesEl){
+      var abertasPorCidade = {};
+      vagasAbertas.forEach(function(v){
+        var cidade = v.cidade || '—';
+        abertasPorCidade[cidade] = (abertasPorCidade[cidade] || 0) + (v.qtd - v.hired.length);
+      });
+      var andamentoPorCidade = {};
+      rowsAndamento.forEach(function(r){
+        andamentoPorCidade[r.cidade] = (andamentoPorCidade[r.cidade] || 0) + (r.documentacao + r.exames + r.dp + r.contratacao);
+      });
+      var todasCidades = {};
+      Object.keys(abertasPorCidade).forEach(function(c){ todasCidades[c] = true; });
+      Object.keys(andamentoPorCidade).forEach(function(c){ todasCidades[c] = true; });
+      var faltandoPorCidade = Object.keys(todasCidades).map(function(cidade){
+        var abertas = abertasPorCidade[cidade] || 0;
+        var andamento = andamentoPorCidade[cidade] || 0;
+        return {cidade: cidade, faltam: Math.max(0, abertas - andamento)};
+      }).filter(function(r){ return r.faltam > 0; })
+        .sort(function(a,b){ return b.faltam - a.faltam; });
+
+      if(faltandoPorCidade.length === 0){
+        cardsCidadesEl.innerHTML = '<div class="kanban-empty">Nenhuma vaga faltando pra fechar no momento.</div>';
+      } else {
+        cardsCidadesEl.innerHTML = faltandoPorCidade.map(function(r){
+          return '<div style="background:#0D1526;border:1px solid var(--line-strong);border-radius:10px;padding:14px 18px;min-width:140px;">' +
+            '<div style="font-size:22px;font-weight:600;font-family:var(--font-display);color:var(--amber);">'+r.faltam+'</div>' +
+            '<div style="font-size:12.5px;color:var(--text-dim);margin-top:2px;">'+r.cidade+' — sem ninguém em andamento</div>' +
+            '</div>';
+        }).join('');
+      }
     }
 
     // ---- Produtividade por recrutador, respeitando o filtro de período desta tela ----
