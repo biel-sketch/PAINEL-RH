@@ -3414,12 +3414,23 @@
   // Gera o HTML das 3 tabelas de "Indicadores Gestão" para o relatório PDF — reaproveita
   // exatamente o mesmo agrupamento e cálculo usados na própria tela.
   function gerarHtmlIndicadoresGestao(){
+    var cidadeDaVagaPdf = {};
+    vagasData.forEach(function(v){
+      var kcc = (v.cliente||'—')+'::::'+(v.cargo||'—');
+      if(!cidadeDaVagaPdf[kcc]) cidadeDaVagaPdf[kcc] = v.cidade || '—';
+    });
+    function cidadeConfiavelPdf(cliente, cargo, cidadeCandidato){
+      var kcc = (cliente||'—')+'::::'+(cargo||'—');
+      return cidadeDaVagaPdf[kcc] || cidadeCandidato || '—';
+    }
+
     var groups = {};
     function keyOf(cliente, cargo, cidade){ return (cliente||'—')+'::::'+(cargo||'—')+'::::'+(cidade||'—'); }
     Object.keys(candidatesData).forEach(function(id){
       var c = candidatesData[id];
-      var k = keyOf(c.cliente, c.role, c.cidade);
-      if(!groups[k]) groups[k] = {cliente:c.cliente||'—', cargo:c.role||'—', cidade:c.cidade||'—', documentacao:0, exames:0, dp:0, contratacao:0, inicioDatas:[], andamentoDesde:[]};
+      var cidadeReal = cidadeConfiavelPdf(c.cliente, c.role, c.cidade);
+      var k = keyOf(c.cliente, c.role, cidadeReal);
+      if(!groups[k]) groups[k] = {cliente:c.cliente||'—', cargo:c.role||'—', cidade:cidadeReal, documentacao:0, exames:0, dp:0, contratacao:0, inicioDatas:[], andamentoDesde:[]};
       if(groups[k].hasOwnProperty(c.stage)) groups[k][c.stage]++;
       if(['documentacao','exames','dp','contratacao'].indexOf(c.stage) !== -1){
         groups[k].andamentoDesde.push(c.andamentoSince || c.stageSince);
@@ -4944,14 +4955,28 @@
     var tbodyAbertas = document.getElementById('ig-vagas-abertas-tbody');
     if(!tbodyAbertas) return;
 
+    // Mapa cliente+cargo -> cidade cadastrada na VAGA (fonte confiável). Usamos isso em vez do
+    // campo de cidade do candidato, porque esse campo pode ter ficado desatualizado (digitado
+    // na hora de agendar a entrevista, antes da pessoa ser designada pra uma vaga específica).
+    var cidadeDaVaga = {};
+    vagasData.forEach(function(v){
+      var kcc = (v.cliente||'—')+'::::'+(v.cargo||'—');
+      if(!cidadeDaVaga[kcc]) cidadeDaVaga[kcc] = v.cidade || '—';
+    });
+    function cidadeConfiavel(cliente, cargo, cidadeCandidato){
+      var kcc = (cliente||'—')+'::::'+(cargo||'—');
+      return cidadeDaVaga[kcc] || cidadeCandidato || '—';
+    }
+
     // ---- Vagas em andamento (agrupado por cliente + cargo + cidade) — calculado primeiro pra
     // podermos checar, na tabela de "Vagas abertas", se alguém já entrou em andamento ou não.
     var groups = {};
     function keyOf(cliente, cargo, cidade){ return (cliente||'—')+'::::'+(cargo||'—')+'::::'+(cidade||'—'); }
     Object.keys(candidatesData).forEach(function(id){
       var c = candidatesData[id];
-      var k = keyOf(c.cliente, c.role, c.cidade);
-      if(!groups[k]) groups[k] = {cliente:c.cliente||'—', cargo:c.role||'—', cidade:c.cidade||'—', documentacao:0, exames:0, dp:0, contratacao:0, inicioDatas:[], andamentoDesde:[]};
+      var cidadeReal = cidadeConfiavel(c.cliente, c.role, c.cidade);
+      var k = keyOf(c.cliente, c.role, cidadeReal);
+      if(!groups[k]) groups[k] = {cliente:c.cliente||'—', cargo:c.role||'—', cidade:cidadeReal, documentacao:0, exames:0, dp:0, contratacao:0, inicioDatas:[], andamentoDesde:[]};
       if(groups[k].hasOwnProperty(c.stage)) groups[k][c.stage]++;
       if(['documentacao','exames','dp','contratacao'].indexOf(c.stage) !== -1){
         groups[k].andamentoDesde.push(c.andamentoSince || c.stageSince);
@@ -5577,7 +5602,7 @@
         var vagaCliente = vagaEscolhida.cliente, vagaCargo = vagaEscolhida.cargo, vagaCidade = vagaEscolhida.cidade, vagaTurno = vagaEscolhida.turno || '';
         safeDeleteAndSync(function(){
           var freshC = candidatesData[id];
-          if(freshC){ freshC.cliente = vagaCliente; freshC.role = vagaCargo; freshC.turno = vagaTurno; freshC.dataDesignacao = new Date().toISOString(); }
+          if(freshC){ freshC.cliente = vagaCliente; freshC.role = vagaCargo; freshC.cidade = vagaCidade; freshC.turno = vagaTurno; freshC.dataDesignacao = new Date().toISOString(); }
           logAudit('Designou '+(freshC ? freshC.name : c.name)+' para a vaga de '+vagaCargo+' — '+vagaCliente+' ('+vagaCidade+')'+(vagaTurno?' — '+vagaTurno:''));
         }).then(function(){
           openCandidateModal(id);
