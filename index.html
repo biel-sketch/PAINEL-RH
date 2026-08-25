@@ -489,6 +489,7 @@
   .rp-tag{display:inline-block;font-size:9.5px;font-weight:600;padding:3px 8px;border-radius:999px;}
   .rp-tag.danger{background:var(--red-soft);color:var(--red);}
   .rp-tag.warning{background:var(--amber-soft);color:var(--amber);}
+  .rp-tag.ok{background:var(--teal-soft);color:var(--teal);}
   .rp-recruiter-card{background:var(--card);border:1px solid var(--line);border-radius:9px;padding:10px 13px;margin-bottom:6px;break-inside:avoid;}
   .rp-recruiter-name{font-family:var(--font-display);font-weight:600;font-size:12px;color:var(--text);margin-bottom:3px;}
   .rp-recruiter-stats{font-size:10.5px;color:var(--text-dim);}
@@ -596,6 +597,10 @@
       <div class="nav-item" data-view="clientes">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 21V8l9-5 9 5v13"/><path d="M9 21v-6h6v6"/></svg>
         <span class="nav-label">Clientes</span>
+      </div>
+      <div class="nav-item" data-view="indicadores-gestao">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+        <span class="nav-label">Indicadores Gestão</span>
       </div>
       <div class="nav-item" data-view="config">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V21a2 2 0 1 1-4 0v-.2a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.6-1H3a2 2 0 1 1 0-4h.2a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.6V3a2 2 0 1 1 4 0v.2a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.6 1H21a2 2 0 1 1 0 4h-.2a1.7 1.7 0 0 0-1.6 1z"/></svg>
@@ -1096,6 +1101,74 @@
           <thead><tr><th>Nome do cliente</th><th>CNPJ</th><th>Cidade</th><th style="width:160px;"></th></tr></thead>
           <tbody id="clientes-tbody"></tbody>
         </table>
+      </div>
+    </div>
+
+    <div class="view" id="view-indicadores-gestao">
+      <div class="topbar">
+        <div class="page-title">Indicadores Gestão</div>
+        <button class="data-btn" id="btn-pdf-gestao">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+          Gerar PDF
+        </button>
+      </div>
+
+      <div class="panel-head" style="margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+        <div class="panel-title">Período de análise</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <select id="ig-periodo" style="background:#0D1526;border:1px solid var(--line-strong);border-radius:8px;padding:7px 10px;color:var(--text);font-family:var(--font-body);font-size:12.5px;">
+            <option value="7">Últimos 7 dias</option>
+            <option value="30">Últimos 30 dias</option>
+            <option value="mes">Este mês</option>
+            <option value="tudo">Todo o período</option>
+            <option value="dia" selected>Dia específico</option>
+            <option value="custom">Personalizado</option>
+          </select>
+          <input type="date" id="ig-periodo-dia-input" style="background:#0D1526;border:1px solid var(--line-strong);border-radius:8px;padding:7px 10px;color:var(--text);font-family:var(--font-body);font-size:12.5px;">
+          <input type="date" id="ig-periodo-de" style="display:none;background:#0D1526;border:1px solid var(--line-strong);border-radius:8px;padding:7px 10px;color:var(--text);font-family:var(--font-body);font-size:12.5px;">
+          <span id="ig-periodo-ate-label" style="display:none;color:var(--text-faint);font-size:12px;">até</span>
+          <input type="date" id="ig-periodo-ate" style="display:none;background:#0D1526;border:1px solid var(--line-strong);border-radius:8px;padding:7px 10px;color:var(--text);font-family:var(--font-body);font-size:12.5px;">
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><div class="panel-title">Vagas abertas</div></div>
+        <div style="overflow-x:auto;">
+        <table>
+          <thead><tr><th>Cliente</th><th>Cargo</th><th>Cidade</th><th>Vagas</th><th>Abertura</th><th>SLA</th><th>Status</th></tr></thead>
+          <tbody id="ig-vagas-abertas-tbody"></tbody>
+        </table>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:14px;">
+        <div class="panel-head"><div class="panel-title">Vagas em andamento</div></div>
+        <div style="overflow-x:auto;">
+        <table>
+          <thead><tr><th>Cliente</th><th>Cargo</th><th>Cidade</th><th>Vagas</th><th>Doc</th><th>Exames</th><th>DP</th><th>Integração</th><th>Início</th><th>SLA</th><th>Status</th></tr></thead>
+          <tbody id="ig-vagas-andamento-tbody"></tbody>
+        </table>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:14px;">
+        <div class="panel-head"><div class="panel-title">Vagas faltando para fechar (abertas − em andamento)</div></div>
+        <div style="overflow-x:auto;">
+        <table>
+          <thead><tr><th>Cliente</th><th>Cargo</th><th>Abertas</th><th>Em andamento</th><th>Faltam</th></tr></thead>
+          <tbody id="ig-faltando-tbody"></tbody>
+        </table>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:14px;">
+        <div class="panel-head"><div class="panel-title">Produtividade por recrutador <span id="ig-produtividade-periodo-label" style="font-weight:400;color:var(--text-faint);font-size:12px;"></span></div></div>
+        <div style="overflow-x:auto;">
+        <table>
+          <thead><tr><th>Recrutador</th><th>Entrevistas realizadas</th><th>Aprovados</th><th>Reprovados</th><th>Banco de talentos</th></tr></thead>
+          <tbody id="ig-produtividade-tbody"></tbody>
+        </table>
+        </div>
       </div>
     </div>
 
@@ -1918,7 +1991,7 @@
     {user:'gabriel', email:'gabriel@loginserv.com.br', name:'Gabriel', role:'administrador'},
     {user:'simone', email:'simone@loginserv.com.br', name:'Simone', role:'operacional'},
     {user:'elaine', email:'elaine@loginserv.com.br', name:'Elaine', role:'supervisor'},
-    {user:'mariah', email:'dp@loginserv.com.br', name:'Mariah', role:'administrador'},
+    {user:'mariah', email:'dp@loginserv.com.br', name:'Mariah', role:'dp'},
     {user:'larissa', email:'dp.1@loginserv.com.br', name:'Larissa', role:'dp'},
     {user:'marilia', email:'dp.3@loginserv.com.br', name:'Marilia', role:'dp'},
     {user:'elaine silva', email:'rh@loginserv.com.br', name:'Elaine Silva', role:'analista'},
@@ -2238,6 +2311,16 @@
   }
 
   var VAGA_SLA_DAYS = 15;
+  // SLA da Gestão: dentro de 3 dias após abrir a vaga, alguém já deveria ter sido aprovado e
+  // entrado em andamento — senão a vaga está "em atraso".
+  var VAGA_APROVACAO_SLA_DIAS = 3;
+  // SLA de andamento até a contratação: 3 dias no geral, 7 dias pra clientes SPAL ou Eucatex.
+  var ANDAMENTO_SLA_PADRAO_DIAS = 3;
+  var ANDAMENTO_SLA_SPAL_EUCATEX_DIAS = 7;
+  function slaAndamentoDoCliente(cliente){
+    var c = (cliente||'').toUpperCase();
+    return (c.indexOf('SPAL') !== -1 || c.indexOf('EUCATEX') !== -1) ? ANDAMENTO_SLA_SPAL_EUCATEX_DIAS : ANDAMENTO_SLA_PADRAO_DIAS;
+  }
 
   var CHART_PALETTE = ['#3B82F6','#8B5CF6','#14B8A6','#EC4899','#F59E0B','#10B981','#6B7280','#84CC16','#06B6D4','#F97316','#A855F7','#EF4444'];
 
@@ -3281,6 +3364,155 @@
           '<div><div class="rp-header-title">Acompanhamento — Grupo Login Serv</div><div class="rp-header-sub">Gerado em '+dataGeracao+'</div></div>' +
         '</div>' +
         gerarHtmlAcompanhamento() +
+        '<div class="rp-footer">PAINEL-RH — Grupo Login Serv</div>' +
+      '</div>';
+
+    document.getElementById('relatorio-print-content').innerHTML = html;
+    window.print();
+  });
+
+  // Gera o HTML das 3 tabelas de "Indicadores Gestão" para o relatório PDF — reaproveita
+  // exatamente o mesmo agrupamento e cálculo usados na própria tela.
+  function gerarHtmlIndicadoresGestao(){
+    var groups = {};
+    function keyOf(cliente, cargo, cidade){ return (cliente||'—')+'::::'+(cargo||'—')+'::::'+(cidade||'—'); }
+    Object.keys(candidatesData).forEach(function(id){
+      var c = candidatesData[id];
+      var k = keyOf(c.cliente, c.role, c.cidade);
+      if(!groups[k]) groups[k] = {cliente:c.cliente||'—', cargo:c.role||'—', cidade:c.cidade||'—', documentacao:0, exames:0, dp:0, contratacao:0, inicioDatas:[], andamentoDesde:[]};
+      if(groups[k].hasOwnProperty(c.stage)) groups[k][c.stage]++;
+      if(['documentacao','exames','dp','contratacao'].indexOf(c.stage) !== -1){
+        groups[k].andamentoDesde.push(c.andamentoSince || c.stageSince);
+      }
+      if(c.stage === 'contratacao' && c.checklist){
+        var itemInicio = c.checklist.find(function(e){ return e.item === 'Integração/início no cliente'; });
+        if(itemInicio && itemInicio.date && !itemInicio.done){
+          groups[k].inicioDatas.push(itemInicio.date);
+        }
+      }
+    });
+    var rowsAndamento = Object.keys(groups).map(function(k){ return groups[k]; })
+      .filter(function(r){ return (r.documentacao + r.exames + r.dp + r.contratacao) > 0; })
+      .sort(function(a,b){
+        if(a.cliente !== b.cliente) return a.cliente < b.cliente ? -1 : 1;
+        return a.cargo < b.cargo ? -1 : 1;
+      });
+    var chavesComAndamento = {};
+    rowsAndamento.forEach(function(r){ chavesComAndamento[keyOf(r.cliente, r.cargo, r.cidade)] = true; });
+
+    var vagasAbertas = vagasData.filter(function(v){ return (v.qtd - v.hired.length) > 0; });
+    var totalPosicoesAbertas = vagasAbertas.reduce(function(s,v){ return s + (v.qtd - v.hired.length); }, 0);
+    var abertasHtml = vagasAbertas.length === 0
+      ? '<div class="rp-empty">Nenhuma vaga em aberto.</div>'
+      : '<table class="rp-table"><thead><tr><th>Cliente</th><th>Cargo</th><th>Cidade</th><th>Vagas</th><th>Abertura</th><th>SLA</th><th>Status</th></tr></thead><tbody>' +
+        vagasAbertas.map(function(v){
+          var faltantes = v.qtd - v.hired.length;
+          var diasAberta = v.createdAt ? Math.floor((Date.now() - new Date(v.createdAt).getTime()) / 86400000) : null;
+          var slaTexto = diasAberta === null ? '—' : diasAberta+'d';
+          var slaTag = diasAberta !== null && diasAberta >= VAGA_SLA_DAYS ? ' <span class="rp-tag danger">⚠</span>' : '';
+          var aberturaTexto = v.createdAt ? formatDateBR(v.createdAt.slice(0,10)) : '—';
+          var temAndamento = !!chavesComAndamento[keyOf(v.cliente, v.cargo, v.cidade)];
+          var emAtraso = diasAberta !== null && diasAberta > VAGA_APROVACAO_SLA_DIAS && !temAndamento;
+          var statusTag = emAtraso ? '<span class="rp-tag danger">Em atraso</span>' : '<span class="rp-tag ok">Dentro do prazo</span>';
+          return '<tr><td>'+v.cliente+'</td><td>'+v.cargo+'</td><td>'+(v.cidade||'—')+'</td><td class="mono">'+faltantes+'</td><td class="mono">'+aberturaTexto+'</td><td class="mono">'+slaTexto+slaTag+'</td><td>'+statusTag+'</td></tr>';
+        }).join('') + '</tbody></table>';
+
+    var andamentoHtml = rowsAndamento.length === 0
+      ? '<div class="rp-empty">Nenhum colaborador em andamento na esteira no momento.</div>'
+      : '<table class="rp-table"><thead><tr><th>Cliente</th><th>Cargo</th><th>Cidade</th><th>Vagas</th><th>Doc</th><th>Exames</th><th>DP</th><th>Integração</th><th>Início</th><th>SLA</th><th>Status</th></tr></thead><tbody>' +
+        rowsAndamento.map(function(r){
+          var total = r.documentacao + r.exames + r.dp + r.contratacao;
+          var inicioTexto = r.inicioDatas.length ? formatDateBR(r.inicioDatas.sort()[0]) : '—';
+          var maisAntiga = r.andamentoDesde.filter(Boolean).sort()[0];
+          var diasAndamento = maisAntiga ? Math.floor((Date.now() - new Date(maisAntiga).getTime()) / 86400000) : null;
+          var limiteSla = slaAndamentoDoCliente(r.cliente);
+          var slaTexto = diasAndamento === null ? '—' : diasAndamento+'d';
+          var emAtraso = diasAndamento !== null && diasAndamento > limiteSla;
+          var slaTag = emAtraso ? ' <span class="rp-tag danger">⚠</span>' : '';
+          var statusTag = diasAndamento === null ? '—' : (emAtraso ? '<span class="rp-tag danger">Em atraso</span>' : '<span class="rp-tag ok">Dentro do prazo</span>');
+          return '<tr><td>'+r.cliente+'</td><td>'+r.cargo+'</td><td>'+r.cidade+'</td><td class="mono">'+total+'</td><td class="mono">'+r.documentacao+'</td><td class="mono">'+r.exames+'</td><td class="mono">'+r.dp+'</td><td class="mono">'+r.contratacao+'</td><td class="mono">'+inicioTexto+'</td><td class="mono">'+slaTexto+slaTag+'</td><td>'+statusTag+'</td></tr>';
+        }).join('') + '</tbody></table>';
+
+    var abertasPorCargo = {};
+    vagasAbertas.forEach(function(v){
+      var k = (v.cliente||'—')+'::::'+(v.cargo||'—');
+      abertasPorCargo[k] = (abertasPorCargo[k]||0) + (v.qtd - v.hired.length);
+    });
+    var andamentoPorCargo = {};
+    rowsAndamento.forEach(function(r){
+      var k = r.cliente+'::::'+r.cargo;
+      andamentoPorCargo[k] = (andamentoPorCargo[k]||0) + (r.documentacao + r.exames + r.dp + r.contratacao);
+    });
+    var todasChaves = {};
+    Object.keys(abertasPorCargo).forEach(function(k){ todasChaves[k] = true; });
+    Object.keys(andamentoPorCargo).forEach(function(k){ todasChaves[k] = true; });
+    var rowsFaltando = Object.keys(todasChaves).map(function(k){
+      var partes = k.split('::::');
+      var abertas = abertasPorCargo[k] || 0;
+      var andamento = andamentoPorCargo[k] || 0;
+      return {cliente:partes[0], cargo:partes[1], abertas:abertas, andamento:andamento, faltam: Math.max(0, abertas - andamento)};
+    }).filter(function(r){ return r.abertas > 0; })
+      .sort(function(a,b){
+        if(a.cliente !== b.cliente) return a.cliente < b.cliente ? -1 : 1;
+        return a.cargo < b.cargo ? -1 : 1;
+      });
+    var faltandoHtml = rowsFaltando.length === 0
+      ? '<div class="rp-empty">Nenhuma vaga em aberto no momento.</div>'
+      : '<table class="rp-table"><thead><tr><th>Cliente</th><th>Cargo</th><th>Abertas</th><th>Em andamento</th><th>Faltam</th></tr></thead><tbody>' +
+        rowsFaltando.map(function(r){
+          var faltamCor = r.faltam > 0 ? 'color:var(--amber);font-weight:600;' : 'color:var(--teal);';
+          return '<tr><td>'+r.cliente+'</td><td>'+r.cargo+'</td><td class="mono">'+r.abertas+'</td><td class="mono">'+r.andamento+'</td><td class="mono" style="'+faltamCor+'">'+r.faltam+'</td></tr>';
+        }).join('') + '</tbody></table>';
+
+    var totalPessoasAndamento = rowsAndamento.reduce(function(s,r){ return s + r.documentacao + r.exames + r.dp + r.contratacao; }, 0);
+
+    // ---- Produtividade por recrutador, respeitando o filtro de período desta tela ----
+    var igRangePdf = getPeriodRangeFromIds('ig');
+    var igModeLabelPdf = igRangePdf.mode === '7' ? 'nos últimos 7 dias' : igRangePdf.mode === '30' ? 'nos últimos 30 dias' : igRangePdf.mode === 'mes' ? 'neste mês' : igRangePdf.mode === 'dia' ? 'no dia selecionado' : igRangePdf.mode === 'custom' ? 'no período selecionado' : 'em todo o período';
+    var historicoIgPdf = interviewsHistoryData.filter(function(h){
+      if(!h.date) return false;
+      var d = new Date(h.date+'T12:00:00');
+      if(igRangePdf.start && d < igRangePdf.start) return false;
+      if(igRangePdf.end && d > igRangePdf.end) return false;
+      return true;
+    });
+    var recrutadoresIgPdf = USER_ROLES.filter(function(u){ return u.role === 'assistente' || u.role === 'analista'; }).map(function(u){ return u.name; }).sort();
+    var linhasProdutividadePdf = recrutadoresIgPdf.map(function(nome){
+      var doRecrutador = historicoIgPdf.filter(function(h){ return h.entrevistador === nome; });
+      return {
+        nome: nome,
+        realizadas: doRecrutador.length,
+        aprovados: doRecrutador.filter(function(h){ return h.situacao === 'aprovado'; }).length,
+        reprovados: doRecrutador.filter(function(h){ return h.situacao === 'reprovado' || h.situacao === 'nao_compareceu'; }).length,
+        bancoTalentos: doRecrutador.filter(function(h){ return h.situacao === 'banco_talentos'; }).length
+      };
+    }).filter(function(r){ return r.realizadas > 0; });
+    var produtividadeGestaoHtml = linhasProdutividadePdf.length === 0
+      ? '<div class="rp-empty">Nenhuma entrevista realizada no período selecionado.</div>'
+      : '<table class="rp-table"><thead><tr><th>Recrutador</th><th>Entrevistas realizadas</th><th>Aprovados</th><th>Reprovados</th><th>Banco de talentos</th></tr></thead><tbody>' +
+        linhasProdutividadePdf.map(function(r){
+          return '<tr><td>'+r.nome+'</td><td class="mono">'+r.realizadas+'</td><td class="mono">'+r.aprovados+'</td><td class="mono">'+r.reprovados+'</td><td class="mono">'+r.bancoTalentos+'</td></tr>';
+        }).join('') + '</tbody></table>';
+
+    return '<div class="rp-section"><div class="rp-section-title">Vagas abertas ('+totalPosicoesAbertas+' posição(ões) · '+vagasAbertas.length+' vaga(s))</div>'+abertasHtml+'</div>' +
+      '<div class="rp-section"><div class="rp-section-title">Vagas em andamento ('+totalPessoasAndamento+' pessoa(s) · '+rowsAndamento.length+' vaga(s))</div>'+andamentoHtml+'</div>' +
+      '<div class="rp-section"><div class="rp-section-title">Vagas faltando para fechar</div>'+faltandoHtml+'</div>' +
+      '<div class="rp-section"><div class="rp-section-title">Produtividade por recrutador — '+igModeLabelPdf+'</div>'+produtividadeGestaoHtml+'</div>';
+  }
+
+  document.getElementById('btn-pdf-gestao').addEventListener('click', function(){
+    var agora = new Date();
+    var dataGeracao = agora.toLocaleDateString('pt-BR')+' às '+agora.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+    var logoEl = document.querySelector('.brand-logo-img');
+    var logoSrc = logoEl ? logoEl.src : '';
+
+    var html =
+      '<div class="rp-page">' +
+        '<div class="rp-header">' +
+          (logoSrc ? '<img src="'+logoSrc+'" alt="Logo">' : '') +
+          '<div><div class="rp-header-title">Indicadores Gestão — Grupo Login Serv</div><div class="rp-header-sub">Gerado em '+dataGeracao+'</div></div>' +
+        '</div>' +
+        gerarHtmlIndicadoresGestao() +
         '<div class="rp-footer">PAINEL-RH — Grupo Login Serv</div>' +
       '</div>';
 
@@ -4639,6 +4871,151 @@
     renderAcompanhamento();
   }
 
+  function renderIndicadoresGestao(){
+    var tbodyAbertas = document.getElementById('ig-vagas-abertas-tbody');
+    if(!tbodyAbertas) return;
+
+    // ---- Vagas em andamento (agrupado por cliente + cargo + cidade) — calculado primeiro pra
+    // podermos checar, na tabela de "Vagas abertas", se alguém já entrou em andamento ou não.
+    var groups = {};
+    function keyOf(cliente, cargo, cidade){ return (cliente||'—')+'::::'+(cargo||'—')+'::::'+(cidade||'—'); }
+    Object.keys(candidatesData).forEach(function(id){
+      var c = candidatesData[id];
+      var k = keyOf(c.cliente, c.role, c.cidade);
+      if(!groups[k]) groups[k] = {cliente:c.cliente||'—', cargo:c.role||'—', cidade:c.cidade||'—', documentacao:0, exames:0, dp:0, contratacao:0, inicioDatas:[], andamentoDesde:[]};
+      if(groups[k].hasOwnProperty(c.stage)) groups[k][c.stage]++;
+      if(['documentacao','exames','dp','contratacao'].indexOf(c.stage) !== -1){
+        groups[k].andamentoDesde.push(c.andamentoSince || c.stageSince);
+      }
+      if(c.stage === 'contratacao' && c.checklist){
+        var itemInicio = c.checklist.find(function(e){ return e.item === 'Integração/início no cliente'; });
+        if(itemInicio && itemInicio.date && !itemInicio.done){
+          groups[k].inicioDatas.push(itemInicio.date);
+        }
+      }
+    });
+    var rowsAndamento = Object.keys(groups).map(function(k){ return groups[k]; })
+      .filter(function(r){ return (r.documentacao + r.exames + r.dp + r.contratacao) > 0; })
+      .sort(function(a,b){
+        if(a.cliente !== b.cliente) return a.cliente < b.cliente ? -1 : 1;
+        return a.cargo < b.cargo ? -1 : 1;
+      });
+
+    // Chaves cliente+cargo+cidade que já têm alguém em andamento (usado pelo status de "Vagas abertas")
+    var chavesComAndamento = {};
+    rowsAndamento.forEach(function(r){ chavesComAndamento[keyOf(r.cliente, r.cargo, r.cidade)] = true; });
+
+    // ---- Vagas abertas ----
+    var vagasAbertas = vagasData.filter(function(v){ return (v.qtd - v.hired.length) > 0; });
+    if(vagasAbertas.length === 0){
+      tbodyAbertas.innerHTML = '<tr><td colspan="7" class="kanban-empty">Nenhuma vaga em aberto.</td></tr>';
+    } else {
+      tbodyAbertas.innerHTML = vagasAbertas.map(function(v){
+        var faltantes = v.qtd - v.hired.length;
+        var diasAberta = v.createdAt ? Math.floor((Date.now() - new Date(v.createdAt).getTime()) / 86400000) : null;
+        var slaTexto = diasAberta === null ? '—' : diasAberta+'d';
+        var slaEstilo = diasAberta !== null && diasAberta >= VAGA_SLA_DAYS ? ' style="color:var(--red);font-weight:600;"' : ' style="color:var(--teal);"';
+        var aberturaTexto = v.createdAt ? formatDateBR(v.createdAt.slice(0,10)) : '—';
+        var temAndamento = !!chavesComAndamento[keyOf(v.cliente, v.cargo, v.cidade)];
+        var emAtraso = diasAberta !== null && diasAberta > VAGA_APROVACAO_SLA_DIAS && !temAndamento;
+        var statusHtml = emAtraso
+          ? '<span class="pill red">Em atraso</span>'
+          : '<span class="pill teal">Dentro do prazo</span>';
+        return '<tr><td>'+v.cliente+'</td><td>'+v.cargo+'</td><td>'+(v.cidade||'—')+'</td><td class="mono">'+faltantes+'</td><td class="mono">'+aberturaTexto+'</td><td class="mono"'+slaEstilo+'>'+slaTexto+'</td><td>'+statusHtml+'</td></tr>';
+      }).join('');
+    }
+
+    var tbodyAndamento = document.getElementById('ig-vagas-andamento-tbody');
+    if(rowsAndamento.length === 0){
+      tbodyAndamento.innerHTML = '<tr><td colspan="11" class="kanban-empty">Nenhum colaborador em andamento na esteira no momento.</td></tr>';
+    } else {
+      tbodyAndamento.innerHTML = rowsAndamento.map(function(r){
+        var total = r.documentacao + r.exames + r.dp + r.contratacao;
+        var inicioTexto = r.inicioDatas.length ? formatDateBR(r.inicioDatas.sort()[0]) : '—';
+        var maisAntiga = r.andamentoDesde.filter(Boolean).sort()[0];
+        var diasAndamento = maisAntiga ? Math.floor((Date.now() - new Date(maisAntiga).getTime()) / 86400000) : null;
+        var limiteSla = slaAndamentoDoCliente(r.cliente);
+        var slaTexto = diasAndamento === null ? '—' : diasAndamento+'d';
+        var emAtraso = diasAndamento !== null && diasAndamento > limiteSla;
+        var slaEstilo = emAtraso ? ' style="color:var(--red);font-weight:600;"' : ' style="color:var(--teal);"';
+        var statusHtml = diasAndamento === null ? '—' : (emAtraso ? '<span class="pill red">Em atraso</span>' : '<span class="pill teal">Dentro do prazo</span>');
+        return '<tr><td>'+r.cliente+'</td><td>'+r.cargo+'</td><td>'+r.cidade+'</td><td class="mono">'+total+'</td><td class="mono">'+r.documentacao+'</td><td class="mono">'+r.exames+'</td><td class="mono">'+r.dp+'</td><td class="mono">'+r.contratacao+'</td><td class="mono">'+inicioTexto+'</td><td class="mono"'+slaEstilo+'>'+slaTexto+'</td><td>'+statusHtml+'</td></tr>';
+      }).join('');
+    }
+
+    // ---- Vagas faltando para fechar (abertas - em andamento, agrupado por cliente + cargo) ----
+    var abertasPorCargo = {};
+    vagasAbertas.forEach(function(v){
+      var k = (v.cliente||'—')+'::::'+(v.cargo||'—');
+      abertasPorCargo[k] = (abertasPorCargo[k]||0) + (v.qtd - v.hired.length);
+    });
+    var andamentoPorCargo = {};
+    rowsAndamento.forEach(function(r){
+      var k = r.cliente+'::::'+r.cargo;
+      andamentoPorCargo[k] = (andamentoPorCargo[k]||0) + (r.documentacao + r.exames + r.dp + r.contratacao);
+    });
+    var todasChaves = {};
+    Object.keys(abertasPorCargo).forEach(function(k){ todasChaves[k] = true; });
+    Object.keys(andamentoPorCargo).forEach(function(k){ todasChaves[k] = true; });
+
+    var rowsFaltando = Object.keys(todasChaves).map(function(k){
+      var partes = k.split('::::');
+      var abertas = abertasPorCargo[k] || 0;
+      var andamento = andamentoPorCargo[k] || 0;
+      return {cliente:partes[0], cargo:partes[1], abertas:abertas, andamento:andamento, faltam: Math.max(0, abertas - andamento)};
+    }).filter(function(r){ return r.abertas > 0; })
+      .sort(function(a,b){
+        if(a.cliente !== b.cliente) return a.cliente < b.cliente ? -1 : 1;
+        return a.cargo < b.cargo ? -1 : 1;
+      });
+
+    var tbodyFaltando = document.getElementById('ig-faltando-tbody');
+    if(rowsFaltando.length === 0){
+      tbodyFaltando.innerHTML = '<tr><td colspan="5" class="kanban-empty">Nenhuma vaga em aberto no momento.</td></tr>';
+    } else {
+      tbodyFaltando.innerHTML = rowsFaltando.map(function(r){
+        var faltamEstilo = r.faltam > 0 ? ' style="color:var(--amber);font-weight:600;"' : ' style="color:var(--teal);"';
+        return '<tr><td>'+r.cliente+'</td><td>'+r.cargo+'</td><td class="mono">'+r.abertas+'</td><td class="mono">'+r.andamento+'</td><td class="mono"'+faltamEstilo+'>'+r.faltam+'</td></tr>';
+      }).join('');
+    }
+
+    // ---- Produtividade por recrutador, respeitando o filtro de período desta tela ----
+    var tbodyProdutividade = document.getElementById('ig-produtividade-tbody');
+    if(tbodyProdutividade){
+      var igRange = getPeriodRangeFromIds('ig');
+      var igModeLabel = igRange.mode === '7' ? 'nos últimos 7 dias' : igRange.mode === '30' ? 'nos últimos 30 dias' : igRange.mode === 'mes' ? 'neste mês' : igRange.mode === 'dia' ? 'no dia selecionado' : igRange.mode === 'custom' ? 'no período selecionado' : 'em todo o período';
+      var igLabelEl = document.getElementById('ig-produtividade-periodo-label');
+      if(igLabelEl) igLabelEl.textContent = '('+igModeLabel+')';
+
+      var historicoIg = interviewsHistoryData.filter(function(h){
+        if(!h.date) return false;
+        var d = new Date(h.date+'T12:00:00');
+        if(igRange.start && d < igRange.start) return false;
+        if(igRange.end && d > igRange.end) return false;
+        return true;
+      });
+      var recrutadoresIg = USER_ROLES.filter(function(u){ return u.role === 'assistente' || u.role === 'analista'; }).map(function(u){ return u.name; }).sort();
+      var linhasComDados = recrutadoresIg.map(function(nome){
+        var doRecrutador = historicoIg.filter(function(h){ return h.entrevistador === nome; });
+        return {
+          nome: nome,
+          realizadas: doRecrutador.length,
+          aprovados: doRecrutador.filter(function(h){ return h.situacao === 'aprovado'; }).length,
+          reprovados: doRecrutador.filter(function(h){ return h.situacao === 'reprovado' || h.situacao === 'nao_compareceu'; }).length,
+          bancoTalentos: doRecrutador.filter(function(h){ return h.situacao === 'banco_talentos'; }).length
+        };
+      }).filter(function(r){ return r.realizadas > 0; });
+
+      if(linhasComDados.length === 0){
+        tbodyProdutividade.innerHTML = '<tr><td colspan="5" class="kanban-empty">Nenhuma entrevista realizada no período selecionado.</td></tr>';
+      } else {
+        tbodyProdutividade.innerHTML = linhasComDados.map(function(r){
+          return '<tr><td>'+r.nome+'</td><td class="mono">'+r.realizadas+'</td><td class="mono" style="color:var(--teal);">'+r.aprovados+'</td><td class="mono" style="color:var(--red);">'+r.reprovados+'</td><td class="mono" style="color:var(--amber);">'+r.bancoTalentos+'</td></tr>';
+        }).join('');
+      }
+    }
+  }
+
   function renderAcompanhamento(){
     var tbody = document.getElementById('acompanhamento-tbody');
     if(!tbody) return;
@@ -4897,8 +5274,8 @@
   // ============================================================
   // FILTRO DE PERÍODO — INDICADORES (Aprovados / Reprovados / Taxa)
   // ============================================================
-  function getIndicPeriodRange(){
-    var mode = (document.getElementById('indic-periodo') || {}).value || 'tudo';
+  function getPeriodRangeFromIds(prefix){
+    var mode = (document.getElementById(prefix+'-periodo') || {}).value || 'tudo';
     var now = new Date();
     var end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
     var start = null;
@@ -4909,18 +5286,22 @@
     } else if(mode === 'mes'){
       start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
     } else if(mode === 'custom'){
-      var deVal = document.getElementById('indic-periodo-de').value;
-      var ateVal = document.getElementById('indic-periodo-ate').value;
+      var deVal = document.getElementById(prefix+'-periodo-de').value;
+      var ateVal = document.getElementById(prefix+'-periodo-ate').value;
       start = deVal ? new Date(deVal+'T00:00:00') : null;
       end = ateVal ? new Date(ateVal+'T23:59:59') : end;
     } else if(mode === 'dia'){
-      var diaVal = document.getElementById('indic-periodo-dia-input').value;
+      var diaVal = document.getElementById(prefix+'-periodo-dia-input').value;
       if(diaVal){
         start = new Date(diaVal+'T00:00:00');
         end = new Date(diaVal+'T23:59:59');
       }
     }
-    return {start:start, end: (mode === 'tudo') ? null : end};
+    return {start:start, end: (mode === 'tudo') ? null : end, mode:mode};
+  }
+
+  function getIndicPeriodRange(){
+    return getPeriodRangeFromIds('indic');
   }
 
   function renderIndicadoresPeriodo(){
@@ -4977,6 +5358,25 @@
   document.getElementById('indic-periodo-de').addEventListener('change', renderIndicadoresPeriodo);
   document.getElementById('indic-periodo-ate').addEventListener('change', renderIndicadoresPeriodo);
   document.getElementById('indic-periodo-dia-input').addEventListener('change', renderAllViews);
+
+  // Filtro de período da tela "Indicadores Gestão" — já vem em "Dia específico" com hoje
+  // preenchido, já que a Produtividade ali é pensada como algo diário por padrão.
+  document.getElementById('ig-periodo-dia-input').value = todayISO;
+  document.getElementById('ig-periodo').addEventListener('change', function(){
+    var isCustom = this.value === 'custom';
+    var isDia = this.value === 'dia';
+    document.getElementById('ig-periodo-de').style.display = isCustom ? 'inline-block' : 'none';
+    document.getElementById('ig-periodo-ate-label').style.display = isCustom ? 'inline' : 'none';
+    document.getElementById('ig-periodo-ate').style.display = isCustom ? 'inline-block' : 'none';
+    document.getElementById('ig-periodo-dia-input').style.display = isDia ? 'inline-block' : 'none';
+    if(isDia && !document.getElementById('ig-periodo-dia-input').value){
+      document.getElementById('ig-periodo-dia-input').value = todayISO;
+    }
+    renderIndicadoresGestao();
+  });
+  document.getElementById('ig-periodo-de').addEventListener('change', renderIndicadoresGestao);
+  document.getElementById('ig-periodo-ate').addEventListener('change', renderIndicadoresGestao);
+  document.getElementById('ig-periodo-dia-input').addEventListener('change', renderIndicadoresGestao);
 
   function openStageDetail(stage){
     var f = getVagaFilters();
@@ -5241,11 +5641,18 @@
       if(!canEdit || !checklistComplete) return;
       if(currentIndex < stageOrder.length - 1){
         var nextStage = stageOrder[currentIndex+1];
+        var estavaEmAprovado = c.stage === 'aprovado';
         safeDeleteAndSync(function(){
           var freshC = candidatesData[id];
           if(freshC){
             freshC.stage = nextStage;
             freshC.stageSince = new Date().toISOString();
+            // Marca a data em que a pessoa entrou de fato "em andamento" (saiu de aprovado pra
+            // documentação) — isso não muda mais enquanto ela avança pelas próximas etapas, e
+            // serve pra calcular o SLA de "vagas em andamento".
+            if(estavaEmAprovado && nextStage === 'documentacao'){
+              freshC.andamentoSince = new Date().toISOString();
+            }
             initStageState(freshC, nextStage);
           }
           logAudit('Avançou '+(freshC ? freshC.name : c.name)+' para a etapa "'+stageLabels[nextStage]+'"');
@@ -5278,6 +5685,9 @@
         if(freshC){
           freshC.stage = prevStage;
           freshC.stageSince = new Date().toISOString();
+          if(prevStage === 'aprovado'){
+            freshC.andamentoSince = null;
+          }
           initStageState(freshC, prevStage);
         }
         logAudit('Retornou '+(freshC ? freshC.name : c.name)+' para a etapa "'+stageLabels[prevStage]+'"');
@@ -6014,6 +6424,7 @@
     renderAuditLog();
     renderIndicadoresPeriodo();
     renderAcompanhamento();
+    renderIndicadoresGestao();
     renderAlertsCenter();
     populateEpcCargoSelect();
   }
