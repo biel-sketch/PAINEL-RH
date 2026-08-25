@@ -217,7 +217,7 @@
   .mini-list-value{font-family:var(--font-mono);font-size:13px;font-weight:500;}
   .rec-card{background:#0D1526;border:1px solid var(--line);border-radius:10px;padding:16px;}
   .rec-card-name{font-family:var(--font-display);font-weight:600;font-size:14.5px;margin-bottom:12px;}
-  .rec-card-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;}
+  .rec-card-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
   .rec-card-stat{background:var(--card);border-radius:8px;padding:9px 10px;}
   .rec-card-stat-value{font-family:var(--font-mono);font-size:18px;font-weight:600;}
   .rec-card-stat-value.teal{color:var(--teal);}
@@ -978,14 +978,6 @@
       <div class="indic-grid">
         <div class="stat-card">
           <div class="stat-label">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
-            Tempo médio de integração
-          </div>
-          <div class="stat-value" id="indic-tempo-contratacao">—</div>
-          <div class="stat-sub">da entrevista à integração</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18"/></svg>
             Entrevistas no mês
           </div>
@@ -1018,14 +1010,6 @@
           </div>
           <div class="stat-value teal" id="indic-contratados">0</div>
           <div class="stat-sub" id="indic-contratados-sub">posições preenchidas até agora</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
-            Desistências
-          </div>
-          <div class="stat-value red" id="indic-desistencias">0</div>
-          <div class="stat-sub" id="indic-desistencias-sub">candidatos ou contratados que desistiram</div>
         </div>
         <div class="stat-card">
           <div class="stat-label">
@@ -2653,14 +2637,11 @@
 
   function updateHiringIndicators(){
     var contratadosEl = document.getElementById('indic-contratados');
-    var desistenciasEl = document.getElementById('indic-desistencias');
-    if(!contratadosEl || !desistenciasEl) return;
+    if(!contratadosEl) return;
 
     var totalContratados = vagasData.reduce(function(s,v){ return s+v.hired.length; }, 0);
-    var totalDesistencias = reprovadosData.filter(function(r){ return r.obs === 'Desistência'; }).length;
 
     contratadosEl.textContent = totalContratados;
-    desistenciasEl.textContent = totalDesistencias;
 
     var bancoTalentosEl = document.getElementById('indic-banco-talentos');
     if(bancoTalentosEl) bancoTalentosEl.textContent = talentBankData.length;
@@ -3273,12 +3254,81 @@
         '<div class="rp-section"><div class="rp-section-title">Aprovados '+diaLabel+' — envio para exame médico</div>'+gruposHtml+'</div>' +
         '<div class="rp-section"><div class="rp-section-title">Total de aprovados por recrutador</div>'+recrutadoresHtml+'</div>' +
         bancoTalentosHtml +
+        gerarHtmlVagasEmAberto() +
+        gerarHtmlCandidatosPorEtapa() +
+        gerarHtmlAcompanhamento() +
         '<div class="rp-footer">PAINEL-RH — Grupo Login Serv</div>' +
       '</div>';
 
     document.getElementById('relatorio-print-content').innerHTML = html;
     window.print();
   });
+
+  // Gera o HTML da seção "Vagas em aberto" — usa o estado ATUAL (não filtrado por data), já que
+  // vagas em aberto é sempre uma foto do momento, não faz sentido "de um dia específico".
+  function gerarHtmlVagasEmAberto(){
+    var vagasAbertas = vagasData.filter(function(v){ return (v.qtd - (v.hired?v.hired.length:0)) > 0; })
+      .sort(function(a,b){ return (b.urgente?1:0) - (a.urgente?1:0); });
+    var vagasHtml = vagasAbertas.length === 0
+      ? '<div class="rp-empty">Nenhuma vaga em aberto no momento.</div>'
+      : '<table class="rp-table"><thead><tr><th>Cliente</th><th>Cargo</th><th>Cidade</th><th>Faltantes</th><th>SLA (dias)</th></tr></thead><tbody>' +
+        vagasAbertas.map(function(v){
+          var faltantes = v.qtd - (v.hired?v.hired.length:0);
+          var diasAberta = v.createdAt ? Math.floor((Date.now() - new Date(v.createdAt).getTime()) / 86400000) : null;
+          var slaTexto = diasAberta === null ? '—' : diasAberta+'d';
+          var slaTag = diasAberta !== null && diasAberta >= VAGA_SLA_DAYS ? ' <span class="rp-tag danger">⚠</span>' : '';
+          return '<tr><td>'+v.cliente+(v.urgente?' <span class="rp-tag danger">Urgente</span>':'')+'</td><td>'+v.cargo+'</td><td>'+(v.cidade||'—')+'</td><td>'+faltantes+'</td><td class="mono">'+slaTexto+slaTag+'</td></tr>';
+        }).join('') + '</tbody></table>';
+    var totalVagasFaltantes = vagasAbertas.reduce(function(s,v){ return s + (v.qtd - (v.hired?v.hired.length:0)); }, 0);
+    var titulo = 'Vagas em aberto ('+vagasAbertas.length+' vaga(s) · '+totalVagasFaltantes+' posição(ões) faltando)';
+    return '<div class="rp-section"><div class="rp-section-title">'+titulo+'</div>'+vagasHtml+'</div>';
+  }
+
+  // Gera o HTML da seção "Candidatos por etapa da esteira" — também é sempre uma foto do
+  // momento atual, não filtrada por data.
+  function gerarHtmlCandidatosPorEtapa(){
+    var stageCounts = {aprovado:0, documentacao:0, exames:0, dp:0, contratacao:0};
+    Object.keys(candidatesData).forEach(function(id){
+      var c = candidatesData[id];
+      if(stageCounts.hasOwnProperty(c.stage)) stageCounts[c.stage]++;
+    });
+    var etapasHtml = '<div class="rp-stats-row">' +
+      stageOrder.map(function(st){
+        return '<div class="rp-stat"><div class="rp-stat-value">'+stageCounts[st]+'</div><div class="rp-stat-label">'+stageLabels[st]+'</div></div>';
+      }).join('') + '</div>';
+    return '<div class="rp-section"><div class="rp-section-title">Candidatos por etapa da esteira</div>'+etapasHtml+'</div>';
+  }
+
+  // Gera o HTML da seção "Acompanhamento" — mostra só as combinações cliente/cargo que têm
+  // pelo menos um colaborador em andamento (documentação, exames, DP ou integração).
+  function gerarHtmlAcompanhamento(){
+    var groups = {};
+    function keyOf(cliente, cargo){ return (cliente||'—')+'::::'+(cargo||'—'); }
+    function newGroup(cliente, cargo){
+      return {cliente:cliente||'—', cargo:cargo||'—', documentacao:0, exames:0, dp:0, contratacao:0};
+    }
+    Object.keys(candidatesData).forEach(function(id){
+      var c = candidatesData[id];
+      var k = keyOf(c.cliente, c.role);
+      if(!groups[k]) groups[k] = newGroup(c.cliente, c.role);
+      if(groups[k].hasOwnProperty(c.stage)) groups[k][c.stage]++;
+    });
+
+    var rows = Object.keys(groups).map(function(k){ return groups[k]; })
+      .filter(function(r){ return (r.documentacao + r.exames + r.dp + r.contratacao) > 0; })
+      .sort(function(a,b){
+        if(a.cliente !== b.cliente) return a.cliente < b.cliente ? -1 : 1;
+        return a.cargo < b.cargo ? -1 : 1;
+      });
+
+    var html = rows.length === 0
+      ? '<div class="rp-empty">Nenhum colaborador em andamento na esteira no momento.</div>'
+      : '<table class="rp-table"><thead><tr><th>Cliente</th><th>Cargo</th><th>Documentação</th><th>Exames</th><th>DP</th><th>Integração</th></tr></thead><tbody>' +
+        rows.map(function(r){
+          return '<tr><td>'+r.cliente+'</td><td>'+r.cargo+'</td><td class="mono">'+r.documentacao+'</td><td class="mono">'+r.exames+'</td><td class="mono">'+r.dp+'</td><td class="mono">'+r.contratacao+'</td></tr>';
+        }).join('') + '</tbody></table>';
+    return '<div class="rp-section"><div class="rp-section-title">Acompanhamento — '+rows.length+' vaga(s) com colaborador em andamento</div>'+html+'</div>';
+  }
 
   function gerarRelatorioPDF(){
     renderIndicadoresGerais();
@@ -3289,31 +3339,9 @@
     var logoEl = document.querySelector('.brand-logo-img');
     var logoSrc = logoEl ? logoEl.src : '';
 
-    // ---- 1. Vagas em aberto, por cliente ----
-    var vagasAbertas = vagasData.filter(function(v){ return (v.qtd - (v.hired?v.hired.length:0)) > 0; })
-      .sort(function(a,b){ return (b.urgente?1:0) - (a.urgente?1:0); });
-    var VAGAS_LIMITE = 10;
-    var vagasMostradas = vagasAbertas.slice(0, VAGAS_LIMITE);
-    var vagasRestantes = vagasAbertas.length - vagasMostradas.length;
-    var vagasHtml = vagasAbertas.length === 0
-      ? '<div class="rp-empty">Nenhuma vaga em aberto no momento.</div>'
-      : '<table class="rp-table"><thead><tr><th>Cliente</th><th>Cargo</th><th>Cidade</th><th>Faltantes</th></tr></thead><tbody>' +
-        vagasMostradas.map(function(v){
-          var faltantes = v.qtd - (v.hired?v.hired.length:0);
-          return '<tr><td>'+v.cliente+(v.urgente?' <span class="rp-tag danger">Urgente</span>':'')+'</td><td>'+v.cargo+'</td><td>'+(v.cidade||'—')+'</td><td>'+faltantes+'</td></tr>';
-        }).join('') + '</tbody></table>' +
-        (vagasRestantes > 0 ? '<div class="rp-empty">+ '+vagasRestantes+' vaga(s) adicional(is) em aberto</div>' : '');
-
-    // ---- 2. Candidatos por etapa ----
-    var stageCounts = {aprovado:0, documentacao:0, exames:0, dp:0, contratacao:0};
-    Object.keys(candidatesData).forEach(function(id){
-      var c = candidatesData[id];
-      if(stageCounts.hasOwnProperty(c.stage)) stageCounts[c.stage]++;
-    });
-    var etapasHtml = '<div class="rp-stats-row">' +
-      stageOrder.map(function(st){
-        return '<div class="rp-stat"><div class="rp-stat-value">'+stageCounts[st]+'</div><div class="rp-stat-label">'+stageLabels[st]+'</div></div>';
-      }).join('') + '</div>';
+    // ---- 1. Vagas em aberto e 2. Candidatos por etapa ----
+    var vagasSecaoHtml = gerarHtmlVagasEmAberto();
+    var etapasSecaoHtml = gerarHtmlCandidatosPorEtapa();
 
     // ---- 3 e 4. Entrevistas e Aprovados x Reprovados no período selecionado ----
     var range = getIndicPeriodRange();
@@ -3337,53 +3365,34 @@
     // ---- Indicadores gerais (reaproveitando o que já está calculado na tela) ----
     function txt(id, fallback){ var el = document.getElementById(id); return el ? el.textContent : (fallback||'—'); }
     var indicadoresHtml = '<div class="rp-stats-row">' +
+      '<div class="rp-stat"><div class="rp-stat-value">'+txt('indic-vagas-abertas')+'</div><div class="rp-stat-label">Vagas em aberto</div></div>' +
+      '<div class="rp-stat"><div class="rp-stat-value">'+txt('indic-em-esteira')+'</div><div class="rp-stat-label">Em esteira agora</div></div>' +
       '<div class="rp-stat"><div class="rp-stat-value">'+txt('indic-taxa-aprovacao')+'</div><div class="rp-stat-label">Taxa de aprovação</div></div>' +
-      '<div class="rp-stat"><div class="rp-stat-value">'+txt('indic-tempo-contratacao')+'</div><div class="rp-stat-label">Tempo médio de integração</div></div>' +
       '<div class="rp-stat"><div class="rp-stat-value">'+txt('indic-comparecimento')+'</div><div class="rp-stat-label">Comparecimento no mês</div></div>' +
       '<div class="rp-stat"><div class="rp-stat-value">'+txt('indic-contratados')+'</div><div class="rp-stat-label">Contratados</div></div>' +
-      '<div class="rp-stat"><div class="rp-stat-value">'+txt('indic-desistencias')+'</div><div class="rp-stat-label">Desistências</div></div>' +
       '<div class="rp-stat"><div class="rp-stat-value">'+txt('indic-banco-talentos')+'</div><div class="rp-stat-label">No Banco de talentos</div></div>' +
       '<div class="rp-stat"><div class="rp-stat-value">'+txt('indic-sla-contratacao')+'</div><div class="rp-stat-label">SLA de contratação</div></div>' +
       '</div>';
-
-    // ---- 5. Alertas pendentes ----
-    var alerts = getAllAlerts();
-    var alertsHtml;
-    if(alerts.length === 0){
-      alertsHtml = '<div class="rp-empty">Nenhum alerta pendente. ✓</div>';
-    } else {
-      var alertGroups = {};
-      var alertOrder = [];
-      alerts.forEach(function(a){
-        if(!alertGroups[a.group]){ alertGroups[a.group] = []; alertOrder.push(a.group); }
-        alertGroups[a.group].push(a);
-      });
-      var ALERTAS_LIMITE_POR_GRUPO = 5;
-      alertsHtml = alertOrder.map(function(g){
-        var itens = alertGroups[g];
-        var mostrados = itens.slice(0, ALERTAS_LIMITE_POR_GRUPO);
-        var restantes = itens.length - mostrados.length;
-        return '<table class="rp-table"><thead><tr><th colspan="2">'+g+' ('+itens.length+')</th></tr></thead><tbody>' +
-          mostrados.map(function(a){
-            return '<tr><td>'+a.name+'</td><td><span class="rp-tag '+a.severity+'">'+a.detail+'</span></td></tr>';
-          }).join('') +
-          (restantes > 0 ? '<tr><td colspan="2" class="rp-empty">+ '+restantes+' adicional(is)</td></tr>' : '') +
-          '</tbody></table>';
-      }).join('');
-    }
 
     // ---- 6. Produtividade por recrutador (só se o perfil tem permissão) ----
     var produtividadeHtml = '';
     if(currentRole && currentRole.verProdutividade){
       var recrutadores = USER_ROLES.filter(function(u){ return u.role === 'assistente' || u.role === 'analista'; }).map(function(u){ return u.name; }).sort();
+      var historicoNoPeriodoRel = interviewsHistoryData.filter(function(h){
+        if(!h.date) return false;
+        var d = new Date(h.date+'T12:00:00');
+        if(range.start && d < range.start) return false;
+        if(range.end && d > range.end) return false;
+        return true;
+      });
       produtividadeHtml = recrutadores.length === 0 ? '<div class="rp-empty">Nenhum Assistente/Analista de RH cadastrado.</div>' :
         recrutadores.map(function(nome){
-          var agendados = interviewsData.filter(function(iv){ return iv.entrevistador === nome; }).length;
-          var doRecrutador = interviewsHistoryData.filter(function(h){ return h.entrevistador === nome; });
+          var doRecrutador = historicoNoPeriodoRel.filter(function(h){ return h.entrevistador === nome; });
           var aprov = doRecrutador.filter(function(h){ return h.situacao === 'aprovado'; }).length;
-          var reprov = doRecrutador.filter(function(h){ return h.situacao === 'reprovado'; }).length;
+          var reprov = doRecrutador.filter(function(h){ return h.situacao === 'reprovado' || h.situacao === 'nao_compareceu'; }).length;
+          var bancoTal = doRecrutador.filter(function(h){ return h.situacao === 'banco_talentos'; }).length;
           return '<div class="rp-recruiter-card"><div class="rp-recruiter-name">'+nome+'</div>' +
-            '<div class="rp-recruiter-stats">Agendados: <b>'+agendados+'</b> · Realizadas: <b>'+doRecrutador.length+'</b> · Aprovados: <b>'+aprov+'</b> · Reprovados: <b>'+reprov+'</b></div></div>';
+            '<div class="rp-recruiter-stats">Realizadas: <b>'+doRecrutador.length+'</b> · Aprovados: <b>'+aprov+'</b> · Reprovados: <b>'+reprov+'</b> · Banco de talentos: <b>'+bancoTal+'</b></div></div>';
         }).join('');
     }
 
@@ -3393,11 +3402,11 @@
           (logoSrc ? '<img src="'+logoSrc+'" alt="Logo">' : '') +
           '<div><div class="rp-header-title">Relatório de Recrutamento — Grupo Login Serv</div><div class="rp-header-sub">Gerado em '+dataGeracao+'</div></div>' +
         '</div>' +
-        '<div class="rp-section"><div class="rp-section-title">Vagas em aberto</div>'+vagasHtml+'</div>' +
-        '<div class="rp-section"><div class="rp-section-title">Candidatos por etapa da esteira</div>'+etapasHtml+'</div>' +
+        vagasSecaoHtml +
+        etapasSecaoHtml +
+        gerarHtmlAcompanhamento() +
         '<div class="rp-section"><div class="rp-section-title">Entrevistas e decisões — '+periodoLabel+'</div>'+entrevistasHtml+'</div>' +
         '<div class="rp-section"><div class="rp-section-title">Indicadores gerais</div>'+indicadoresHtml+'</div>' +
-        '<div class="rp-section"><div class="rp-section-title">Alertas pendentes</div>'+alertsHtml+'</div>' +
         (produtividadeHtml ? '<div class="rp-section"><div class="rp-section-title">Produtividade por recrutador</div>'+produtividadeHtml+'</div>' : '') +
         '<div class="rp-footer">PAINEL-RH — Grupo Login Serv</div>' +
       '</div>';
@@ -4700,7 +4709,7 @@
     var modeProdutividade = document.getElementById('indic-periodo').value;
     var periodoLabelProdutividade = modeProdutividade === '7' ? 'nos últimos 7 dias' : modeProdutividade === '30' ? 'nos últimos 30 dias' : modeProdutividade === 'mes' ? 'neste mês' : modeProdutividade === 'custom' ? 'no período selecionado' : 'em todo o período';
     var periodoLabelEl = document.getElementById('produtividade-periodo-label');
-    if(periodoLabelEl) periodoLabelEl.textContent = '(agendados: total atual · demais: '+periodoLabelProdutividade+')';
+    if(periodoLabelEl) periodoLabelEl.textContent = '('+periodoLabelProdutividade+')';
     var historicoNoPeriodo = interviewsHistoryData.filter(function(h){
       if(!h.date) return false;
       var d = new Date(h.date+'T12:00:00');
@@ -4710,7 +4719,6 @@
     });
 
     cardsEl.innerHTML = recrutadores.map(function(nome){
-      var agendados = interviewsData.filter(function(iv){ return iv.entrevistador === nome; }).length;
       var doRecrutador = historicoNoPeriodo.filter(function(h){ return h.entrevistador === nome; });
       var realizadas = doRecrutador.length;
       var aprovados = doRecrutador.filter(function(h){ return h.situacao === 'aprovado'; }).length;
@@ -4734,7 +4742,6 @@
       return '<div class="rec-card">' +
         '<div class="rec-card-name">'+nome+'</div>' +
         '<div class="rec-card-stats">' +
-          '<div class="rec-card-stat"><div class="rec-card-stat-value">'+agendados+'</div><div class="rec-card-stat-label">Agendados</div></div>' +
           '<div class="rec-card-stat"><div class="rec-card-stat-value">'+realizadas+'</div><div class="rec-card-stat-label">Entrevistas realizadas</div></div>' +
           '<div class="rec-card-stat"><div class="rec-card-stat-value teal">'+aprovados+'</div><div class="rec-card-stat-label">Aprovados</div></div>' +
           '<div class="rec-card-stat"><div class="rec-card-stat-value red">'+reprovados.length+'</div><div class="rec-card-stat-label">Reprovados</div></div>' +
@@ -4783,26 +4790,6 @@
     var vagasAbertas = vagasData.filter(function(v){ return (v.qtd - v.hired.length) > 0; }).length;
     elVagas.textContent = vagasAbertas;
     document.getElementById('indic-vagas-abertas-sub').textContent = 'de '+totalVagas+' vagas cadastradas';
-
-    // Tempo médio de integração (da entrevista à integração)
-    var somaDias = 0, qtdHired = 0;
-    vagasData.forEach(function(v){
-      (v.hired||[]).forEach(function(h){
-        if(h.hiredAt && h.interviewDate){
-          var d1 = new Date(h.interviewDate+'T12:00:00');
-          var d2 = new Date(h.hiredAt);
-          var dias = (d2.getTime() - d1.getTime()) / 86400000;
-          if(dias >= 0){ somaDias += dias; qtdHired++; }
-        }
-      });
-    });
-    var tempoContratacaoEl = document.getElementById('indic-tempo-contratacao');
-    if(qtdHired === 0){
-      tempoContratacaoEl.textContent = '—';
-    } else {
-      var media = (somaDias/qtdHired).toFixed(1);
-      tempoContratacaoEl.innerHTML = media+'<span style="font-size:15px;color:var(--text-faint);"> dias</span>';
-    }
 
     // Entrevistas já decididas no mês + agendadas hoje
     var now = new Date();
