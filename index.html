@@ -1148,6 +1148,10 @@
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
               Aprovados do dia (PDF)
             </button>
+            <button class="data-btn" id="btn-pdf-acompanhamento">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+              Acompanhamento (PDF)
+            </button>
             <button class="data-btn" id="btn-copiar-aprovados-dia">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
               Copiar texto (WhatsApp)
@@ -3264,6 +3268,26 @@
     window.print();
   });
 
+  document.getElementById('btn-pdf-acompanhamento').addEventListener('click', function(){
+    var agora = new Date();
+    var dataGeracao = agora.toLocaleDateString('pt-BR')+' às '+agora.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+    var logoEl = document.querySelector('.brand-logo-img');
+    var logoSrc = logoEl ? logoEl.src : '';
+
+    var html =
+      '<div class="rp-page">' +
+        '<div class="rp-header">' +
+          (logoSrc ? '<img src="'+logoSrc+'" alt="Logo">' : '') +
+          '<div><div class="rp-header-title">Acompanhamento — Grupo Login Serv</div><div class="rp-header-sub">Gerado em '+dataGeracao+'</div></div>' +
+        '</div>' +
+        gerarHtmlAcompanhamento() +
+        '<div class="rp-footer">PAINEL-RH — Grupo Login Serv</div>' +
+      '</div>';
+
+    document.getElementById('relatorio-print-content').innerHTML = html;
+    window.print();
+  });
+
   // Gera o HTML da seção "Vagas em aberto" — usa o estado ATUAL (não filtrado por data), já que
   // vagas em aberto é sempre uma foto do momento, não faz sentido "de um dia específico".
   function gerarHtmlVagasEmAberto(){
@@ -3305,13 +3329,30 @@
     var groups = {};
     function keyOf(cliente, cargo){ return (cliente||'—')+'::::'+(cargo||'—'); }
     function newGroup(cliente, cargo){
-      return {cliente:cliente||'—', cargo:cargo||'—', documentacao:0, exames:0, dp:0, contratacao:0};
+      return {cliente:cliente||'—', cargo:cargo||'—', documentacao:0, exames:0, dp:0, contratacao:0, examesDatas:[], integracaoDatas:[]};
     }
     Object.keys(candidatesData).forEach(function(id){
       var c = candidatesData[id];
       var k = keyOf(c.cliente, c.role);
       if(!groups[k]) groups[k] = newGroup(c.cliente, c.role);
       if(groups[k].hasOwnProperty(c.stage)) groups[k][c.stage]++;
+
+      if(c.stage === 'exames' && c.exame){
+        if(c.exame.status === 'aprovado'){
+          groups[k].examesDatas.push(c.name+': Aprovado');
+        } else if(c.exame.status === 'retido'){
+          groups[k].examesDatas.push(c.name+': Retido'+(c.exame.obs ? ' — '+c.exame.obs : ''));
+        } else if(c.exame.data){
+          groups[k].examesDatas.push(c.name+': '+formatDateBR(c.exame.data));
+        }
+      }
+      if(c.stage === 'contratacao' && c.checklist){
+        c.checklist.forEach(function(entry){
+          if(entry.hasOwnProperty('date') && entry.date && !entry.done){
+            groups[k].integracaoDatas.push(c.name+' — '+entry.item+': '+formatDateBR(entry.date));
+          }
+        });
+      }
     });
 
     var rows = Object.keys(groups).map(function(k){ return groups[k]; })
@@ -3321,11 +3362,18 @@
         return a.cargo < b.cargo ? -1 : 1;
       });
 
+    function detalheHtml(list){
+      if(!list.length) return '';
+      return '<div style="margin-top:3px;">' + list.map(function(txt){
+        return '<div style="font-size:9.5px;color:var(--text-faint);">'+txt+'</div>';
+      }).join('') + '</div>';
+    }
+
     var html = rows.length === 0
       ? '<div class="rp-empty">Nenhum colaborador em andamento na esteira no momento.</div>'
       : '<table class="rp-table"><thead><tr><th>Cliente</th><th>Cargo</th><th>Documentação</th><th>Exames</th><th>DP</th><th>Integração</th></tr></thead><tbody>' +
         rows.map(function(r){
-          return '<tr><td>'+r.cliente+'</td><td>'+r.cargo+'</td><td class="mono">'+r.documentacao+'</td><td class="mono">'+r.exames+'</td><td class="mono">'+r.dp+'</td><td class="mono">'+r.contratacao+'</td></tr>';
+          return '<tr><td>'+r.cliente+'</td><td>'+r.cargo+'</td><td class="mono">'+r.documentacao+'</td><td class="mono">'+r.exames+detalheHtml(r.examesDatas)+'</td><td class="mono">'+r.dp+'</td><td class="mono">'+r.contratacao+detalheHtml(r.integracaoDatas)+'</td></tr>';
         }).join('') + '</tbody></table>';
     return '<div class="rp-section"><div class="rp-section-title">Acompanhamento — '+rows.length+' vaga(s) com colaborador em andamento</div>'+html+'</div>';
   }
@@ -4615,8 +4663,14 @@
       if(!groups[k]) groups[k] = newGroup(c.cliente, c.role);
       if(groups[k].hasOwnProperty(c.stage)) groups[k][c.stage]++;
 
-      if(c.stage === 'exames' && c.exame && c.exame.data){
-        groups[k].examesDatas.push(c.name+': '+formatDateBR(c.exame.data));
+      if(c.stage === 'exames' && c.exame){
+        if(c.exame.status === 'aprovado'){
+          groups[k].examesDatas.push(c.name+': Aprovado');
+        } else if(c.exame.status === 'retido'){
+          groups[k].examesDatas.push(c.name+': Retido'+(c.exame.obs ? ' — '+c.exame.obs : ''));
+        } else if(c.exame.data){
+          groups[k].examesDatas.push(c.name+': '+formatDateBR(c.exame.data));
+        }
       }
       if(c.stage === 'contratacao' && c.checklist){
         c.checklist.forEach(function(entry){
