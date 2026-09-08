@@ -326,6 +326,12 @@
   details summary::before{content:'▸';display:inline-block;margin-right:8px;color:var(--teal);transition:transform 0.15s;}
   details[open] summary::before{transform:rotate(90deg);}
   details summary:hover{border-color:var(--line-strong);}
+  .ig-cliente-group{margin-bottom:10px;border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+  .ig-cliente-summary{cursor:pointer;padding:12px 16px;background:#0D1526;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;text-align:left;}
+  .ig-cliente-summary-name{font-family:var(--font-display);font-weight:600;font-size:13.5px;text-align:left;flex-shrink:0;}
+  .ig-cliente-summary-stats{display:flex;gap:14px;font-size:12px;color:var(--text-dim);flex-wrap:wrap;text-align:left;}
+  .ig-cliente-summary-stats b{color:var(--text);font-family:var(--font-mono);}
+  .ig-cliente-body table{border-top:1px solid var(--line);}
   .cfg-panel-body{padding:16px 18px;}
   .cfg-row{padding:12px 0;border-bottom:1px solid var(--line);}
   .cfg-row:last-child{border-bottom:none;}
@@ -417,6 +423,9 @@
     .login-card{padding:26px 20px 24px;}
     .btn{padding:9px 14px;font-size:13px;}
     .danger-row{flex-wrap:wrap;}
+    .ig-cliente-summary{flex-direction:column;align-items:flex-start;}
+    .ig-cliente-summary-name{width:100%;}
+    .ig-cliente-summary-stats{width:100%;}
   }
   @media (max-width:420px){
     .stats,.indic-grid{grid-template-columns:1fr !important;}
@@ -1132,44 +1141,8 @@
       </div>
 
       <div class="panel">
-        <div class="panel-head"><div class="panel-title">Vagas abertas</div></div>
-        <div style="overflow-x:auto;">
-        <table>
-          <thead><tr><th>Cliente</th><th>Cargo</th><th>Cidade</th><th>Vagas</th><th>Abertura</th><th>SLA</th><th>Status</th></tr></thead>
-          <tbody id="ig-vagas-abertas-tbody"></tbody>
-        </table>
-        </div>
-      </div>
-
-      <div class="panel" style="margin-top:14px;">
-        <div class="panel-head"><div class="panel-title">Vagas em andamento</div></div>
-        <div style="overflow-x:auto;">
-        <table>
-          <thead><tr><th>Cliente</th><th>Cargo</th><th>Cidade</th><th>Vagas</th><th>Doc</th><th>Exames</th><th>DP</th><th>Integração</th><th>Início</th><th>SLA</th><th>Status</th></tr></thead>
-          <tbody id="ig-vagas-andamento-tbody"></tbody>
-        </table>
-        </div>
-      </div>
-
-      <div class="panel" style="margin-top:14px;">
-        <div class="panel-head">
-          <div class="panel-title">Vagas faltando para fechar (abertas − em andamento)</div>
-          <div style="font-size:13px;color:var(--text-dim);">Total: <b id="ig-faltando-total" class="mono" style="color:var(--amber);">0</b></div>
-        </div>
-        <div style="overflow-x:auto;">
-        <table>
-          <thead><tr><th>Cliente</th><th>Cargo</th><th>Abertas</th><th>Em andamento</th><th>Faltam</th></tr></thead>
-          <tbody id="ig-faltando-tbody"></tbody>
-        </table>
-        </div>
-      </div>
-
-      <div class="panel" style="margin-top:14px;">
-        <div class="panel-head">
-          <div class="panel-title">Vagas sem ninguém em andamento, por cidade</div>
-          <div style="font-size:11.5px;color:var(--text-faint);">Posições que ainda não têm nenhum candidato em Documentação, Exames, DP ou Integração</div>
-        </div>
-        <div id="ig-cidades-cards" style="display:flex;flex-wrap:wrap;gap:10px;padding:16px;"></div>
+        <div class="panel-head"><div class="panel-title">Vagas</div></div>
+        <div id="ig-vagas-andamento-grupos" style="padding:12px 18px;"></div>
       </div>
 
       <div class="panel" style="margin-top:14px;">
@@ -1564,6 +1537,30 @@
         <button type="submit" class="btn btn-primary" style="flex:1;">Salvar alterações</button>
       </div>
     </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="desistencia-motivo-overlay">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <div class="modal-title">Motivo da desistência</div>
+        <div class="modal-sub" id="desistencia-motivo-subtitle">—</div>
+      </div>
+      <button class="modal-close" id="desistencia-motivo-close" aria-label="Fechar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-field">
+        <label for="desistencia-motivo-input">Descreva o motivo</label>
+        <textarea id="desistencia-motivo-input" placeholder="Ex: recebeu outra proposta, mudou de cidade, não se adaptou..." style="min-height:100px;"></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn btn-ghost" id="desistencia-motivo-cancel" style="flex:1;">Cancelar</button>
+      <button type="button" class="btn btn-primary" id="desistencia-motivo-confirm" style="flex:1;">Confirmar desistência</button>
+    </div>
   </div>
 </div>
 
@@ -2684,36 +2681,38 @@
       var hIdxs = checked.map(function(cb){ return parseInt(cb.getAttribute('data-hidx'), 10); }).sort(function(a,b){ return b-a; });
       var pessoasAlvo = hIdxs.map(function(hIdx){ return v.hired[hIdx]; });
 
-      safeDeleteAndSync(function(){
-        var freshV = vagasData.find(function(x){ return vagaKey(x) === alvoKey; });
-        var nomesDesistentes = [];
-        if(freshV){
-          pessoasAlvo.forEach(function(pessoa){
-            var idxNaFresh = freshV.hired.findIndex(function(h){ return h.name === pessoa.name && h.telefone === pessoa.telefone; });
-            if(idxNaFresh !== -1){
-              nomesDesistentes.push(pessoa.name);
-              reprovadosData.push({id:genRecordId('rep'), name:pessoa.name, telefone:pessoa.telefone, vaga:freshV.cargo, cliente:freshV.cliente, situacao:'reprovado', jus:'sim', obs:'Desistência'});
-              var pessoaFresh = freshV.hired[idxNaFresh];
-              if(pessoaFresh.custoExameId){
-                var custoRef = custosExameData.find(function(x){ return x.id === pessoaFresh.custoExameId; });
-                if(custoRef && !custoRef.prejuizo){
-                  custoRef.prejuizo = true;
-                  custoRef.motivoPrejuizo = 'Desistência após contratação';
-                  custoRef.dataPrejuizo = new Date().toISOString();
-                  logAudit('Prejuízo de exame registrado — '+pessoa.name+' desistiu após contratado, exame já realizado (R$ '+(custoRef.custoTotal||0).toFixed(2).replace('.',',')+')');
+      openDesistenciaMotivoModal(pessoasAlvo.map(function(p){ return p.name; }).join(', '), function(motivo){
+        safeDeleteAndSync(function(){
+          var freshV = vagasData.find(function(x){ return vagaKey(x) === alvoKey; });
+          var nomesDesistentes = [];
+          if(freshV){
+            pessoasAlvo.forEach(function(pessoa){
+              var idxNaFresh = freshV.hired.findIndex(function(h){ return h.name === pessoa.name && h.telefone === pessoa.telefone; });
+              if(idxNaFresh !== -1){
+                nomesDesistentes.push(pessoa.name);
+                reprovadosData.push({id:genRecordId('rep'), name:pessoa.name, telefone:pessoa.telefone, vaga:freshV.cargo, cliente:freshV.cliente, situacao:'reprovado', jus:'sim', obs:'Desistência: '+motivo});
+                var pessoaFresh = freshV.hired[idxNaFresh];
+                if(pessoaFresh.custoExameId){
+                  var custoRef = custosExameData.find(function(x){ return x.id === pessoaFresh.custoExameId; });
+                  if(custoRef && !custoRef.prejuizo){
+                    custoRef.prejuizo = true;
+                    custoRef.motivoPrejuizo = 'Desistência após contratação: '+motivo;
+                    custoRef.dataPrejuizo = new Date().toISOString();
+                    logAudit('Prejuízo de exame registrado — '+pessoa.name+' desistiu após contratado, exame já realizado (R$ '+(custoRef.custoTotal||0).toFixed(2).replace('.',',')+')');
+                  }
                 }
+                freshV.hired.splice(idxNaFresh, 1);
+                markDeleted('hiredPeople', alvoKey+'|'+pessoa.name);
               }
-              freshV.hired.splice(idxNaFresh, 1);
-              markDeleted('hiredPeople', alvoKey+'|'+pessoa.name);
-            }
-          });
-          freshV.history = freshV.history || [];
-          freshV.history.push({ts:new Date().toISOString(), acao:nomesDesistentes.length+' desistência(s) registrada(s): '+nomesDesistentes.join(', ')});
-        }
-        logAudit('Registrou '+nomesDesistentes.length+' desistência(s) na vaga de '+(freshV?freshV.cargo:v.cargo)+' ('+(freshV?freshV.cliente:v.cliente)+'): '+nomesDesistentes.join(', '));
-      }).then(function(){
-        closeReopenModal();
-        showToast(hIdxs.length+' desistência(s) registrada(s) — vaga reaberta com '+hIdxs.length+' posição(ões).');
+            });
+            freshV.history = freshV.history || [];
+            freshV.history.push({ts:new Date().toISOString(), acao:nomesDesistentes.length+' desistência(s) registrada(s): '+nomesDesistentes.join(', ')+' — motivo: '+motivo});
+          }
+          logAudit('Registrou '+nomesDesistentes.length+' desistência(s) na vaga de '+(freshV?freshV.cargo:v.cargo)+' ('+(freshV?freshV.cliente:v.cliente)+'): '+nomesDesistentes.join(', ')+' — motivo: '+motivo);
+        }).then(function(){
+          closeReopenModal();
+          showToast(hIdxs.length+' desistência(s) registrada(s) — vaga reaberta com '+hIdxs.length+' posição(ões).');
+        });
       });
     }
   });
@@ -3448,92 +3447,78 @@
         if(a.cliente !== b.cliente) return a.cliente < b.cliente ? -1 : 1;
         return a.cargo < b.cargo ? -1 : 1;
       });
-    var chavesComAndamento = {};
-    rowsAndamento.forEach(function(r){ chavesComAndamento[keyOf(r.cliente, r.cargo, r.cidade)] = true; });
 
     var vagasAbertas = vagasData.filter(function(v){ return (v.qtd - v.hired.length) > 0; });
-    var totalPosicoesAbertas = vagasAbertas.reduce(function(s,v){ return s + (v.qtd - v.hired.length); }, 0);
-    var abertasHtml = vagasAbertas.length === 0
-      ? '<div class="rp-empty">Nenhuma vaga em aberto.</div>'
-      : '<table class="rp-table"><thead><tr><th>Cliente</th><th>Cargo</th><th>Cidade</th><th>Vagas</th><th>Abertura</th><th>SLA</th><th>Status</th></tr></thead><tbody>' +
-        vagasAbertas.map(function(v){
-          var faltantes = v.qtd - v.hired.length;
-          var diasAberta = diasUteisDesde(v.createdAt);
-          var slaTexto = diasAberta === null ? '—' : diasAberta+'d';
-          var slaTag = diasAberta !== null && diasAberta >= VAGA_SLA_DAYS ? ' <span class="rp-tag danger">⚠</span>' : '';
-          var aberturaTexto = v.createdAt ? formatDateBR(v.createdAt.slice(0,10)) : '—';
-          var temAndamento = !!chavesComAndamento[keyOf(v.cliente, v.cargo, v.cidade)];
-          var emAtraso = diasAberta !== null && diasAberta > VAGA_APROVACAO_SLA_DIAS && !temAndamento;
-          var statusTag = emAtraso ? '<span class="rp-tag danger">Em atraso</span>' : '<span class="rp-tag ok">Dentro do prazo</span>';
-          return '<tr><td>'+v.cliente+'</td><td>'+v.cargo+'</td><td>'+(v.cidade||'—')+'</td><td class="mono">'+faltantes+'</td><td class="mono">'+aberturaTexto+'</td><td class="mono">'+slaTexto+slaTag+'</td><td>'+statusTag+'</td></tr>';
-        }).join('') + '</tbody></table>';
 
-    var andamentoHtml = rowsAndamento.length === 0
-      ? '<div class="rp-empty">Nenhum colaborador em andamento na esteira no momento.</div>'
-      : '<table class="rp-table"><thead><tr><th>Cliente</th><th>Cargo</th><th>Cidade</th><th>Vagas</th><th>Doc</th><th>Exames</th><th>DP</th><th>Integração</th><th>Início</th><th>SLA</th><th>Status</th></tr></thead><tbody>' +
-        rowsAndamento.map(function(r){
-          var total = r.documentacao + r.exames + r.dp + r.contratacao;
-          var inicioTexto = formatarDatasComQtd(r.inicioDatas);
-          var maisAntiga = r.andamentoDesde.filter(Boolean).sort()[0];
-          var diasAndamento = maisAntiga ? diasUteisDesde(maisAntiga) : null;
-          var limiteSla = slaAndamentoDoCliente(r.cliente);
-          var slaTexto = diasAndamento === null ? '—' : diasAndamento+'d';
-          var emAtraso = diasAndamento !== null && diasAndamento > limiteSla;
-          var slaTag = emAtraso ? ' <span class="rp-tag danger">⚠</span>' : '';
-          var statusTag = diasAndamento === null ? '—' : (emAtraso ? '<span class="rp-tag danger">Em atraso</span>' : '<span class="rp-tag ok">Dentro do prazo</span>');
-          return '<tr><td>'+r.cliente+'</td><td>'+r.cargo+'</td><td>'+r.cidade+'</td><td class="mono">'+total+'</td><td class="mono">'+r.documentacao+'</td><td class="mono">'+r.exames+'</td><td class="mono">'+r.dp+'</td><td class="mono">'+r.contratacao+'</td><td class="mono">'+inicioTexto+'</td><td class="mono">'+slaTexto+slaTag+'</td><td>'+statusTag+'</td></tr>';
-        }).join('') + '</tbody></table>';
-
-    var abertasPorCargo = {};
+    // ---- Vagas, agrupadas por cliente — inclui todos os clientes com vaga aberta, mesmo os
+    // que ainda não têm ninguém em andamento. ----
+    var abertasPorClienteQtd = {};
     vagasAbertas.forEach(function(v){
-      var k = (v.cliente||'—')+'::::'+(v.cargo||'—');
-      abertasPorCargo[k] = (abertasPorCargo[k]||0) + (v.qtd - v.hired.length);
+      abertasPorClienteQtd[v.cliente||'—'] = (abertasPorClienteQtd[v.cliente||'—']||0) + (v.qtd - v.hired.length);
     });
-    var andamentoPorCargo = {};
+    var andamentoPorCliente = {};
     rowsAndamento.forEach(function(r){
-      var k = r.cliente+'::::'+r.cargo;
-      andamentoPorCargo[k] = (andamentoPorCargo[k]||0) + (r.documentacao + r.exames + r.dp + r.contratacao);
+      if(!andamentoPorCliente[r.cliente]) andamentoPorCliente[r.cliente] = [];
+      andamentoPorCliente[r.cliente].push(r);
     });
-    var todasChaves = {};
-    Object.keys(abertasPorCargo).forEach(function(k){ todasChaves[k] = true; });
-    Object.keys(andamentoPorCargo).forEach(function(k){ todasChaves[k] = true; });
-    var rowsFaltando = Object.keys(todasChaves).map(function(k){
-      var partes = k.split('::::');
-      var abertas = abertasPorCargo[k] || 0;
-      var andamento = andamentoPorCargo[k] || 0;
-      return {cliente:partes[0], cargo:partes[1], abertas:abertas, andamento:andamento, faltam: Math.max(0, abertas - andamento)};
-    }).filter(function(r){ return r.abertas > 0; })
-      .sort(function(a,b){
-        if(a.cliente !== b.cliente) return a.cliente < b.cliente ? -1 : 1;
-        return a.cargo < b.cargo ? -1 : 1;
-      });
-    var faltandoHtml = rowsFaltando.length === 0
+    var todosClientesVagas = {};
+    Object.keys(abertasPorClienteQtd).forEach(function(c){ todosClientesVagas[c] = true; });
+    Object.keys(andamentoPorCliente).forEach(function(c){ todosClientesVagas[c] = true; });
+    var ordemClientesVagas = Object.keys(todosClientesVagas).sort();
+
+    var vagasSecoesHtml = ordemClientesVagas.length === 0
       ? '<div class="rp-empty">Nenhuma vaga em aberto no momento.</div>'
-      : '<table class="rp-table"><thead><tr><th>Cliente</th><th>Cargo</th><th>Abertas</th><th>Em andamento</th><th>Faltam</th></tr></thead><tbody>' +
-        rowsFaltando.map(function(r){
-          var faltamCor = r.faltam > 0 ? 'color:var(--amber);font-weight:600;' : 'color:var(--teal);';
-          return '<tr><td>'+r.cliente+'</td><td>'+r.cargo+'</td><td class="mono">'+r.abertas+'</td><td class="mono">'+r.andamento+'</td><td class="mono" style="'+faltamCor+'">'+r.faltam+'</td></tr>';
-        }).join('') + '</tbody></table>';
-    var totalFaltando = rowsFaltando.reduce(function(s,r){ return s + r.faltam; }, 0);
+      : ordemClientesVagas.map(function(cli){
+          var lista = andamentoPorCliente[cli] || [];
+          var totalDoc = lista.reduce(function(s,r){ return s+r.documentacao; }, 0);
+          var totalExames = lista.reduce(function(s,r){ return s+r.exames; }, 0);
+          var totalDp = lista.reduce(function(s,r){ return s+r.dp; }, 0);
+          var totalIntegracao = lista.reduce(function(s,r){ return s+r.contratacao; }, 0);
+          var totalAndamentoCli = totalDoc + totalExames + totalDp + totalIntegracao;
+          var abertasCli = abertasPorClienteQtd[cli] || 0;
 
-    // Usa a mesma base da tabela de cima (linha por linha, cliente+cargo), garantindo que a
-    // soma dos cards de cidade bate exatamente com o total.
-    var faltamPorCidadePdf = {};
-    rowsFaltando.forEach(function(r){
-      var cidade = cidadeConfiavelPdf(r.cliente, r.cargo, null);
-      faltamPorCidadePdf[cidade] = (faltamPorCidadePdf[cidade] || 0) + r.faltam;
-    });
-    var faltandoPorCidade = Object.keys(faltamPorCidadePdf).map(function(cidade){
-      return {cidade: cidade, faltam: faltamPorCidadePdf[cidade]};
-    }).filter(function(r){ return r.faltam > 0; })
-      .sort(function(a,b){ return b.faltam - a.faltam; });
-    var faltandoPorCidadeHtml = faltandoPorCidade.length === 0
-      ? '<div class="rp-empty">Nenhuma vaga faltando pra fechar no momento.</div>'
-      : '<div class="rp-stats-row">' + faltandoPorCidade.map(function(r){
-          return '<div class="rp-stat"><div class="rp-stat-value">'+r.faltam+'</div><div class="rp-stat-label">'+r.cidade+'</div></div>';
-        }).join('') + '</div>';
+          var vagasClienteAbertas = vagasAbertas.filter(function(v){ return (v.cliente||'—') === cli; });
+          var cargosCidadesComAndamento = {};
+          lista.forEach(function(r){ cargosCidadesComAndamento[r.cargo+'::::'+r.cidade] = true; });
+          var vagasSemNinguem = vagasClienteAbertas.filter(function(v){
+            return !cargosCidadesComAndamento[v.cargo+'::::'+(v.cidade||'—')];
+          });
+          var abertasPorCargoCidade = {};
+          vagasClienteAbertas.forEach(function(v){
+            var kcc2 = v.cargo+'::::'+(v.cidade||'—');
+            abertasPorCargoCidade[kcc2] = (abertasPorCargoCidade[kcc2]||0) + (v.qtd - v.hired.length);
+          });
 
-    var totalPessoasAndamento = rowsAndamento.reduce(function(s,r){ return s + r.documentacao + r.exames + r.dp + r.contratacao; }, 0);
+          var rowsComAndamento = lista.map(function(r){
+            var total = r.documentacao + r.exames + r.dp + r.contratacao;
+            var abertasAqui = abertasPorCargoCidade[r.cargo+'::::'+r.cidade] || 0;
+            var inicioTexto = formatarDatasComQtd(r.inicioDatas);
+            var maisAntiga = r.andamentoDesde.filter(Boolean).sort()[0];
+            var diasAndamento = maisAntiga ? diasUteisDesde(maisAntiga) : null;
+            var limiteSla = slaAndamentoDoCliente(r.cliente);
+            var slaTexto = diasAndamento === null ? '—' : diasAndamento+'d';
+            var emAtraso = diasAndamento !== null && diasAndamento > limiteSla;
+            var slaTag = emAtraso ? ' <span class="rp-tag danger">⚠</span>' : '';
+            var statusTag = diasAndamento === null ? '—' : (emAtraso ? '<span class="rp-tag danger">Em atraso</span>' : '<span class="rp-tag ok">Dentro do prazo</span>');
+            return '<tr><td>'+r.cargo+'</td><td>'+r.cidade+'</td><td class="mono">'+abertasAqui+'</td><td class="mono">'+total+'</td><td class="mono">'+r.documentacao+'</td><td class="mono">'+r.exames+'</td><td class="mono">'+r.dp+'</td><td class="mono">'+r.contratacao+'</td><td class="mono">'+inicioTexto+'</td><td class="mono">'+slaTexto+slaTag+'</td><td>'+statusTag+'</td></tr>';
+          }).join('');
+
+          var rowsSemNinguem = vagasSemNinguem.map(function(v){
+            var faltantes = v.qtd - v.hired.length;
+            return '<tr><td>'+v.cargo+'</td><td>'+(v.cidade||'—')+'</td><td class="mono">'+faltantes+'</td><td class="mono">0</td><td class="mono">0</td><td class="mono">0</td><td class="mono">0</td><td class="mono">0</td><td class="mono">—</td><td class="mono">—</td><td><span class="rp-tag danger">Sem ninguém ainda</span></td></tr>';
+          }).join('');
+
+          var rowsHtml = rowsComAndamento + rowsSemNinguem;
+          if(!rowsHtml){
+            rowsHtml = '<tr><td colspan="11" class="rp-empty">Nenhuma vaga em aberto pra esse cliente.</td></tr>';
+          }
+
+          return '<div style="margin-bottom:14px;">' +
+            '<div style="font-family:var(--font-display);font-weight:600;font-size:12.5px;color:var(--text);margin-bottom:5px;">'+cli+
+              ' <span style="font-weight:400;color:var(--text-dim);font-size:11px;">— Abertas: <b style="color:var(--teal);">'+abertasCli+'</b> · Em andamento: <b style="color:var(--amber);">'+totalAndamentoCli+'</b></span></div>' +
+            '<table class="rp-table"><thead><tr><th>Cargo</th><th>Cidade</th><th>Abertas</th><th>Em andamento</th><th>Doc</th><th>Exames</th><th>DP</th><th>Integração</th><th>Início</th><th>SLA</th><th>Status</th></tr></thead><tbody>'+rowsHtml+'</tbody></table>' +
+            '</div>';
+        }).join('');
 
     // ---- Produtividade por recrutador, respeitando o filtro de período desta tela ----
     var igRangePdf = getPeriodRangeFromIds('ig');
@@ -3563,10 +3548,7 @@
           return '<tr><td>'+r.nome+'</td><td class="mono">'+r.realizadas+'</td><td class="mono">'+r.aprovados+'</td><td class="mono">'+r.reprovados+'</td><td class="mono">'+r.bancoTalentos+'</td></tr>';
         }).join('') + '</tbody></table>';
 
-    return '<div class="rp-section"><div class="rp-section-title">Vagas abertas ('+totalPosicoesAbertas+' posição(ões) · '+vagasAbertas.length+' vaga(s))</div>'+abertasHtml+'</div>' +
-      '<div class="rp-section"><div class="rp-section-title">Vagas em andamento ('+totalPessoasAndamento+' pessoa(s) · '+rowsAndamento.length+' vaga(s))</div>'+andamentoHtml+'</div>' +
-      '<div class="rp-section"><div class="rp-section-title">Vagas faltando para fechar (total: '+totalFaltando+' · abertas menos as já em andamento)</div>'+faltandoHtml+'</div>' +
-      '<div class="rp-section"><div class="rp-section-title">Vagas sem ninguém em andamento, por cidade</div>'+faltandoPorCidadeHtml+'</div>' +
+    return '<div class="rp-section"><div class="rp-section-title">Vagas</div>'+vagasSecoesHtml+'</div>' +
       '<div class="rp-section"><div class="rp-section-title">Produtividade por recrutador — '+igModeLabelPdf+'</div>'+produtividadeGestaoHtml+'</div>';
   }
 
@@ -4942,8 +4924,8 @@
   }
 
   function renderIndicadoresGestao(){
-    var tbodyAbertas = document.getElementById('ig-vagas-abertas-tbody');
-    if(!tbodyAbertas) return;
+    var containerAndamentoGuard = document.getElementById('ig-vagas-andamento-grupos');
+    if(!containerAndamentoGuard) return;
 
     // Mapa cliente+cargo -> cidade cadastrada na VAGA (fonte confiável). Usamos isso em vez do
     // campo de cidade do candidato, porque esse campo pode ter ficado desatualizado (digitado
@@ -4958,8 +4940,7 @@
       return cidadeDaVaga[kcc] || cidadeCandidato || '—';
     }
 
-    // ---- Vagas em andamento (agrupado por cliente + cargo + cidade) — calculado primeiro pra
-    // podermos checar, na tabela de "Vagas abertas", se alguém já entrou em andamento ou não.
+    // ---- Vagas em andamento (agrupado por cliente + cargo + cidade) ----
     var groups = {};
     function keyOf(cliente, cargo, cidade){ return (cliente||'—')+'::::'+(cargo||'—')+'::::'+(cidade||'—'); }
     Object.keys(candidatesData).forEach(function(id){
@@ -4985,113 +4966,88 @@
         return a.cargo < b.cargo ? -1 : 1;
       });
 
-    // Chaves cliente+cargo+cidade que já têm alguém em andamento (usado pelo status de "Vagas abertas")
-    var chavesComAndamento = {};
-    rowsAndamento.forEach(function(r){ chavesComAndamento[keyOf(r.cliente, r.cargo, r.cidade)] = true; });
-
-    // ---- Vagas abertas ----
     var vagasAbertas = vagasData.filter(function(v){ return (v.qtd - v.hired.length) > 0; });
-    if(vagasAbertas.length === 0){
-      tbodyAbertas.innerHTML = '<tr><td colspan="7" class="kanban-empty">Nenhuma vaga em aberto.</td></tr>';
-    } else {
-      tbodyAbertas.innerHTML = vagasAbertas.map(function(v){
-        var faltantes = v.qtd - v.hired.length;
-        var diasAberta = diasUteisDesde(v.createdAt);
-        var slaTexto = diasAberta === null ? '—' : diasAberta+'d';
-        var slaEstilo = diasAberta !== null && diasAberta >= VAGA_SLA_DAYS ? ' style="color:var(--red);font-weight:600;"' : ' style="color:var(--teal);"';
-        var aberturaTexto = v.createdAt ? formatDateBR(v.createdAt.slice(0,10)) : '—';
-        var temAndamento = !!chavesComAndamento[keyOf(v.cliente, v.cargo, v.cidade)];
-        var emAtraso = diasAberta !== null && diasAberta > VAGA_APROVACAO_SLA_DIAS && !temAndamento;
-        var statusHtml = emAtraso
-          ? '<span class="pill red">Em atraso</span>'
-          : '<span class="pill teal">Dentro do prazo</span>';
-        return '<tr><td>'+v.cliente+'</td><td>'+v.cargo+'</td><td>'+(v.cidade||'—')+'</td><td class="mono">'+faltantes+'</td><td class="mono">'+aberturaTexto+'</td><td class="mono"'+slaEstilo+'>'+slaTexto+'</td><td>'+statusHtml+'</td></tr>';
-      }).join('');
-    }
 
-    var tbodyAndamento = document.getElementById('ig-vagas-andamento-tbody');
-    if(rowsAndamento.length === 0){
-      tbodyAndamento.innerHTML = '<tr><td colspan="11" class="kanban-empty">Nenhum colaborador em andamento na esteira no momento.</td></tr>';
-    } else {
-      tbodyAndamento.innerHTML = rowsAndamento.map(function(r){
-        var total = r.documentacao + r.exames + r.dp + r.contratacao;
-        var inicioTexto = formatarDatasComQtd(r.inicioDatas);
-        var maisAntiga = r.andamentoDesde.filter(Boolean).sort()[0];
-        var diasAndamento = maisAntiga ? diasUteisDesde(maisAntiga) : null;
-        var limiteSla = slaAndamentoDoCliente(r.cliente);
-        var slaTexto = diasAndamento === null ? '—' : diasAndamento+'d';
-        var emAtraso = diasAndamento !== null && diasAndamento > limiteSla;
-        var slaEstilo = emAtraso ? ' style="color:var(--red);font-weight:600;"' : ' style="color:var(--teal);"';
-        var statusHtml = diasAndamento === null ? '—' : (emAtraso ? '<span class="pill red">Em atraso</span>' : '<span class="pill teal">Dentro do prazo</span>');
-        return '<tr><td>'+r.cliente+'</td><td>'+r.cargo+'</td><td>'+r.cidade+'</td><td class="mono">'+total+'</td><td class="mono">'+r.documentacao+'</td><td class="mono">'+r.exames+'</td><td class="mono">'+r.dp+'</td><td class="mono">'+r.contratacao+'</td><td class="mono">'+inicioTexto+'</td><td class="mono"'+slaEstilo+'>'+slaTexto+'</td><td>'+statusHtml+'</td></tr>';
-      }).join('');
-    }
-
-    // ---- Vagas faltando para fechar (abertas - em andamento, agrupado por cliente + cargo) ----
-    var abertasPorCargo = {};
+    // ---- Vagas, agrupadas por cliente — inclui TODOS os clientes com vaga em aberto, mesmo
+    // os que ainda não têm ninguém em andamento (mostrando claramente esse "zero"). ----
+    var containerAndamento = document.getElementById('ig-vagas-andamento-grupos');
+    var abertasPorClienteQtd = {};
     vagasAbertas.forEach(function(v){
-      var k = (v.cliente||'—')+'::::'+(v.cargo||'—');
-      abertasPorCargo[k] = (abertasPorCargo[k]||0) + (v.qtd - v.hired.length);
+      abertasPorClienteQtd[v.cliente||'—'] = (abertasPorClienteQtd[v.cliente||'—']||0) + (v.qtd - v.hired.length);
     });
-    var andamentoPorCargo = {};
+    var andamentoPorCliente = {};
     rowsAndamento.forEach(function(r){
-      var k = r.cliente+'::::'+r.cargo;
-      andamentoPorCargo[k] = (andamentoPorCargo[k]||0) + (r.documentacao + r.exames + r.dp + r.contratacao);
+      if(!andamentoPorCliente[r.cliente]) andamentoPorCliente[r.cliente] = [];
+      andamentoPorCliente[r.cliente].push(r);
     });
-    var todasChaves = {};
-    Object.keys(abertasPorCargo).forEach(function(k){ todasChaves[k] = true; });
-    Object.keys(andamentoPorCargo).forEach(function(k){ todasChaves[k] = true; });
+    var todosClientesVagas = {};
+    Object.keys(abertasPorClienteQtd).forEach(function(c){ todosClientesVagas[c] = true; });
+    Object.keys(andamentoPorCliente).forEach(function(c){ todosClientesVagas[c] = true; });
+    var ordemClientesAndamento = Object.keys(todosClientesVagas).sort();
 
-    var rowsFaltando = Object.keys(todasChaves).map(function(k){
-      var partes = k.split('::::');
-      var abertas = abertasPorCargo[k] || 0;
-      var andamento = andamentoPorCargo[k] || 0;
-      return {cliente:partes[0], cargo:partes[1], abertas:abertas, andamento:andamento, faltam: Math.max(0, abertas - andamento)};
-    }).filter(function(r){ return r.abertas > 0; })
-      .sort(function(a,b){
-        if(a.cliente !== b.cliente) return a.cliente < b.cliente ? -1 : 1;
-        return a.cargo < b.cargo ? -1 : 1;
-      });
-
-    var tbodyFaltando = document.getElementById('ig-faltando-tbody');
-    if(rowsFaltando.length === 0){
-      tbodyFaltando.innerHTML = '<tr><td colspan="5" class="kanban-empty">Nenhuma vaga em aberto no momento.</td></tr>';
-    } else {
-      tbodyFaltando.innerHTML = rowsFaltando.map(function(r){
-        var faltamEstilo = r.faltam > 0 ? ' style="color:var(--amber);font-weight:600;"' : ' style="color:var(--teal);"';
-        return '<tr><td>'+r.cliente+'</td><td>'+r.cargo+'</td><td class="mono">'+r.abertas+'</td><td class="mono">'+r.andamento+'</td><td class="mono"'+faltamEstilo+'>'+r.faltam+'</td></tr>';
-      }).join('');
-    }
-    var totalFaltandoEl = document.getElementById('ig-faltando-total');
-    if(totalFaltandoEl){
-      // O total tem que ser exatamente a soma das linhas mostradas na tabela abaixo — senão os
-      // dois números não batem entre si e fica confuso de conferir.
-      totalFaltandoEl.textContent = rowsFaltando.reduce(function(s,r){ return s + r.faltam; }, 0);
-    }
-
-    // ---- Vagas sem ninguém em andamento, por cidade (cards) ----
-    // Usa a mesma base da tabela de cima (linha por linha, cliente+cargo) — assim a soma dos
-    // cards sempre bate exatamente com o "Total" mostrado ali em cima.
-    var cardsCidadesEl = document.getElementById('ig-cidades-cards');
-    if(cardsCidadesEl){
-      var faltamPorCidade = {};
-      rowsFaltando.forEach(function(r){
-        var cidade = cidadeConfiavel(r.cliente, r.cargo, null);
-        faltamPorCidade[cidade] = (faltamPorCidade[cidade] || 0) + r.faltam;
-      });
-      var faltandoPorCidade = Object.keys(faltamPorCidade).map(function(cidade){
-        return {cidade: cidade, faltam: faltamPorCidade[cidade]};
-      }).filter(function(r){ return r.faltam > 0; })
-        .sort(function(a,b){ return b.faltam - a.faltam; });
-
-      if(faltandoPorCidade.length === 0){
-        cardsCidadesEl.innerHTML = '<div class="kanban-empty">Nenhuma vaga faltando pra fechar no momento.</div>';
+    if(containerAndamento){
+      if(ordemClientesAndamento.length === 0){
+        containerAndamento.innerHTML = '<div class="kanban-empty">Nenhuma vaga em aberto no momento.</div>';
       } else {
-        cardsCidadesEl.innerHTML = faltandoPorCidade.map(function(r){
-          return '<div style="background:#0D1526;border:1px solid var(--line-strong);border-radius:10px;padding:14px 18px;min-width:140px;">' +
-            '<div style="font-size:22px;font-weight:600;font-family:var(--font-display);color:var(--amber);">'+r.faltam+'</div>' +
-            '<div style="font-size:12.5px;color:var(--text-dim);margin-top:2px;">'+r.cidade+' — sem ninguém em andamento</div>' +
-            '</div>';
+        containerAndamento.innerHTML = ordemClientesAndamento.map(function(cli){
+          var lista = andamentoPorCliente[cli] || [];
+          var totalDoc = lista.reduce(function(s,r){ return s+r.documentacao; }, 0);
+          var totalExames = lista.reduce(function(s,r){ return s+r.exames; }, 0);
+          var totalDp = lista.reduce(function(s,r){ return s+r.dp; }, 0);
+          var totalIntegracao = lista.reduce(function(s,r){ return s+r.contratacao; }, 0);
+          var totalAndamentoCli = totalDoc + totalExames + totalDp + totalIntegracao;
+          var abertasCli = abertasPorClienteQtd[cli] || 0;
+          var faltamSemNinguem = Math.max(0, abertasCli - totalAndamentoCli);
+
+          var rowsHtml;
+          var vagasClienteAbertas = vagasAbertas.filter(function(v){ return (v.cliente||'—') === cli; });
+          var cargosCidadesComAndamento = {};
+          lista.forEach(function(r){ cargosCidadesComAndamento[r.cargo+'::::'+r.cidade] = true; });
+          var vagasSemNinguem = vagasClienteAbertas.filter(function(v){
+            return !cargosCidadesComAndamento[v.cargo+'::::'+(v.cidade||'—')];
+          });
+          // Vagas abertas por cargo+cidade — pra mostrar ao lado do total em andamento, já que
+          // são duas contagens diferentes (uma é a vaga em si, outra é gente andando na esteira).
+          var abertasPorCargoCidade = {};
+          vagasClienteAbertas.forEach(function(v){
+            var kcc2 = v.cargo+'::::'+(v.cidade||'—');
+            abertasPorCargoCidade[kcc2] = (abertasPorCargoCidade[kcc2]||0) + (v.qtd - v.hired.length);
+          });
+
+          var rowsComAndamento = lista.map(function(r){
+            var total = r.documentacao + r.exames + r.dp + r.contratacao;
+            var abertasAqui = abertasPorCargoCidade[r.cargo+'::::'+r.cidade] || 0;
+            var inicioTexto = formatarDatasComQtd(r.inicioDatas);
+            var maisAntiga = r.andamentoDesde.filter(Boolean).sort()[0];
+            var diasAndamento = maisAntiga ? diasUteisDesde(maisAntiga) : null;
+            var limiteSla = slaAndamentoDoCliente(r.cliente);
+            var slaTexto = diasAndamento === null ? '—' : diasAndamento+'d';
+            var emAtraso = diasAndamento !== null && diasAndamento > limiteSla;
+            var slaEstilo = emAtraso ? ' style="color:var(--red);font-weight:600;"' : ' style="color:var(--teal);"';
+            var statusHtml = diasAndamento === null ? '—' : (emAtraso ? '<span class="pill red">Em atraso</span>' : '<span class="pill teal">Dentro do prazo</span>');
+            return '<tr><td>'+r.cargo+'</td><td>'+r.cidade+'</td><td class="mono" style="color:var(--teal);">'+abertasAqui+'</td><td class="mono" style="color:var(--amber);">'+total+'</td><td class="mono">'+r.documentacao+'</td><td class="mono">'+r.exames+'</td><td class="mono">'+r.dp+'</td><td class="mono">'+r.contratacao+'</td><td class="mono">'+inicioTexto+'</td><td class="mono"'+slaEstilo+'>'+slaTexto+'</td><td>'+statusHtml+'</td></tr>';
+          }).join('');
+
+          var rowsSemNinguem = vagasSemNinguem.map(function(v){
+            var faltantes = v.qtd - v.hired.length;
+            return '<tr><td>'+v.cargo+'</td><td>'+(v.cidade||'—')+'</td><td class="mono" style="color:var(--teal);">'+faltantes+'</td><td class="mono" style="color:var(--amber);">0</td><td class="mono">0</td><td class="mono">0</td><td class="mono">0</td><td class="mono">0</td><td class="mono">—</td><td class="mono">—</td><td><span class="pill red">Sem ninguém ainda</span></td></tr>';
+          }).join('');
+
+          rowsHtml = rowsComAndamento + rowsSemNinguem;
+          if(!rowsHtml){
+            rowsHtml = '<tr><td colspan="11" class="kanban-empty">Nenhuma vaga em aberto pra esse cliente.</td></tr>';
+          }
+
+          return '<details class="ig-cliente-group">' +
+            '<summary class="ig-cliente-summary"><span class="ig-cliente-summary-name">'+cli+'</span>' +
+            '<span class="ig-cliente-summary-stats">' +
+              '<span>Vagas abertas: <b style="color:var(--teal);">'+abertasCli+'</b></span>' +
+              '<span>Em andamento: <b style="color:var(--amber);">'+totalAndamentoCli+'</b></span>' +
+              (faltamSemNinguem > 0 ? '<span>Sem ninguém ainda: <b style="color:var(--red);">'+faltamSemNinguem+'</b></span>' : '') +
+              '<span>Doc: <b>'+totalDoc+'</b> · Exames: <b>'+totalExames+'</b> · DP: <b>'+totalDp+'</b> · Integração: <b>'+totalIntegracao+'</b></span>' +
+            '</span></summary>' +
+            '<div class="ig-cliente-body" style="overflow-x:auto;"><table><thead><tr><th>Cargo</th><th>Cidade</th><th>Vagas abertas</th><th>Em andamento</th><th>Doc</th><th>Exames</th><th>DP</th><th>Integração</th><th>Início</th><th>SLA</th><th>Status</th></tr></thead><tbody>'+rowsHtml+'</tbody></table></div>' +
+            '</details>';
         }).join('');
       }
     }
@@ -5817,27 +5773,27 @@
     desistBtn.disabled = !canEdit;
     desistBtn.onclick = function(){
       if(!canEdit) return;
-      var confirmed = window.confirm('Registrar a desistência de '+c.name+'? O candidato será movido para Reprovados e essa ação não pode ser desfeita.');
-      if(!confirmed) return;
-      safeDeleteAndSync(function(){
-        var freshC = candidatesData[id] || c;
-        var obsDesistencia = 'Desistência' + (freshC.cliente ? ' (estava designado para '+freshC.role+' — '+freshC.cliente+')' : '');
-        reprovadosData.push({id:genRecordId('rep'), name:freshC.name, telefone:freshC.telefone||'—', cpf:freshC.cpf, endereco:freshC.endereco, vaga:freshC.cargoPretendido||freshC.role, cidade:freshC.cidade, situacao:'reprovado', jus:freshC.jus||'sim', obs:obsDesistencia});
-        delete candidatesData[id];
-        markDeleted('candidates', id);
-        if(freshC.custoExameId){
-          var custoRef = custosExameData.find(function(x){ return x.id === freshC.custoExameId; });
-          if(custoRef && !custoRef.prejuizo){
-            custoRef.prejuizo = true;
-            custoRef.motivoPrejuizo = 'Desistência na esteira';
-            custoRef.dataPrejuizo = new Date().toISOString();
-            logAudit('Prejuízo de exame registrado — '+freshC.name+' desistiu após exame já realizado (R$ '+(custoRef.custoTotal||0).toFixed(2).replace('.',',')+')');
+      openDesistenciaMotivoModal(c.name, function(motivo){
+        safeDeleteAndSync(function(){
+          var freshC = candidatesData[id] || c;
+          var obsDesistencia = 'Desistência: '+motivo + (freshC.cliente ? ' (estava designado para '+freshC.role+' — '+freshC.cliente+')' : '');
+          reprovadosData.push({id:genRecordId('rep'), name:freshC.name, telefone:freshC.telefone||'—', cpf:freshC.cpf, endereco:freshC.endereco, vaga:freshC.cargoPretendido||freshC.role, cidade:freshC.cidade, situacao:'reprovado', jus:freshC.jus||'sim', obs:obsDesistencia});
+          delete candidatesData[id];
+          markDeleted('candidates', id);
+          if(freshC.custoExameId){
+            var custoRef = custosExameData.find(function(x){ return x.id === freshC.custoExameId; });
+            if(custoRef && !custoRef.prejuizo){
+              custoRef.prejuizo = true;
+              custoRef.motivoPrejuizo = 'Desistência na esteira: '+motivo;
+              custoRef.dataPrejuizo = new Date().toISOString();
+              logAudit('Prejuízo de exame registrado — '+freshC.name+' desistiu após exame já realizado (R$ '+(custoRef.custoTotal||0).toFixed(2).replace('.',',')+')');
+            }
           }
-        }
-        logAudit('Registrou desistência de '+freshC.name);
-      }).then(function(){
-        closeCandidateModal();
-        showToast('Desistência registrada — candidato movido para Reprovados.');
+          logAudit('Registrou desistência de '+freshC.name+' — motivo: '+motivo);
+        }).then(function(){
+          closeCandidateModal();
+          showToast('Desistência registrada — candidato movido para Reprovados.');
+        });
       });
     };
 
@@ -6715,6 +6671,37 @@
         ? 'Entrevista atualizada — registro correspondente também foi sincronizado.'
         : 'Histórico da entrevista atualizado. Não encontramos um registro ativo dessa pessoa em outra tela (pode já ter avançado ou sido removido) — se necessário, ajuste manualmente lá.');
     });
+  });
+
+  // Modal reutilizável pra pedir o motivo antes de confirmar qualquer desistência — usado tanto
+  // na Esteira quanto no fluxo de "Reabrir vaga" (desistência de já contratado).
+  var pendingDesistenciaCallback = null;
+  function openDesistenciaMotivoModal(subtitle, callback){
+    document.getElementById('desistencia-motivo-subtitle').textContent = subtitle;
+    document.getElementById('desistencia-motivo-input').value = '';
+    document.getElementById('desistencia-motivo-input').style.borderColor = '';
+    pendingDesistenciaCallback = callback;
+    document.getElementById('desistencia-motivo-overlay').classList.add('open');
+  }
+  function closeDesistenciaMotivoModal(){
+    document.getElementById('desistencia-motivo-overlay').classList.remove('open');
+    pendingDesistenciaCallback = null;
+  }
+  document.getElementById('desistencia-motivo-close').addEventListener('click', closeDesistenciaMotivoModal);
+  document.getElementById('desistencia-motivo-cancel').addEventListener('click', closeDesistenciaMotivoModal);
+  document.getElementById('desistencia-motivo-overlay').addEventListener('click', function(e){
+    if(e.target === this) closeDesistenciaMotivoModal();
+  });
+  document.getElementById('desistencia-motivo-confirm').addEventListener('click', function(){
+    var motivo = document.getElementById('desistencia-motivo-input').value.trim();
+    if(!motivo){
+      document.getElementById('desistencia-motivo-input').style.borderColor = 'var(--red)';
+      showToast('Descreva o motivo da desistência antes de confirmar.');
+      return;
+    }
+    var cb = pendingDesistenciaCallback;
+    closeDesistenciaMotivoModal();
+    if(cb) cb(motivo);
   });
 
   document.getElementById('alerts-bell-btn').addEventListener('click', openAlertsCenter);
