@@ -2142,7 +2142,7 @@
     if(items.length === 0){
       html += '<div class="vd-empty">Nenhum candidato nesta etapa.</div>';
     } else {
-      items.forEach(function(item){ html += renderItem(item); });
+      items.forEach(function(item, idx){ html += renderItem(item, idx); });
     }
     html += '</div>';
     return html;
@@ -2155,6 +2155,14 @@
     }
     var notaHtml = c.nota ? ' '+starsHtml(c.nota) : '';
     return '<div class="vd-candidate"><div class="vd-candidate-name">'+c.name+notaHtml+'</div><div class="vd-candidate-phone">'+(c.telefone||'—')+'</div>'+pendingHtml+'</div>';
+  }
+
+  function vdHiredCandidateHtml(c, idx){
+    var notaHtml = c.nota ? ' '+starsHtml(c.nota) : '';
+    return '<div class="vd-candidate vd-hired-item" data-hidx="'+idx+'" style="cursor:pointer;" title="Clique para marcar desistência">'+
+      '<div class="vd-candidate-name">'+c.name+notaHtml+'</div><div class="vd-candidate-phone">'+(c.telefone||'—')+'</div>'+
+      '<div style="font-size:11px;color:var(--text-faint);margin-top:2px;">Clique para marcar desistência</div>' +
+      '</div>';
   }
 
   var editVagaKey = null;
@@ -2261,7 +2269,7 @@
       body += '<div class="vd-section"><div class="vd-section-head"><span class="vd-section-title">Observação</span></div>'+
         '<div style="font-size:12.5px;color:var(--text-dim);white-space:pre-wrap;line-height:1.5;padding:2px 0 4px;">'+vaga.obs+'</div></div>';
     }
-    body += vdSectionHtml('Vagas fechadas', vaga.hired, function(c){ return vdCandidateHtml(c); });
+    body += vdSectionHtml('Vagas fechadas', vaga.hired, function(c, idx){ return vdHiredCandidateHtml(c, idx); });
     body += vdSectionHtml('Aprovados', aprovados, function(c){ return vdCandidateHtml(c); });
     body += vdSectionHtml('Documentação', documentacao, function(c){
       var pending = (c.checklist||[]).filter(function(i){ return !i.done; }).map(function(i){ return i.item; });
@@ -2286,6 +2294,45 @@
     }
 
     document.getElementById('vd-body').innerHTML = body;
+    document.getElementById('vd-body').querySelectorAll('.vd-hired-item').forEach(function(el){
+      el.addEventListener('click', function(){
+        if(currentRole && !currentRole.editVagas) return;
+        var hidx = parseInt(el.getAttribute('data-hidx'), 10);
+        var pessoa = vaga.hired[hidx];
+        if(!pessoa) return;
+        var alvoKey = vagaKey(vaga);
+        openDesistenciaMotivoModal(pessoa.name, function(motivo){
+          safeDeleteAndSync(function(){
+            var freshV = vagasData.find(function(x){ return vagaKey(x) === alvoKey; });
+            if(freshV){
+              var idxNaFresh = freshV.hired.findIndex(function(h){ return h.name === pessoa.name && h.telefone === pessoa.telefone; });
+              if(idxNaFresh !== -1){
+                reprovadosData.push({id:genRecordId('rep'), name:pessoa.name, telefone:pessoa.telefone, vaga:freshV.cargo, cliente:freshV.cliente, situacao:'reprovado', jus:'sim', obs:'Desistência: '+motivo});
+                var pessoaFresh = freshV.hired[idxNaFresh];
+                if(pessoaFresh.custoExameId){
+                  var custoRef = custosExameData.find(function(x){ return x.id === pessoaFresh.custoExameId; });
+                  if(custoRef && !custoRef.prejuizo){
+                    custoRef.prejuizo = true;
+                    custoRef.motivoPrejuizo = 'Desistência após contratação: '+motivo;
+                    custoRef.dataPrejuizo = new Date().toISOString();
+                    logAudit('Prejuízo de exame registrado — '+pessoa.name+' desistiu após contratado, exame já realizado (R$ '+(custoRef.custoTotal||0).toFixed(2).replace('.',',')+')');
+                  }
+                }
+                freshV.hired.splice(idxNaFresh, 1);
+                markDeleted('hiredPeople', alvoKey+'|'+pessoa.name);
+                freshV.history = freshV.history || [];
+                freshV.history.push({ts:new Date().toISOString(), acao:'Desistência registrada: '+pessoa.name+' — motivo: '+motivo});
+              }
+            }
+            logAudit('Registrou desistência de '+pessoa.name+' na vaga de '+(freshV ? freshV.cargo : vaga.cargo)+' ('+(freshV ? freshV.cliente : vaga.cliente)+') — motivo: '+motivo);
+          }).then(function(){
+            showToast('Desistência registrada — '+pessoa.name+' movido para Reprovados.');
+            var novoIdx = vagasData.findIndex(function(v){ return vagaKey(v) === alvoKey; });
+            if(novoIdx !== -1) openVagaModal(novoIdx); else closeVagaModal();
+          });
+        });
+      });
+    });
     document.getElementById('vaga-detail-overlay').classList.add('open');
   }
   function closeVagaModal(){
@@ -3488,10 +3535,18 @@
             var kcc2 = v.cargo+'::::'+(v.cidade||'—');
             abertasPorCargoCidade[kcc2] = (abertasPorCargoCidade[kcc2]||0) + (v.qtd - v.hired.length);
           });
+          var fechadasPorCargoCidade = {};
+          var totalFechadasCli = 0;
+          vagasClienteAbertas.forEach(function(v){
+            var kcc3 = v.cargo+'::::'+(v.cidade||'—');
+            fechadasPorCargoCidade[kcc3] = (fechadasPorCargoCidade[kcc3]||0) + v.hired.length;
+            totalFechadasCli += v.hired.length;
+          });
 
           var rowsComAndamento = lista.map(function(r){
             var total = r.documentacao + r.exames + r.dp + r.contratacao;
             var abertasAqui = abertasPorCargoCidade[r.cargo+'::::'+r.cidade] || 0;
+            var fechadasAqui = fechadasPorCargoCidade[r.cargo+'::::'+r.cidade] || 0;
             var inicioTexto = formatarDatasComQtd(r.inicioDatas);
             var maisAntiga = r.andamentoDesde.filter(Boolean).sort()[0];
             var diasAndamento = maisAntiga ? diasUteisDesde(maisAntiga) : null;
@@ -3500,23 +3555,24 @@
             var emAtraso = diasAndamento !== null && diasAndamento > limiteSla;
             var slaTag = emAtraso ? ' <span class="rp-tag danger">⚠</span>' : '';
             var statusTag = diasAndamento === null ? '—' : (emAtraso ? '<span class="rp-tag danger">Em atraso</span>' : '<span class="rp-tag ok">Dentro do prazo</span>');
-            return '<tr><td>'+r.cargo+'</td><td>'+r.cidade+'</td><td class="mono">'+abertasAqui+'</td><td class="mono">'+total+'</td><td class="mono">'+r.documentacao+'</td><td class="mono">'+r.exames+'</td><td class="mono">'+r.dp+'</td><td class="mono">'+r.contratacao+'</td><td class="mono">'+inicioTexto+'</td><td class="mono">'+slaTexto+slaTag+'</td><td>'+statusTag+'</td></tr>';
+            return '<tr><td>'+r.cargo+'</td><td>'+r.cidade+'</td><td class="mono">'+abertasAqui+'</td><td class="mono">'+total+'</td><td class="mono">'+fechadasAqui+'</td><td class="mono">'+r.documentacao+'</td><td class="mono">'+r.exames+'</td><td class="mono">'+r.dp+'</td><td class="mono">'+r.contratacao+'</td><td class="mono">'+inicioTexto+'</td><td class="mono">'+slaTexto+slaTag+'</td><td>'+statusTag+'</td></tr>';
           }).join('');
 
           var rowsSemNinguem = vagasSemNinguem.map(function(v){
             var faltantes = v.qtd - v.hired.length;
-            return '<tr><td>'+v.cargo+'</td><td>'+(v.cidade||'—')+'</td><td class="mono">'+faltantes+'</td><td class="mono">0</td><td class="mono">0</td><td class="mono">0</td><td class="mono">0</td><td class="mono">0</td><td class="mono">—</td><td class="mono">—</td><td><span class="rp-tag danger">Sem ninguém ainda</span></td></tr>';
+            var fechadasAqui = fechadasPorCargoCidade[v.cargo+'::::'+(v.cidade||'—')] || 0;
+            return '<tr><td>'+v.cargo+'</td><td>'+(v.cidade||'—')+'</td><td class="mono">'+faltantes+'</td><td class="mono">0</td><td class="mono">'+fechadasAqui+'</td><td class="mono">0</td><td class="mono">0</td><td class="mono">0</td><td class="mono">0</td><td class="mono">—</td><td class="mono">—</td><td><span class="rp-tag danger">Sem ninguém ainda</span></td></tr>';
           }).join('');
 
           var rowsHtml = rowsComAndamento + rowsSemNinguem;
           if(!rowsHtml){
-            rowsHtml = '<tr><td colspan="11" class="rp-empty">Nenhuma vaga em aberto pra esse cliente.</td></tr>';
+            rowsHtml = '<tr><td colspan="12" class="rp-empty">Nenhuma vaga em aberto pra esse cliente.</td></tr>';
           }
 
           return '<div style="margin-bottom:14px;">' +
             '<div style="font-family:var(--font-display);font-weight:600;font-size:12.5px;color:var(--text);margin-bottom:5px;">'+cli+
-              ' <span style="font-weight:400;color:var(--text-dim);font-size:11px;">— Abertas: <b style="color:var(--teal);">'+abertasCli+'</b> · Em andamento: <b style="color:var(--amber);">'+totalAndamentoCli+'</b></span></div>' +
-            '<table class="rp-table"><thead><tr><th>Cargo</th><th>Cidade</th><th>Abertas</th><th>Em andamento</th><th>Doc</th><th>Exames</th><th>DP</th><th>Integração</th><th>Início</th><th>SLA</th><th>Status</th></tr></thead><tbody>'+rowsHtml+'</tbody></table>' +
+              ' <span style="font-weight:400;color:var(--text-dim);font-size:11px;">— Abertas: <b style="color:var(--teal);">'+abertasCli+'</b> · Em andamento: <b style="color:var(--amber);">'+totalAndamentoCli+'</b> · Fechadas (destas vagas): <b>'+totalFechadasCli+'</b></span></div>' +
+            '<table class="rp-table"><thead><tr><th>Cargo</th><th>Cidade</th><th>Abertas</th><th>Em andamento</th><th>Fechadas</th><th>Doc</th><th>Exames</th><th>DP</th><th>Integração</th><th>Início</th><th>SLA</th><th>Status</th></tr></thead><tbody>'+rowsHtml+'</tbody></table>' +
             '</div>';
         }).join('');
 
@@ -5013,10 +5069,20 @@
             var kcc2 = v.cargo+'::::'+(v.cidade||'—');
             abertasPorCargoCidade[kcc2] = (abertasPorCargoCidade[kcc2]||0) + (v.qtd - v.hired.length);
           });
+          // Posições já fechadas — só das vagas que AINDA estão em aberto (parcialmente
+          // preenchidas). Vagas 100% fechadas não entram nessa conta.
+          var fechadasPorCargoCidade = {};
+          var totalFechadasCli = 0;
+          vagasClienteAbertas.forEach(function(v){
+            var kcc3 = v.cargo+'::::'+(v.cidade||'—');
+            fechadasPorCargoCidade[kcc3] = (fechadasPorCargoCidade[kcc3]||0) + v.hired.length;
+            totalFechadasCli += v.hired.length;
+          });
 
           var rowsComAndamento = lista.map(function(r){
             var total = r.documentacao + r.exames + r.dp + r.contratacao;
             var abertasAqui = abertasPorCargoCidade[r.cargo+'::::'+r.cidade] || 0;
+            var fechadasAqui = fechadasPorCargoCidade[r.cargo+'::::'+r.cidade] || 0;
             var inicioTexto = formatarDatasComQtd(r.inicioDatas);
             var maisAntiga = r.andamentoDesde.filter(Boolean).sort()[0];
             var diasAndamento = maisAntiga ? diasUteisDesde(maisAntiga) : null;
@@ -5025,17 +5091,18 @@
             var emAtraso = diasAndamento !== null && diasAndamento > limiteSla;
             var slaEstilo = emAtraso ? ' style="color:var(--red);font-weight:600;"' : ' style="color:var(--teal);"';
             var statusHtml = diasAndamento === null ? '—' : (emAtraso ? '<span class="pill red">Em atraso</span>' : '<span class="pill teal">Dentro do prazo</span>');
-            return '<tr><td>'+r.cargo+'</td><td>'+r.cidade+'</td><td class="mono" style="color:var(--teal);">'+abertasAqui+'</td><td class="mono" style="color:var(--amber);">'+total+'</td><td class="mono">'+r.documentacao+'</td><td class="mono">'+r.exames+'</td><td class="mono">'+r.dp+'</td><td class="mono">'+r.contratacao+'</td><td class="mono">'+inicioTexto+'</td><td class="mono"'+slaEstilo+'>'+slaTexto+'</td><td>'+statusHtml+'</td></tr>';
+            return '<tr><td>'+r.cargo+'</td><td>'+r.cidade+'</td><td class="mono" style="color:var(--teal);">'+abertasAqui+'</td><td class="mono" style="color:var(--amber);">'+total+'</td><td class="mono" style="color:var(--text-dim);">'+fechadasAqui+'</td><td class="mono">'+r.documentacao+'</td><td class="mono">'+r.exames+'</td><td class="mono">'+r.dp+'</td><td class="mono">'+r.contratacao+'</td><td class="mono">'+inicioTexto+'</td><td class="mono"'+slaEstilo+'>'+slaTexto+'</td><td>'+statusHtml+'</td></tr>';
           }).join('');
 
           var rowsSemNinguem = vagasSemNinguem.map(function(v){
             var faltantes = v.qtd - v.hired.length;
-            return '<tr><td>'+v.cargo+'</td><td>'+(v.cidade||'—')+'</td><td class="mono" style="color:var(--teal);">'+faltantes+'</td><td class="mono" style="color:var(--amber);">0</td><td class="mono">0</td><td class="mono">0</td><td class="mono">0</td><td class="mono">0</td><td class="mono">—</td><td class="mono">—</td><td><span class="pill red">Sem ninguém ainda</span></td></tr>';
+            var fechadasAqui = fechadasPorCargoCidade[v.cargo+'::::'+(v.cidade||'—')] || 0;
+            return '<tr><td>'+v.cargo+'</td><td>'+(v.cidade||'—')+'</td><td class="mono" style="color:var(--teal);">'+faltantes+'</td><td class="mono" style="color:var(--amber);">0</td><td class="mono" style="color:var(--text-dim);">'+fechadasAqui+'</td><td class="mono">0</td><td class="mono">0</td><td class="mono">0</td><td class="mono">0</td><td class="mono">—</td><td class="mono">—</td><td><span class="pill red">Sem ninguém ainda</span></td></tr>';
           }).join('');
 
           rowsHtml = rowsComAndamento + rowsSemNinguem;
           if(!rowsHtml){
-            rowsHtml = '<tr><td colspan="11" class="kanban-empty">Nenhuma vaga em aberto pra esse cliente.</td></tr>';
+            rowsHtml = '<tr><td colspan="12" class="kanban-empty">Nenhuma vaga em aberto pra esse cliente.</td></tr>';
           }
 
           return '<details class="ig-cliente-group">' +
@@ -5043,10 +5110,11 @@
             '<span class="ig-cliente-summary-stats">' +
               '<span>Vagas abertas: <b style="color:var(--teal);">'+abertasCli+'</b></span>' +
               '<span>Em andamento: <b style="color:var(--amber);">'+totalAndamentoCli+'</b></span>' +
+              '<span>Fechadas (destas vagas): <b style="color:var(--text-dim);">'+totalFechadasCli+'</b></span>' +
               (faltamSemNinguem > 0 ? '<span>Sem ninguém ainda: <b style="color:var(--red);">'+faltamSemNinguem+'</b></span>' : '') +
               '<span>Doc: <b>'+totalDoc+'</b> · Exames: <b>'+totalExames+'</b> · DP: <b>'+totalDp+'</b> · Integração: <b>'+totalIntegracao+'</b></span>' +
             '</span></summary>' +
-            '<div class="ig-cliente-body" style="overflow-x:auto;"><table><thead><tr><th>Cargo</th><th>Cidade</th><th>Vagas abertas</th><th>Em andamento</th><th>Doc</th><th>Exames</th><th>DP</th><th>Integração</th><th>Início</th><th>SLA</th><th>Status</th></tr></thead><tbody>'+rowsHtml+'</tbody></table></div>' +
+            '<div class="ig-cliente-body" style="overflow-x:auto;"><table><thead><tr><th>Cargo</th><th>Cidade</th><th>Vagas abertas</th><th>Em andamento</th><th>Fechadas</th><th>Doc</th><th>Exames</th><th>DP</th><th>Integração</th><th>Início</th><th>SLA</th><th>Status</th></tr></thead><tbody>'+rowsHtml+'</tbody></table></div>' +
             '</details>';
         }).join('');
       }
