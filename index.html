@@ -403,6 +403,7 @@
   @media (max-width:640px){
     .main{padding:16px 14px 32px;}
     .stats,.indic-grid{grid-template-columns:1fr 1fr !important;gap:10px;}
+    .ig-charts-row{grid-template-columns:1fr !important;}
     .form-row{grid-template-columns:1fr;}
     .topbar{flex-wrap:wrap;gap:10px;margin-bottom:16px;}
     .page-title{font-size:18px;}
@@ -1138,6 +1139,23 @@
           <span id="ig-periodo-ate-label" style="display:none;color:var(--text-faint);font-size:12px;">até</span>
           <input type="date" id="ig-periodo-ate" style="display:none;background:#0D1526;border:1px solid var(--line-strong);border-radius:8px;padding:7px 10px;color:var(--text);font-family:var(--font-body);font-size:12.5px;">
         </div>
+      </div>
+
+      <div class="ig-charts-row" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">Vagas em aberto por cliente</div></div>
+          <div id="ig-chart-abertas-cliente" style="display:flex;align-items:flex-end;gap:10px;padding:18px;overflow-x:auto;min-height:170px;"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">Pessoas por etapa da esteira</div></div>
+          <div id="ig-chart-etapas" style="display:flex;align-items:flex-end;gap:14px;padding:18px;justify-content:center;min-height:170px;"></div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-bottom:14px;">
+        <div class="panel-head"><div class="panel-title">Início nos próximos 7 dias</div></div>
+        <div id="ig-chart-inicio-7dias" style="display:flex;align-items:flex-end;gap:10px;padding:18px;justify-content:center;min-height:170px;"></div>
+        <div id="ig-lista-inicio-7dias" style="padding:0 18px 16px;"></div>
       </div>
 
       <div class="panel">
@@ -3513,6 +3531,56 @@
     Object.keys(andamentoPorCliente).forEach(function(c){ todosClientesVagas[c] = true; });
     var ordemClientesVagas = Object.keys(todosClientesVagas).sort();
 
+    // ---- Gráfico: Vagas em aberto por cliente ----
+    var clientesAbertasOrdenadosPdf = Object.keys(abertasPorClienteQtd).sort(function(a,b){ return abertasPorClienteQtd[b]-abertasPorClienteQtd[a]; });
+    var chartAbertasHtmlPdf = clientesAbertasOrdenadosPdf.length === 0
+      ? '<div class="rp-empty">Nenhuma vaga em aberto no momento.</div>'
+      : '<div class="rp-stats-row">' + clientesAbertasOrdenadosPdf.map(function(cliNome){
+          return '<div class="rp-stat"><div class="rp-stat-value">'+abertasPorClienteQtd[cliNome]+'</div><div class="rp-stat-label">'+cliNome+'</div></div>';
+        }).join('') + '</div>';
+
+    // ---- Gráfico: Pessoas por etapa da esteira (total, somando todos os clientes) ----
+    var totalDocPdf = rowsAndamento.reduce(function(s,r){ return s+r.documentacao; }, 0);
+    var totalExamesPdf = rowsAndamento.reduce(function(s,r){ return s+r.exames; }, 0);
+    var totalDpPdf = rowsAndamento.reduce(function(s,r){ return s+r.dp; }, 0);
+    var totalIntegracaoPdf = rowsAndamento.reduce(function(s,r){ return s+r.contratacao; }, 0);
+    var chartEtapasHtmlPdf = '<div class="rp-stats-row">' +
+      '<div class="rp-stat"><div class="rp-stat-value">'+totalDocPdf+'</div><div class="rp-stat-label">Documentação</div></div>' +
+      '<div class="rp-stat"><div class="rp-stat-value">'+totalExamesPdf+'</div><div class="rp-stat-label">Exames</div></div>' +
+      '<div class="rp-stat"><div class="rp-stat-value">'+totalDpPdf+'</div><div class="rp-stat-label">DP</div></div>' +
+      '<div class="rp-stat"><div class="rp-stat-value">'+totalIntegracaoPdf+'</div><div class="rp-stat-label">Integração</div></div>' +
+      '</div>';
+
+    // ---- Início nos próximos 7 dias ----
+    var hojeBasePdf = new Date();
+    hojeBasePdf.setHours(0,0,0,0);
+    var dias7Pdf = [];
+    for(var dpi=0; dpi<7; dpi++){
+      var dDataPdf = new Date(hojeBasePdf.getTime() + dpi*86400000);
+      dias7Pdf.push({iso: toISODate(dDataPdf), pessoas:[]});
+    }
+    var diasPorIsoPdf = {};
+    dias7Pdf.forEach(function(d){ diasPorIsoPdf[d.iso] = d; });
+    Object.keys(candidatesData).forEach(function(id){
+      var c = candidatesData[id];
+      if(c.stage === 'contratacao' && c.checklist){
+        var itemInicio = c.checklist.find(function(e){ return e.item === 'Integração/início no cliente'; });
+        if(itemInicio && itemInicio.date && !itemInicio.done && diasPorIsoPdf[itemInicio.date]){
+          diasPorIsoPdf[itemInicio.date].pessoas.push({nome:c.name, cliente:c.cliente, cargo:c.role});
+        }
+      }
+    });
+    var linhasInicioPdf = [];
+    dias7Pdf.forEach(function(d){
+      d.pessoas.forEach(function(p){ linhasInicioPdf.push({data:d.iso, cliente:p.cliente, cargo:p.cargo, nome:p.nome}); });
+    });
+    var inicioHtmlPdf = linhasInicioPdf.length === 0
+      ? '<div class="rp-empty">Nenhuma integração/início programada pros próximos 7 dias.</div>'
+      : '<table class="rp-table"><thead><tr><th>Data</th><th>Cliente</th><th>Vaga</th><th>Nome</th></tr></thead><tbody>' +
+        linhasInicioPdf.map(function(l){
+          return '<tr><td class="mono">'+formatDateBR(l.data)+'</td><td>'+l.cliente+'</td><td>'+l.cargo+'</td><td>'+l.nome+'</td></tr>';
+        }).join('') + '</tbody></table>';
+
     var vagasSecoesHtml = ordemClientesVagas.length === 0
       ? '<div class="rp-empty">Nenhuma vaga em aberto no momento.</div>'
       : ordemClientesVagas.map(function(cli){
@@ -3604,7 +3672,10 @@
           return '<tr><td>'+r.nome+'</td><td class="mono">'+r.realizadas+'</td><td class="mono">'+r.aprovados+'</td><td class="mono">'+r.reprovados+'</td><td class="mono">'+r.bancoTalentos+'</td></tr>';
         }).join('') + '</tbody></table>';
 
-    return '<div class="rp-section"><div class="rp-section-title">Vagas</div>'+vagasSecoesHtml+'</div>' +
+    return '<div class="rp-section"><div class="rp-section-title">Vagas em aberto por cliente</div>'+chartAbertasHtmlPdf+'</div>' +
+      '<div class="rp-section"><div class="rp-section-title">Pessoas por etapa da esteira</div>'+chartEtapasHtmlPdf+'</div>' +
+      '<div class="rp-section"><div class="rp-section-title">Início nos próximos 7 dias</div>'+inicioHtmlPdf+'</div>' +
+      '<div class="rp-section"><div class="rp-section-title">Vagas</div>'+vagasSecoesHtml+'</div>' +
       '<div class="rp-section"><div class="rp-section-title">Produtividade por recrutador — '+igModeLabelPdf+'</div>'+produtividadeGestaoHtml+'</div>';
   }
 
@@ -5040,6 +5111,98 @@
     Object.keys(abertasPorClienteQtd).forEach(function(c){ todosClientesVagas[c] = true; });
     Object.keys(andamentoPorCliente).forEach(function(c){ todosClientesVagas[c] = true; });
     var ordemClientesAndamento = Object.keys(todosClientesVagas).sort();
+
+    // ---- Gráfico: Vagas em aberto por cliente ----
+    var chartAbertasEl = document.getElementById('ig-chart-abertas-cliente');
+    if(chartAbertasEl){
+      var clientesAbertasOrdenados = Object.keys(abertasPorClienteQtd).sort(function(a,b){ return abertasPorClienteQtd[b]-abertasPorClienteQtd[a]; });
+      if(clientesAbertasOrdenados.length === 0){
+        chartAbertasEl.innerHTML = '<div class="kanban-empty" style="padding:0;">Nenhuma vaga em aberto no momento.</div>';
+      } else {
+        var maxAbertas = Math.max.apply(null, clientesAbertasOrdenados.map(function(c){ return abertasPorClienteQtd[c]; }));
+        chartAbertasEl.innerHTML = clientesAbertasOrdenados.map(function(cliNome, i){
+          var val = abertasPorClienteQtd[cliNome];
+          var h = Math.max(2, Math.round((val / maxAbertas) * 130));
+          var color = CHART_PALETTE[i % CHART_PALETTE.length];
+          return '<div class="barchart-cat">' +
+            '<div class="barchart-bars"><div class="barchart-bar" style="height:'+h+'px;background:'+color+';"><span class="barchart-bar-value">'+val+'</span></div></div>' +
+            '<div class="barchart-label" title="'+cliNome+'">'+cliNome+'</div>' +
+            '</div>';
+        }).join('');
+      }
+    }
+
+    // ---- Gráfico: Pessoas por etapa da esteira (total, somando todos os clientes) ----
+    var chartEtapasEl = document.getElementById('ig-chart-etapas');
+    if(chartEtapasEl){
+      var etapas = [
+        {label:'Documentação', val: rowsAndamento.reduce(function(s,r){ return s+r.documentacao; }, 0), color:'#3B82F6'},
+        {label:'Exames', val: rowsAndamento.reduce(function(s,r){ return s+r.exames; }, 0), color:'#F59E0B'},
+        {label:'DP', val: rowsAndamento.reduce(function(s,r){ return s+r.dp; }, 0), color:'#8B5CF6'},
+        {label:'Integração', val: rowsAndamento.reduce(function(s,r){ return s+r.contratacao; }, 0), color:'#14B8A6'}
+      ];
+      var maxEtapa = Math.max.apply(null, etapas.map(function(e){ return e.val; }).concat([1]));
+      chartEtapasEl.innerHTML = etapas.map(function(e){
+        var h = Math.max(2, Math.round((e.val / maxEtapa) * 130));
+        return '<div class="barchart-cat">' +
+          '<div class="barchart-bars"><div class="barchart-bar" style="height:'+h+'px;background:'+e.color+';">'+(e.val>0?'<span class="barchart-bar-value">'+e.val+'</span>':'')+'</div></div>' +
+          '<div class="barchart-label">'+e.label+'</div>' +
+          '</div>';
+      }).join('');
+    }
+
+    // ---- Gráfico: Início nos próximos 7 dias, de acordo com a data programada ----
+    var chartInicioEl = document.getElementById('ig-chart-inicio-7dias');
+    var listaInicioEl = document.getElementById('ig-lista-inicio-7dias');
+    if(chartInicioEl){
+      var hojeBase = new Date();
+      hojeBase.setHours(0,0,0,0);
+      var dias7 = [];
+      for(var di=0; di<7; di++){
+        var dData = new Date(hojeBase.getTime() + di*86400000);
+        dias7.push({iso: toISODate(dData), label: dData.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}), qtd:0, pessoas:[]});
+      }
+      var diasPorIso = {};
+      dias7.forEach(function(d){ diasPorIso[d.iso] = d; });
+
+      Object.keys(candidatesData).forEach(function(id){
+        var c = candidatesData[id];
+        if(c.stage === 'contratacao' && c.checklist){
+          var itemInicio = c.checklist.find(function(e){ return e.item === 'Integração/início no cliente'; });
+          if(itemInicio && itemInicio.date && !itemInicio.done && diasPorIso[itemInicio.date]){
+            diasPorIso[itemInicio.date].qtd++;
+            diasPorIso[itemInicio.date].pessoas.push({nome:c.name, cliente:c.cliente, cargo:c.role});
+          }
+        }
+      });
+
+      var maxInicio = Math.max.apply(null, dias7.map(function(d){ return d.qtd; }).concat([1]));
+      chartInicioEl.innerHTML = dias7.map(function(d){
+        var h = Math.max(2, Math.round((d.qtd / maxInicio) * 130));
+        var cor = d.qtd > 0 ? 'var(--teal)' : 'var(--line-strong)';
+        return '<div class="barchart-cat">' +
+          '<div class="barchart-bars"><div class="barchart-bar" style="height:'+h+'px;background:'+cor+';">'+(d.qtd>0?'<span class="barchart-bar-value">'+d.qtd+'</span>':'')+'</div></div>' +
+          '<div class="barchart-label">'+d.label+'</div>' +
+          '</div>';
+      }).join('');
+
+      var totalInicio7 = dias7.reduce(function(s,d){ return s+d.qtd; }, 0);
+      if(listaInicioEl){
+        if(totalInicio7 === 0){
+          listaInicioEl.innerHTML = '<div class="kanban-empty" style="padding-top:10px;">Nenhuma integração/início programada pros próximos 7 dias.</div>';
+        } else {
+          var linhasInicio = [];
+          dias7.forEach(function(d){
+            d.pessoas.forEach(function(p){ linhasInicio.push({data:d.iso, cliente:p.cliente, cargo:p.cargo, nome:p.nome}); });
+          });
+          listaInicioEl.innerHTML = '<div style="overflow-x:auto;"><table><thead><tr><th>Data</th><th>Cliente</th><th>Vaga</th><th>Nome</th></tr></thead><tbody>' +
+            linhasInicio.map(function(l){
+              return '<tr><td class="mono">'+formatDateBR(l.data)+'</td><td>'+l.cliente+'</td><td>'+l.cargo+'</td><td>'+l.nome+'</td></tr>';
+            }).join('') +
+            '</tbody></table></div>';
+        }
+      }
+    }
 
     if(containerAndamento){
       if(ordemClientesAndamento.length === 0){
