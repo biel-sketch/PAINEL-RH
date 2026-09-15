@@ -6496,6 +6496,20 @@
     }
   }
 
+  // Guarda qual foi o último dia (data do calendário) em que renderizamos a tela — usado pra
+  // detectar quando o dia virou mesmo sem nenhum dado ter mudado na nuvem (ex: seções que
+  // dependem só da data de hoje, como "Início nos próximos 7 dias").
+  var ultimoDiaRenderizado = toISODate(new Date());
+  function verificarMudancaDeDia(){
+    var hojeAgora = toISODate(new Date());
+    if(hojeAgora !== ultimoDiaRenderizado){
+      ultimoDiaRenderizado = hojeAgora;
+      renderIndicadoresGestao();
+      return true;
+    }
+    return false;
+  }
+
   function syncFromCloud(){
     if(cloudSyncBusy) return Promise.resolve();
     cloudSyncBusy = true;
@@ -6520,7 +6534,9 @@
 
     return cloudGetTimestamp().then(function(remoteTs){
       if(remoteTs && remoteTs === lastKnownCloudTimestamp){
-        // Nada mudou na nuvem desde a última vez — não precisa baixar tudo de novo.
+        // Nada mudou na nuvem desde a última vez — não precisa baixar tudo de novo. Mas ainda
+        // checamos se o dia virou, pra seções que dependem só da data (não de dados na nuvem).
+        verificarMudancaDeDia();
         setSyncIndicator('ok', 'Sincronizado');
         cloudSyncBusy = false;
         return;
@@ -6626,6 +6642,7 @@
     if(document.hidden){
       if(cloudSyncTimer) clearTimeout(cloudSyncTimer);
     } else {
+      verificarMudancaDeDia();
       syncFromCloud().then(scheduleNextSync).catch(scheduleNextSync);
     }
   });
