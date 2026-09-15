@@ -3477,6 +3477,37 @@
 
   // Gera o HTML das 3 tabelas de "Indicadores Gestão" para o relatório PDF — reaproveita
   // exatamente o mesmo agrupamento e cálculo usados na própria tela.
+  // Monta um gráfico de barras em SVG pro relatório PDF — usado pra diferenciar visualmente
+  // essas seções (que são "de olhada rápida") do restante do relatório, que é todo em
+  // tabelas/cards. items = [{label, valor, cor}].
+  function gerarBarChartSvgPdf(items){
+    if(!items || items.length === 0) return '<div class="rp-empty">Sem dados.</div>';
+    var largura = 700, alturaBarras = 130, margemSuperior = 22, margemInferior = 42;
+    var alturaTotal = alturaBarras + margemSuperior + margemInferior;
+    var n = items.length;
+    var maxVal = Math.max.apply(null, items.map(function(it){ return it.valor; }).concat([1]));
+    var larguraBarra = Math.max(18, Math.min(64, (largura / n) - 14));
+    var espaco = (largura - larguraBarra*n) / (n+1);
+
+    var svgConteudo = items.map(function(it, i){
+      var x = espaco + i*(larguraBarra+espaco);
+      var h = it.valor > 0 ? Math.max(3, Math.round((it.valor / maxVal) * alturaBarras)) : 0;
+      var y = margemSuperior + (alturaBarras - h);
+      var cor = it.cor || 'var(--teal)';
+      var labelCurto = it.label.length > 16 ? it.label.slice(0,15)+'…' : it.label;
+      return '<rect x="'+x+'" y="'+y+'" width="'+larguraBarra+'" height="'+h+'" rx="3" fill="'+cor+'"/>' +
+        (it.valor > 0 ? '<text x="'+(x+larguraBarra/2)+'" y="'+(y-6)+'" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text)" font-family="var(--font-mono)">'+it.valor+'</text>' : '') +
+        '<text x="'+(x+larguraBarra/2)+'" y="'+(margemSuperior+alturaBarras+18)+'" text-anchor="middle" font-size="9.5" fill="var(--text-faint)">'+
+          '<title>'+it.label+'</title>'+labelCurto+
+        '</text>';
+    }).join('');
+
+    return '<svg width="100%" height="'+alturaTotal+'" viewBox="0 0 '+largura+' '+alturaTotal+'" style="display:block;">' +
+      '<line x1="0" y1="'+(margemSuperior+alturaBarras)+'" x2="'+largura+'" y2="'+(margemSuperior+alturaBarras)+'" stroke="var(--line)" stroke-width="1"/>' +
+      svgConteudo +
+      '</svg>';
+  }
+
   function gerarHtmlIndicadoresGestao(){
     var cidadeDaVagaPdf = {};
     vagasData.forEach(function(v){
@@ -3535,21 +3566,21 @@
     var clientesAbertasOrdenadosPdf = Object.keys(abertasPorClienteQtd).sort(function(a,b){ return abertasPorClienteQtd[b]-abertasPorClienteQtd[a]; });
     var chartAbertasHtmlPdf = clientesAbertasOrdenadosPdf.length === 0
       ? '<div class="rp-empty">Nenhuma vaga em aberto no momento.</div>'
-      : '<div class="rp-stats-row">' + clientesAbertasOrdenadosPdf.map(function(cliNome){
-          return '<div class="rp-stat"><div class="rp-stat-value">'+abertasPorClienteQtd[cliNome]+'</div><div class="rp-stat-label">'+cliNome+'</div></div>';
-        }).join('') + '</div>';
+      : gerarBarChartSvgPdf(clientesAbertasOrdenadosPdf.map(function(cliNome, i){
+          return {label: cliNome, valor: abertasPorClienteQtd[cliNome], cor: CHART_PALETTE[i % CHART_PALETTE.length]};
+        }));
 
     // ---- Gráfico: Pessoas por etapa da esteira (total, somando todos os clientes) ----
     var totalDocPdf = rowsAndamento.reduce(function(s,r){ return s+r.documentacao; }, 0);
     var totalExamesPdf = rowsAndamento.reduce(function(s,r){ return s+r.exames; }, 0);
     var totalDpPdf = rowsAndamento.reduce(function(s,r){ return s+r.dp; }, 0);
     var totalIntegracaoPdf = rowsAndamento.reduce(function(s,r){ return s+r.contratacao; }, 0);
-    var chartEtapasHtmlPdf = '<div class="rp-stats-row">' +
-      '<div class="rp-stat"><div class="rp-stat-value">'+totalDocPdf+'</div><div class="rp-stat-label">Documentação</div></div>' +
-      '<div class="rp-stat"><div class="rp-stat-value">'+totalExamesPdf+'</div><div class="rp-stat-label">Exames</div></div>' +
-      '<div class="rp-stat"><div class="rp-stat-value">'+totalDpPdf+'</div><div class="rp-stat-label">DP</div></div>' +
-      '<div class="rp-stat"><div class="rp-stat-value">'+totalIntegracaoPdf+'</div><div class="rp-stat-label">Integração</div></div>' +
-      '</div>';
+    var chartEtapasHtmlPdf = gerarBarChartSvgPdf([
+      {label:'Documentação', valor: totalDocPdf, cor:'#3B82F6'},
+      {label:'Exames', valor: totalExamesPdf, cor:'#F59E0B'},
+      {label:'DP', valor: totalDpPdf, cor:'#8B5CF6'},
+      {label:'Integração', valor: totalIntegracaoPdf, cor:'#14B8A6'}
+    ]);
 
     // ---- Início nos próximos 7 dias ----
     var hojeBasePdf = new Date();
@@ -3574,6 +3605,9 @@
     dias7Pdf.forEach(function(d){
       d.pessoas.forEach(function(p){ linhasInicioPdf.push({data:d.iso, cliente:p.cliente, cargo:p.cargo, nome:p.nome}); });
     });
+    var chartInicioHtmlPdf = gerarBarChartSvgPdf(dias7Pdf.map(function(d){
+      return {label: formatDateBR(d.iso), valor: d.pessoas.length, cor: d.pessoas.length > 0 ? 'var(--teal)' : 'var(--line-strong)'};
+    }));
     var inicioHtmlPdf = linhasInicioPdf.length === 0
       ? '<div class="rp-empty">Nenhuma integração/início programada pros próximos 7 dias.</div>'
       : '<table class="rp-table"><thead><tr><th>Data</th><th>Cliente</th><th>Vaga</th><th>Nome</th></tr></thead><tbody>' +
