@@ -490,6 +490,9 @@
   .rp-stat{background:var(--card);border:1px solid var(--line);border-radius:9px;padding:10px 14px;min-width:100px;break-inside:avoid;}
   .rp-stat-value{font-family:var(--font-mono);font-weight:600;font-size:17px;color:var(--text);}
   .rp-stat-label{font-size:10px;color:var(--text-dim);margin-top:2px;}
+  .rp-legend-row{display:flex;flex-wrap:wrap;gap:8px 14px;padding-top:8px;}
+  .rp-legend-item{display:flex;align-items:center;gap:5px;font-size:10.5px;color:var(--text-dim);}
+  .rp-legend-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0;display:inline-block;}
   .rp-table{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:6px;background:var(--card);border-radius:9px;overflow:hidden;border:1px solid var(--line);}
   .rp-table th{text-align:left;font-size:9.5px;text-transform:uppercase;letter-spacing:0.03em;color:var(--text-faint);padding:6px 11px;border-bottom:1px solid var(--line);background:#0D1526;}
   .rp-table td{padding:5.5px 11px;border-bottom:1px solid var(--line);color:var(--text);}
@@ -1148,7 +1151,8 @@
         </div>
         <div class="panel">
           <div class="panel-head"><div class="panel-title">Pessoas por etapa da esteira</div></div>
-          <div id="ig-chart-etapas" style="display:flex;align-items:flex-end;gap:14px;padding:18px;justify-content:center;min-height:170px;"></div>
+          <div id="ig-chart-etapas" style="display:flex;align-items:flex-end;gap:14px;padding:18px 18px 6px;justify-content:center;min-height:170px;"></div>
+          <div id="ig-chart-etapas-legenda" style="display:flex;flex-wrap:wrap;gap:10px 16px;padding:0 18px 16px;"></div>
         </div>
       </div>
 
@@ -3508,6 +3512,60 @@
       '</svg>';
   }
 
+  // Mesma ideia, mas cada barra é dividida em segmentos por cliente (empilhado) — usado pra
+  // "Pessoas por etapa da esteira", mostrando de qual cliente vem cada parte da quantidade.
+  // bars = [{label, total, porCliente: {cliente: valor}}]. ordemClientes/corPorCliente já vêm
+  // prontos, pra manter a mesma cor de cliente usada no gráfico de "Vagas em aberto".
+  function gerarBarChartEmpilhadoSvgPdf(bars, ordemClientes, corPorCliente){
+    if(!bars || bars.length === 0) return '<div class="rp-empty">Sem dados.</div>';
+    var largura = 700, margemSuperior = 22, margemInferior = 42;
+    var n = bars.length;
+    var maxVal = Math.max.apply(null, bars.map(function(b){ return b.total; }).concat([1]));
+    var larguraBarra = Math.max(18, Math.min(64, (largura / n) - 14));
+    var espaco = (largura - larguraBarra*n) / (n+1);
+    var alturaBase = 130;
+    var pxPorUnidade = alturaBase / maxVal;
+    var alturaMinSegmento = 14; // grande o bastante pra caber o número sempre, mesmo com valor pequeno
+
+    // Primeiro calcula a altura real de cada barra (respeitando o mínimo por segmento), pra
+    // descobrir se alguma barra ficou mais alta que o espaço padrão — e ajustar o SVG todo.
+    var barrasCalc = bars.map(function(b){
+      var segmentos = ordemClientes.filter(function(cli){ return (b.porCliente[cli]||0) > 0; }).map(function(cli){
+        var val = b.porCliente[cli];
+        var h = Math.max(alturaMinSegmento, Math.round(val * pxPorUnidade));
+        return {cli:cli, val:val, h:h};
+      });
+      var hTotalReal = segmentos.reduce(function(s,seg){ return s+seg.h; }, 0);
+      return {label: b.label, total: b.total, segmentos: segmentos, hTotalReal: hTotalReal};
+    });
+    var alturaBarras = Math.max(alturaBase, Math.max.apply(null, barrasCalc.map(function(b){ return b.hTotalReal; }).concat([alturaBase])));
+    var alturaTotal = alturaBarras + margemSuperior + margemInferior;
+
+    var svgConteudo = barrasCalc.map(function(b, i){
+      var x = espaco + i*(larguraBarra+espaco);
+      var yTopo = margemSuperior + (alturaBarras - b.hTotalReal);
+      var yAtual = margemSuperior + alturaBarras;
+      var segmentosSvg = b.segmentos.map(function(seg){
+        yAtual -= seg.h;
+        var cor = corPorCliente[seg.cli] || 'var(--teal)';
+        return '<rect x="'+x+'" y="'+yAtual+'" width="'+larguraBarra+'" height="'+seg.h+'" fill="'+cor+'"><title>'+seg.cli+': '+seg.val+'</title></rect>' +
+          '<text x="'+(x+larguraBarra/2)+'" y="'+(yAtual+seg.h/2+3)+'" text-anchor="middle" font-size="9" font-weight="700" fill="#0B1220">'+seg.val+'</text>';
+      }).join('');
+      return segmentosSvg +
+        (b.total > 0 ? '<text x="'+(x+larguraBarra/2)+'" y="'+(yTopo-6)+'" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text)" font-family="var(--font-mono)">'+b.total+'</text>' : '') +
+        '<text x="'+(x+larguraBarra/2)+'" y="'+(margemSuperior+alturaBarras+18)+'" text-anchor="middle" font-size="9.5" fill="var(--text-faint)">'+b.label+'</text>';
+    }).join('');
+
+    var legendaSvg = ordemClientes.length === 0 ? '' : '<div class="rp-legend-row">' + ordemClientes.map(function(cli){
+      return '<span class="rp-legend-item"><span class="rp-legend-dot" style="background:'+(corPorCliente[cli]||'var(--teal)')+';"></span>'+cli+'</span>';
+    }).join('') + '</div>';
+
+    return '<svg width="100%" height="'+alturaTotal+'" viewBox="0 0 '+largura+' '+alturaTotal+'" style="display:block;">' +
+      '<line x1="0" y1="'+(margemSuperior+alturaBarras)+'" x2="'+largura+'" y2="'+(margemSuperior+alturaBarras)+'" stroke="var(--line)" stroke-width="1"/>' +
+      svgConteudo +
+      '</svg>' + legendaSvg;
+  }
+
   function gerarHtmlIndicadoresGestao(){
     var cidadeDaVagaPdf = {};
     vagasData.forEach(function(v){
@@ -3562,25 +3620,39 @@
     Object.keys(andamentoPorCliente).forEach(function(c){ todosClientesVagas[c] = true; });
     var ordemClientesVagas = Object.keys(todosClientesVagas).sort();
 
+    // Cor única por cliente, consistente entre os dois gráficos.
+    var corPorClienteGestaoPdf = {};
+    ordemClientesVagas.forEach(function(cli, i){ corPorClienteGestaoPdf[cli] = CHART_PALETTE[i % CHART_PALETTE.length]; });
+
     // ---- Gráfico: Vagas em aberto por cliente ----
     var clientesAbertasOrdenadosPdf = Object.keys(abertasPorClienteQtd).sort(function(a,b){ return abertasPorClienteQtd[b]-abertasPorClienteQtd[a]; });
     var chartAbertasHtmlPdf = clientesAbertasOrdenadosPdf.length === 0
       ? '<div class="rp-empty">Nenhuma vaga em aberto no momento.</div>'
-      : gerarBarChartSvgPdf(clientesAbertasOrdenadosPdf.map(function(cliNome, i){
-          return {label: cliNome, valor: abertasPorClienteQtd[cliNome], cor: CHART_PALETTE[i % CHART_PALETTE.length]};
+      : gerarBarChartSvgPdf(clientesAbertasOrdenadosPdf.map(function(cliNome){
+          return {label: cliNome, valor: abertasPorClienteQtd[cliNome], cor: corPorClienteGestaoPdf[cliNome]};
         }));
 
-    // ---- Gráfico: Pessoas por etapa da esteira (total, somando todos os clientes) ----
-    var totalDocPdf = rowsAndamento.reduce(function(s,r){ return s+r.documentacao; }, 0);
-    var totalExamesPdf = rowsAndamento.reduce(function(s,r){ return s+r.exames; }, 0);
-    var totalDpPdf = rowsAndamento.reduce(function(s,r){ return s+r.dp; }, 0);
-    var totalIntegracaoPdf = rowsAndamento.reduce(function(s,r){ return s+r.contratacao; }, 0);
-    var chartEtapasHtmlPdf = gerarBarChartSvgPdf([
-      {label:'Documentação', valor: totalDocPdf, cor:'#3B82F6'},
-      {label:'Exames', valor: totalExamesPdf, cor:'#F59E0B'},
-      {label:'DP', valor: totalDpPdf, cor:'#8B5CF6'},
-      {label:'Integração', valor: totalIntegracaoPdf, cor:'#14B8A6'}
-    ]);
+    // ---- Gráfico: Pessoas por etapa da esteira, empilhado por cliente (mesma cor por cliente
+    // usada no gráfico "Vagas em aberto por cliente") ----
+    var etapasKeysPdf = [
+      {key:'documentacao', label:'Documentação'},
+      {key:'exames', label:'Exames'},
+      {key:'dp', label:'DP'},
+      {key:'contratacao', label:'Integração'}
+    ];
+    var clientesEtapasSetPdf = {};
+    rowsAndamento.forEach(function(r){ clientesEtapasSetPdf[r.cliente] = true; });
+    var ordemClientesEtapasPdf = Object.keys(clientesEtapasSetPdf).sort();
+    var barrasEtapasPdf = etapasKeysPdf.map(function(et){
+      var porCliente = {};
+      var total = 0;
+      rowsAndamento.forEach(function(r){
+        var v = r[et.key];
+        if(v > 0){ porCliente[r.cliente] = (porCliente[r.cliente]||0) + v; total += v; }
+      });
+      return {label: et.label, total: total, porCliente: porCliente};
+    });
+    var chartEtapasHtmlPdf = gerarBarChartEmpilhadoSvgPdf(barrasEtapasPdf, ordemClientesEtapasPdf, corPorClienteGestaoPdf);
 
     // ---- Início nos próximos 7 dias ----
     var hojeBasePdf = new Date();
@@ -3708,7 +3780,7 @@
 
     return '<div class="rp-section"><div class="rp-section-title">Vagas em aberto por cliente</div>'+chartAbertasHtmlPdf+'</div>' +
       '<div class="rp-section"><div class="rp-section-title">Pessoas por etapa da esteira</div>'+chartEtapasHtmlPdf+'</div>' +
-      '<div class="rp-section"><div class="rp-section-title">Início nos próximos 7 dias</div>'+inicioHtmlPdf+'</div>' +
+      '<div class="rp-section"><div class="rp-section-title">Início nos próximos 7 dias</div>'+chartInicioHtmlPdf+inicioHtmlPdf+'</div>' +
       '<div class="rp-section"><div class="rp-section-title">Vagas</div>'+vagasSecoesHtml+'</div>' +
       '<div class="rp-section"><div class="rp-section-title">Produtividade por recrutador — '+igModeLabelPdf+'</div>'+produtividadeGestaoHtml+'</div>';
   }
@@ -5146,6 +5218,11 @@
     Object.keys(andamentoPorCliente).forEach(function(c){ todosClientesVagas[c] = true; });
     var ordemClientesAndamento = Object.keys(todosClientesVagas).sort();
 
+    // Cor única por cliente, consistente entre "Vagas em aberto por cliente" e "Pessoas por
+    // etapa" — assim o mesmo cliente é sempre a mesma cor nos dois gráficos.
+    var corPorClienteGestao = {};
+    ordemClientesAndamento.forEach(function(cli, i){ corPorClienteGestao[cli] = CHART_PALETTE[i % CHART_PALETTE.length]; });
+
     // ---- Gráfico: Vagas em aberto por cliente ----
     var chartAbertasEl = document.getElementById('ig-chart-abertas-cliente');
     if(chartAbertasEl){
@@ -5154,10 +5231,10 @@
         chartAbertasEl.innerHTML = '<div class="kanban-empty" style="padding:0;">Nenhuma vaga em aberto no momento.</div>';
       } else {
         var maxAbertas = Math.max.apply(null, clientesAbertasOrdenados.map(function(c){ return abertasPorClienteQtd[c]; }));
-        chartAbertasEl.innerHTML = clientesAbertasOrdenados.map(function(cliNome, i){
+        chartAbertasEl.innerHTML = clientesAbertasOrdenados.map(function(cliNome){
           var val = abertasPorClienteQtd[cliNome];
           var h = Math.max(2, Math.round((val / maxAbertas) * 130));
-          var color = CHART_PALETTE[i % CHART_PALETTE.length];
+          var color = corPorClienteGestao[cliNome] || 'var(--teal)';
           return '<div class="barchart-cat">' +
             '<div class="barchart-bars"><div class="barchart-bar" style="height:'+h+'px;background:'+color+';"><span class="barchart-bar-value">'+val+'</span></div></div>' +
             '<div class="barchart-label" title="'+cliNome+'">'+cliNome+'</div>' +
@@ -5166,23 +5243,64 @@
       }
     }
 
-    // ---- Gráfico: Pessoas por etapa da esteira (total, somando todos os clientes) ----
+    // ---- Gráfico: Pessoas por etapa da esteira, empilhado por cliente (mesma cor por cliente
+    // usada no gráfico "Vagas em aberto por cliente") ----
     var chartEtapasEl = document.getElementById('ig-chart-etapas');
+    var legendaEtapasEl = document.getElementById('ig-chart-etapas-legenda');
     if(chartEtapasEl){
-      var etapas = [
-        {label:'Documentação', val: rowsAndamento.reduce(function(s,r){ return s+r.documentacao; }, 0), color:'#3B82F6'},
-        {label:'Exames', val: rowsAndamento.reduce(function(s,r){ return s+r.exames; }, 0), color:'#F59E0B'},
-        {label:'DP', val: rowsAndamento.reduce(function(s,r){ return s+r.dp; }, 0), color:'#8B5CF6'},
-        {label:'Integração', val: rowsAndamento.reduce(function(s,r){ return s+r.contratacao; }, 0), color:'#14B8A6'}
+      var clientesEtapasSet = {};
+      rowsAndamento.forEach(function(r){ clientesEtapasSet[r.cliente] = true; });
+      var ordemClientesEtapas = Object.keys(clientesEtapasSet).sort();
+
+      var etapasKeys = [
+        {key:'documentacao', label:'Documentação'},
+        {key:'exames', label:'Exames'},
+        {key:'dp', label:'DP'},
+        {key:'contratacao', label:'Integração'}
       ];
-      var maxEtapa = Math.max.apply(null, etapas.map(function(e){ return e.val; }).concat([1]));
-      chartEtapasEl.innerHTML = etapas.map(function(e){
-        var h = Math.max(2, Math.round((e.val / maxEtapa) * 130));
+      var etapasComBreakdown = etapasKeys.map(function(et){
+        var porCliente = {};
+        var total = 0;
+        rowsAndamento.forEach(function(r){
+          var v = r[et.key];
+          if(v > 0){
+            porCliente[r.cliente] = (porCliente[r.cliente]||0) + v;
+            total += v;
+          }
+        });
+        return {label: et.label, total: total, porCliente: porCliente};
+      });
+      var maxEtapaTotal = Math.max.apply(null, etapasComBreakdown.map(function(e){ return e.total; }).concat([1]));
+      var pxPorUnidadeEtapa = 130 / maxEtapaTotal;
+      var alturaMinSegmento = 15; // grande o bastante pra caber o número sempre, mesmo quando o valor é pequeno
+
+      chartEtapasEl.innerHTML = etapasComBreakdown.map(function(e){
+        var segmentosCalc = ordemClientesEtapas.filter(function(cli){ return e.porCliente[cli] > 0; }).map(function(cli){
+          var val = e.porCliente[cli];
+          var h = Math.max(alturaMinSegmento, Math.round(val * pxPorUnidadeEtapa));
+          return {cli:cli, val:val, h:h};
+        });
+        var hTotalReal = segmentosCalc.reduce(function(s,seg){ return s+seg.h; }, 0);
+        var segmentosHtml = segmentosCalc.map(function(seg){
+          var corCli = corPorClienteGestao[seg.cli] || 'var(--teal)';
+          return '<div style="width:100%;height:'+seg.h+'px;background:'+corCli+';display:flex;align-items:center;justify-content:center;flex-shrink:0;" title="'+seg.cli+': '+seg.val+'"><span style="font-size:9px;font-weight:700;color:#0B1220;line-height:1;">'+seg.val+'</span></div>';
+        }).join('');
         return '<div class="barchart-cat">' +
-          '<div class="barchart-bars"><div class="barchart-bar" style="height:'+h+'px;background:'+e.color+';">'+(e.val>0?'<span class="barchart-bar-value">'+e.val+'</span>':'')+'</div></div>' +
+          '<div style="display:flex;align-items:flex-end;height:130px;">' +
+            '<div style="width:16px;border-radius:4px 4px 0 0;position:relative;display:flex;flex-direction:column-reverse;overflow:visible;height:'+hTotalReal+'px;">' +
+              segmentosHtml +
+              (e.total>0?'<span class="barchart-bar-value">'+e.total+'</span>':'') +
+            '</div>' +
+          '</div>' +
           '<div class="barchart-label">'+e.label+'</div>' +
           '</div>';
       }).join('');
+
+      if(legendaEtapasEl){
+        legendaEtapasEl.innerHTML = ordemClientesEtapas.length === 0 ? '' : ordemClientesEtapas.map(function(cli){
+          return '<span class="barchart-legend-item"><span class="barchart-legend-dot" style="background:'+(corPorClienteGestao[cli]||'var(--teal)')+';"></span>'+cli+'</span>';
+        }).join('');
+      }
     }
 
     // ---- Gráfico: Início nos próximos 7 dias, de acordo com a data programada ----
