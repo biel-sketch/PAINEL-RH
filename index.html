@@ -5223,22 +5223,61 @@
     var corPorClienteGestao = {};
     ordemClientesAndamento.forEach(function(cli, i){ corPorClienteGestao[cli] = CHART_PALETTE[i % CHART_PALETTE.length]; });
 
-    // ---- Gráfico: Vagas em aberto por cliente ----
+    // ---- Gráfico: Vagas em aberto por cliente/cargo ----
+    // Cada cargo do mesmo cliente aparece em uma coluna separada.
+    // A quantidade exibida é o saldo de posições ainda abertas (qtd - hired.length).
     var chartAbertasEl = document.getElementById('ig-chart-abertas-cliente');
     if(chartAbertasEl){
-      var clientesAbertasOrdenados = Object.keys(abertasPorClienteQtd).sort(function(a,b){ return abertasPorClienteQtd[b]-abertasPorClienteQtd[a]; });
-      if(clientesAbertasOrdenados.length === 0){
+      var vagasPorClienteCargo = {};
+
+      vagasAbertas.forEach(function(v){
+        var cliente = v.cliente || '—';
+        var cargo = v.cargo || '—';
+        var chave = cliente + '::::' + cargo;
+        var quantidadeAberta = Math.max(0, (v.qtd || 0) - ((v.hired || []).length));
+
+        if(quantidadeAberta <= 0) return;
+
+        if(!vagasPorClienteCargo[chave]){
+          vagasPorClienteCargo[chave] = {
+            cliente: cliente,
+            cargo: cargo,
+            quantidade: 0
+          };
+        }
+
+        vagasPorClienteCargo[chave].quantidade += quantidadeAberta;
+      });
+
+      var vagasClienteCargoOrdenadas = Object.keys(vagasPorClienteCargo)
+        .map(function(chave){ return vagasPorClienteCargo[chave]; })
+        .sort(function(a,b){
+          if(b.quantidade !== a.quantidade) return b.quantidade - a.quantidade;
+          if(a.cliente !== b.cliente) return a.cliente.localeCompare(b.cliente);
+          return a.cargo.localeCompare(b.cargo);
+        });
+
+      if(vagasClienteCargoOrdenadas.length === 0){
         chartAbertasEl.innerHTML = '<div class="kanban-empty" style="padding:0;">Nenhuma vaga em aberto no momento.</div>';
       } else {
-        var maxAbertas = Math.max.apply(null, clientesAbertasOrdenados.map(function(c){ return abertasPorClienteQtd[c]; }));
-        chartAbertasEl.innerHTML = clientesAbertasOrdenados.map(function(cliNome){
-          var val = abertasPorClienteQtd[cliNome];
-          var h = Math.max(2, Math.round((val / maxAbertas) * 130));
-          var color = corPorClienteGestao[cliNome] || 'var(--teal)';
-          return '<div class="barchart-cat">' +
-            '<div class="barchart-bars"><div class="barchart-bar" style="height:'+h+'px;background:'+color+';"><span class="barchart-bar-value">'+val+'</span></div></div>' +
-            '<div class="barchart-label" title="'+cliNome+'">'+cliNome+'</div>' +
-            '</div>';
+        var maxAbertas = Math.max.apply(null, vagasClienteCargoOrdenadas.map(function(item){ return item.quantidade; }));
+
+        chartAbertasEl.innerHTML = vagasClienteCargoOrdenadas.map(function(item){
+          var h = Math.max(2, Math.round((item.quantidade / maxAbertas) * 130));
+          var color = corPorClienteGestao[item.cliente] || 'var(--teal)';
+          var titulo = item.cliente + ' — ' + item.cargo;
+
+          return '<div class="barchart-cat" style="min-width:95px;max-width:120px;flex:0 0 95px;">' +
+            '<div class="barchart-bars">' +
+              '<div class="barchart-bar" style="height:'+h+'px;background:'+color+';">' +
+                '<span class="barchart-bar-value">'+item.quantidade+'</span>' +
+              '</div>' +
+            '</div>' +
+            '<div class="barchart-label" title="'+titulo+'" style="white-space:normal;line-height:1.2;">' +
+              '<div style="font-size:10px;font-weight:600;color:var(--text-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px;">'+item.cliente+'</div>' +
+              '<div style="font-size:11px;font-weight:700;white-space:normal;word-break:break-word;">'+item.cargo+'</div>' +
+            '</div>' +
+          '</div>';
         }).join('');
       }
     }
