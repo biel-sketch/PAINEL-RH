@@ -1246,6 +1246,24 @@
       </div>
 
       <div style="margin-bottom:16px;">
+        <label style="font-size:12.5px;font-weight:600;">Rescisão Inicial <span style="color:var(--text-faint);font-weight:400;">(apurada no desligamento)</span></label>
+        <div class="stats" style="grid-template-columns:1fr 1fr 1fr;margin-top:8px;">
+          <div class="stat-card">
+            <div class="stat-label">TRCT</div>
+            <div class="stat-value" style="font-size:18px;" id="perfil-valor-trct">R$ 0,00</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">FGTS</div>
+            <div class="stat-value" style="font-size:18px;" id="perfil-valor-fgts">R$ 0,00</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Uniforme</div>
+            <div class="stat-value" style="font-size:18px;" id="perfil-valor-uniforme">R$ 0,00</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-bottom:16px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
           <label style="font-size:12.5px;font-weight:600;">Rescisão Complementar</label>
           <button type="button" class="btn btn-ghost" id="btn-add-rescisao-complementar" style="padding:5px 10px;font-size:11.5px;">+ Adicionar</button>
@@ -1321,6 +1339,9 @@
             <select id="edti-contrato"><option value="INDETERMINADO">Indeterminado</option><option value="DETERMINADO">Determinado</option></select>
           </div>
           <div class="modal-field"><label>Supervisor</label><input type="text" id="edti-supervisor"></div>
+          <div class="modal-field"><label>Valor TRCT (R$)</label><input type="number" step="0.01" id="edti-trct"></div>
+          <div class="modal-field"><label>Valor FGTS (R$)</label><input type="number" step="0.01" id="edti-fgts"></div>
+          <div class="modal-field"><label>Valor Uniforme (R$)</label><input type="number" step="0.01" id="edti-uniforme"></div>
         </div>
         <div class="modal-actions">
           <button type="button" class="btn btn-ghost" onclick="closeModal('modal-editar-inativo')">Cancelar</button>
@@ -2571,6 +2592,11 @@
       supervisor: dados.supervisor || null,
       empresa: base.empresa || null,
       observacao: dados.observacao || null,
+      // Valores apurados no checklist de Desligamentos em Andamento (rescisão inicial)
+      valorTRCT: Number(dados.valorTRCT) || 0,
+      valorFGTS: Number(dados.valorFGTS) || 0,
+      valorUniforme: Number(dados.valorUniforme) || 0,
+      uniformeDevolvido: dados.uniformeDevolvido || null,
       rescisaoComplementar: []
     };
     if(idxAtivo >= 0) appState.ativos.splice(idxAtivo, 1);
@@ -2666,7 +2692,9 @@
     moverParaInativos(registro.nome, {
       cargo: registro.cargo, posto: registro.posto, desligamento: registro.desligamento,
       motivoSaida: registro.motivoSaida, contrato: registro.contrato,
-      supervisor: registro.supervisor, observacao: registro.observacao
+      supervisor: registro.supervisor, observacao: registro.observacao,
+      valorTRCT: registro.valorTRCT, valorFGTS: registro.valorFGTS,
+      valorUniforme: registro.valorUniforme, uniformeDevolvido: registro.uniformeDevolvido
     });
     appState.desligamentosAndamento.splice(idx, 1);
   }
@@ -2794,6 +2822,9 @@
     document.getElementById('perfil-desligamento').textContent = formatDateBR(c.desligamento);
     document.getElementById('perfil-motivo').textContent = motivoLabel[c.motivoSaida] || c.motivoSaida || '—';
     document.getElementById('perfil-supervisor').textContent = c.supervisor || '—';
+    document.getElementById('perfil-valor-trct').textContent = formatMoney(c.valorTRCT || 0);
+    document.getElementById('perfil-valor-fgts').textContent = formatMoney(c.valorFGTS || 0);
+    document.getElementById('perfil-valor-uniforme').textContent = formatMoney(c.valorUniforme || 0);
     var contagem = contarFaltasEAdvertencias(c.nome);
     document.getElementById('perfil-faltas').textContent = contagem.faltas;
     document.getElementById('perfil-advertencias').textContent = contagem.advertencias;
@@ -2821,6 +2852,9 @@
     document.getElementById('edti-motivo').value = c.motivoSaida || 'COLABORADOR';
     document.getElementById('edti-contrato').value = c.contrato || 'INDETERMINADO';
     document.getElementById('edti-supervisor').value = c.supervisor || '';
+    document.getElementById('edti-trct').value = c.valorTRCT || 0;
+    document.getElementById('edti-fgts').value = c.valorFGTS || 0;
+    document.getElementById('edti-uniforme').value = c.valorUniforme || 0;
     closeModal('modal-perfil-inativo');
     openModal('modal-editar-inativo');
   });
@@ -2842,6 +2876,9 @@
     c.motivoSaida = document.getElementById('edti-motivo').value;
     c.contrato = document.getElementById('edti-contrato').value;
     c.supervisor = document.getElementById('edti-supervisor').value.trim();
+    c.valorTRCT = parseFloat(document.getElementById('edti-trct').value) || 0;
+    c.valorFGTS = parseFloat(document.getElementById('edti-fgts').value) || 0;
+    c.valorUniforme = parseFloat(document.getElementById('edti-uniforme').value) || 0;
 
     cloudPut(appState).catch(function(err){ console.error('Erro ao salvar edição de inativo:', err); });
     closeModal('modal-editar-inativo');
